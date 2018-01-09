@@ -1785,7 +1785,7 @@ namespace dagConstruct {
         if (clustersToCombine.size() > 0) {
             double curWeight = currentClusters.getCurWeight();
 //            cout << "# Current Weight is " << curWeight << endl;
-            combineClusters(clustersToCombine, currentClusters, clusterGraph, lastCurrent, nodeIDsToNames, nodeDistances, realEdges, inferredEdges);
+            combineClusters(clustersToCombine, currentClusters, inferredEdges, lastCurrent, nodeIDsToNames, nodeDistances, realEdges, inferredEdges);
             currentClusters.setCurWeight(curWeight);
             return true;
         }
