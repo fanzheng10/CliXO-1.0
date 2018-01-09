@@ -1550,16 +1550,27 @@ namespace dagConstruct {
         if (edgesToAdd.size() != 0) {
             currentClusters.resetAllUnexplained();
         }
-        while (edgesToAddCounter < edgesToAdd.size()) {
+        while (edgesToAddCounter < edgesToAdd.size()) {// is this while loop useful?
+
+//            //let's see if this trick works:
+//            if (inferredEdges.isEdge(edgesToAdd[edgesToAddCounter].first.first, edgesToAdd[edgesToAddCounter].first.second)) {
+//                ++edgesToAddCounter;
+//                continue;
+//            }
 
             unsigned long thisRoundCounter = edgesToAddCounter;
+            vector<unsigned long> newEdges(edgesToAdd.size(), 0);
 
             vector<char> affectedNodes(clusterGraph.numNodes(), 0);
             for (; edgesToAddCounter != edgesToAdd.size() ; ++edgesToAddCounter) {
-                clusterGraph.addEdge(edgesToAdd[edgesToAddCounter].first.first, edgesToAdd[edgesToAddCounter].first.second);
-                inferredEdges.addEdge(edgesToAdd[edgesToAddCounter].first.first, edgesToAdd[edgesToAddCounter].first.second);
-                affectedNodes[edgesToAdd[edgesToAddCounter].first.first] = 1;
-                affectedNodes[edgesToAdd[edgesToAddCounter].first.second] = 1;
+//                clusterGraph.addEdge(edgesToAdd[edgesToAddCounter].first.first, edgesToAdd[edgesToAddCounter].first.second);
+
+                if (!inferredEdges.isEdge(edgesToAdd[edgesToAddCounter].first.first, edgesToAdd[edgesToAddCounter].first.second)) {
+                    inferredEdges.addEdge(edgesToAdd[edgesToAddCounter].first.first, edgesToAdd[edgesToAddCounter].first.second);
+                    affectedNodes[edgesToAdd[edgesToAddCounter].first.first] = 1;
+                    affectedNodes[edgesToAdd[edgesToAddCounter].first.second] = 1;
+                    newEdges[edgesToAddCounter] = 1;
+                }
             }
 
             unsigned numAff = 0;
@@ -1572,6 +1583,7 @@ namespace dagConstruct {
 
             // For each affected node, find all possibly affected clusters
             // Affected means, the cluster probably can grow with new edges added.
+            // this is probably greedy?
             vector<char> affectedClusters(currentClusters.maxClusterID(), 0);
 
             for (unsigned i = 0; i < affectedNodes.size(); ++i) {
@@ -1610,12 +1622,14 @@ namespace dagConstruct {
             cout << "# Num of non-maximal clusters deleted here: " << deleted << endl;
 
             for ( ; thisRoundCounter < edgesToAddCounter; ++thisRoundCounter) {
-                boost::dynamic_bitset<unsigned long> seedClust(clusterGraph.numNodes());
-                seedClust[edgesToAdd[thisRoundCounter].first.first] = 1;
-                seedClust[edgesToAdd[thisRoundCounter].first.second] = 1;
-                if (!findClustsWithSeed(seedClust, inferredEdges, newClustersToAdd, nodeIDsToNames)) {
-                    // seedClust is a maximal clique of just two nodes
-                    Utils::insertInOrder(newClustersToAdd, seedClust);
+                if (newEdges[thisRoundCounter] >0) {
+                    boost::dynamic_bitset<unsigned long> seedClust(clusterGraph.numNodes());
+                    seedClust[edgesToAdd[thisRoundCounter].first.first] = 1;
+                    seedClust[edgesToAdd[thisRoundCounter].first.second] = 1;
+                    if (!findClustsWithSeed(seedClust, inferredEdges, newClustersToAdd, nodeIDsToNames)) {
+                        // seedClust is a maximal clique of just two nodes
+                        Utils::insertInOrder(newClustersToAdd, seedClust);
+                    }
                 }
             }
 //            cout << inferredEdges.numEdges() << "\t" << clusterGraph.numEdges() << endl;
@@ -1790,6 +1804,7 @@ namespace dagConstruct {
                                              vector<validClusterBitset> & validClusters, double threshold = 0, double density = 1) {
         time_t start, end;
         time (&start);
+        double dif;
         unsigned largestCluster = 0;
         unsigned lastCurrent = 10;
         unsigned numRealEdgesAdded = 0;
@@ -1804,7 +1819,7 @@ namespace dagConstruct {
         graph_undirected_bitset inferredEdges(numNodes);
         double dt = nodeDistances.sortedDistancesBegin()->second; // Current threshold distance
         currentClusterClassBitset currentClusters(numNodes, clusterGraph.get_num_blocks(),dt, threshold);
-        bool addAtEnd = true;
+        bool addAtEnd = false;
         sortedDistanceStruct::iterator distanceIt = nodeDistances.sortedDistancesBegin(); //this may be problematic since
         unsigned totalEdges = numNodes*(numNodes-1) / 2;
 
@@ -1826,8 +1841,16 @@ namespace dagConstruct {
                 ++distanceIt;
             }
             cout << "# Num of real edges added: " << numRealEdgesAdded << endl;
+
+            time (&end);
+            dif = difftime(end,start);
+            cout << "# Time elapsed: " << dif << " seconds" << endl;
+
             updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, realEdges, inferredEdges);//Fani change distanceIt->second to addUntil maybe?
 
+            time (&end);
+            dif = difftime(end,start);
+            cout << "# Time elapsed: " << dif << " seconds" << endl;
 
             double last_dt = dt;
             if (distanceIt != nodeDistances.sortedDistancesEnd()) {
@@ -1849,6 +1872,11 @@ namespace dagConstruct {
                     // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
                     cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
                     bool newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances, inferredEdges);
+
+                    time (&end);
+                    dif = difftime(end,start);
+                    cout << "# Time elapsed: " << dif << " seconds" << endl;
+
                     while (newEdgesAdded == true) { //not sure
                         performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
                         newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances, inferredEdges);
@@ -1858,6 +1886,10 @@ namespace dagConstruct {
                 } else {
                     currentClusters.prepareForValidityCheck(newClustersSorted);
                 }
+
+                time (&end);
+                dif = difftime(end,start);
+                cout << "# Time elapsed: " << dif << " seconds" << endl;
 
                 vector<char> idsChecked(currentClusters.maxClusterID(), 0);
                 cout << "# Current number of clusters:" << currentClusters.maxClusterID() << endl;
@@ -1893,6 +1925,7 @@ namespace dagConstruct {
                         currentClusters.setNecessary(*newClusterIt); //what's the effect of this line
                     }
                 }
+
                 lastCurrent = currentClusters.numCurrentClusters();
                 if (lastCurrent < 25) {
                     lastCurrent = 25;
@@ -1908,7 +1941,7 @@ namespace dagConstruct {
                 cout << "# Num real edges: " << numRealEdgesAdded << endl;
                 cout << "# Num edges inferred: " << clusterGraph.numEdges() - realEdges.numEdges() << endl;
                 time (&end);
-                double dif = difftime(end,start);
+                dif = difftime(end,start);
                 cout << "# Time elapsed: " << dif << " seconds" << endl;
             }
         } //Fan: while loop ends here
