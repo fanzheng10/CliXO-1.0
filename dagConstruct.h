@@ -449,19 +449,21 @@ public:
         return;
     }
 
-    inline void removeClusterFromExplanation(const vector<unsigned> & cluster, const unsigned long & clustID) {
+    inline void removeClusterFromExplanation(const vector<unsigned> & cluster, const unsigned long & clustID, graph_undirected_bitset & clusterGraph) {
         for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
             vector<unsigned>::const_iterator it2 = it1;
             ++it2;
             for ( ; it2 != cluster.end(); ++it2) {
-                removeClusterToExplainEdge(*it1,*it2,clustID);
+                if (clusterGraph.isEdge(*it1, *it2)) {
+                    removeClusterToExplainEdge(*it1, *it2, clustID);
+                }
             }
         }
         currentClusters[clustID].setRemovedFromExplain();
     }
 
-    inline void removeClusterFromExplanation(unsigned long clusterToRemove) {
-        removeClusterFromExplanation(currentClusters[clusterToRemove].getElementsVector(), currentClusters[clusterToRemove].getID());
+    inline void removeClusterFromExplanation(unsigned long clusterToRemove, graph_undirected_bitset & clusterGraph) {
+        removeClusterFromExplanation(currentClusters[clusterToRemove].getElementsVector(), currentClusters[clusterToRemove].getID(), clusterGraph));
     }
 
     /*inline*/ unsigned long addCluster(const boost::dynamic_bitset<unsigned long> & newCluster, nodeDistanceObject & nodeDistances, vector<string> & nodeIDsToNames, graph_undirected_bitset & realEdges) {
@@ -702,10 +704,10 @@ public:
     }
 
 
-    inline void deleteCluster(const unsigned long & clusterToDelete, vector<string> & nodeIDsToNames, bool printClusterInfo = true) {
+    inline void deleteCluster(const unsigned long & clusterToDelete, vector<string> & nodeIDsToNames, bool printClusterInfo = true, graph_undirected_bitset & clusterGraph) {
 
         if (currentClusters[clusterToDelete].isAddedToExplain()) {
-            removeClusterFromExplanation(clusterToDelete);
+            removeClusterFromExplanation(clusterToDelete, clusterGraph);
         }
         openIDs.push_back(clusterToDelete);
         vector<ClusterBitset>::iterator clusterToDelete_it = currentClusters.begin();
@@ -989,7 +991,8 @@ public:
         }
         else if (nNewEdges  % 2 == 0)
         {
-            newEdgeWeightsMedian = (newEdgeWeights[nNewEdges / 2 - 1] + newEdgeWeights[nNewEdges/ 2]) / 2;
+            newEdgeWeightsMedian = newEdgeWeights[nNewEdges / 2 - 1];
+//            newEdgeWeightsMedian = (newEdgeWeights[nNewEdges / 2 - 1] + newEdgeWeights[nNewEdges/ 2]) / 2;
         }
         else
         {
@@ -1367,7 +1370,7 @@ namespace dagConstruct {
         for (vector<unsigned long>::iterator newClusterIt = newClustersSorted.begin();
              newClusterIt != newClustersSorted.end(); ++newClusterIt) {
             if (!currentClusters.checkClusterValidity(*newClusterIt)) {
-                currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames,false);
+                currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames,false, clusterGraph);
                 ++deleted;
             }
         }
@@ -1639,7 +1642,7 @@ namespace dagConstruct {
 
                     if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd, nodeIDsToNames)) {
                         // Cluster was not maximal - delete it
-                        currentClusters.deleteCluster(i, nodeIDsToNames, false);
+                        currentClusters.deleteCluster(i, nodeIDsToNames, false, realEdges);
                         ++deleted;
                     }
                 }
@@ -1945,7 +1948,7 @@ namespace dagConstruct {
                         }
                         currentClusters.setOld(*newClusterIt);//important
                     } else if (!isNecessary) {
-                        currentClusters.deleteCluster(*newClusterIt,nodeIDsToNames,false);
+                        currentClusters.deleteCluster(*newClusterIt,nodeIDsToNames,false, realEdges);
 
                     } else { // && currentClusters.isNew(*newClusterIt) && !currentClusters.wasNecessary(*newClusterIt) && checkForFinal) {
                         currentClusters.setNecessary(*newClusterIt); //what's the effect of this line
@@ -1963,9 +1966,9 @@ namespace dagConstruct {
                 cout << "# Num current clusters: " << currentClusters.numCurrentClusters() << endl;
                 cout << "# Num valid clusters: " << validClusters.size() << endl;
                 cout << "# Largest cluster: " << largestCluster << endl;
-                cout << "# Num edges in clusterGraph: " << clusterGraph.numEdges() << endl;
+//                cout << "# Num edges in clusterGraph: " << clusterGraph.numEdges() << endl;
                 cout << "# Num real edges: " << numRealEdgesAdded << endl;
-                cout << "# Num edges inferred: " << clusterGraph.numEdges() - realEdges.numEdges() << endl;
+//                cout << "# Num edges inferred: " << clusterGraph.numEdges() - realEdges.numEdges() << endl;
                 time (&end);
                 dif = difftime(end,start);
                 cout << "# Time elapsed: " << dif << " seconds" << endl;
@@ -2023,7 +2026,7 @@ namespace dagConstruct {
                     currentClusters.setOld(*newClusterIt);
 
                 } else  {
-                    currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
+                    currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false, realEdges);
                 }
             }
 
