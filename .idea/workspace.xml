@@ -12,10 +12,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo" afterPath="$PROJECT_DIR$/clixo" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo.o" afterPath="$PROJECT_DIR$/clixo.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG" afterPath="$PROJECT_DIR$/clustersToDAG" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG.o" afterPath="$PROJECT_DIR$/clustersToDAG.o" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dagConstruct.h" afterPath="$PROJECT_DIR$/dagConstruct.h" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -36,8 +33,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="905">
-              <caret line="1939" column="37" lean-forward="true" selection-start-line="1939" selection-start-column="37" selection-end-line="1939" selection-end-column="37" />
+            <state relative-caret-position="33">
+              <caret line="1878" column="131" lean-forward="true" selection-start-line="1878" selection-start-column="131" selection-end-line="1878" selection-end-column="131" />
               <folding>
                 <element signature="e#45#62#0" expanded="true" />
               </folding>
@@ -110,7 +107,7 @@
       <file leaf-file-name="clustersToDAG.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/clustersToDAG.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="170">
+            <state relative-caret-position="70">
               <caret line="10" column="29" lean-forward="false" selection-start-line="10" selection-start-column="29" selection-end-line="10" selection-end-column="29" />
               <folding />
             </state>
@@ -163,8 +160,8 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="35" />
-    <option name="y" value="104" />
+    <option name="x" value="90" />
+    <option name="y" value="121" />
     <option name="width" value="1565" />
     <option name="height" value="929" />
   </component>
@@ -479,7 +476,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="121876000" />
+    <option name="totallyTimeSpent" value="124735000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -491,7 +488,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="35" y="104" width="1565" height="929" extended-state="0" />
+    <frame x="90" y="121" width="1565" height="929" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15463258" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -541,7 +538,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="3" />
+      <option name="time" value="4" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -935,14 +932,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/clustersToDAG.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="10" column="29" lean-forward="false" selection-start-line="10" selection-start-column="29" selection-end-line="10" selection-end-column="29" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/dag.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="552">
@@ -959,10 +948,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/clustersToDAG.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="70">
+          <caret line="10" column="29" lean-forward="false" selection-start-line="10" selection-start-column="29" selection-end-line="10" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="905">
-          <caret line="1939" column="37" lean-forward="true" selection-start-line="1939" selection-start-column="37" selection-end-line="1939" selection-end-column="37" />
+        <state relative-caret-position="33">
+          <caret line="1878" column="131" lean-forward="true" selection-start-line="1878" selection-start-column="131" selection-end-line="1878" selection-end-column="131" />
           <folding>
             <element signature="e#45#62#0" expanded="true" />
           </folding>

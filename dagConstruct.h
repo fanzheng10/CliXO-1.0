@@ -381,6 +381,7 @@ public:
         minWeightAdded = firstWeight;
         combiningNow = false;
         alpha = thisAlpha;
+//        largestCluster = 0;
 
         edgesToClusters = vector<vector<unsigned> >(numNodes, vector<unsigned>(numNodes, 0));
         isEdgeExplained = vector<vector<char> >(numNodes, vector<char>(numNodes, 0));
@@ -962,7 +963,7 @@ public:
     }
 
     void resetClusterWeight(unsigned long id, nodeDistanceObject & nodeDistances, graph_undirected_bitset & realEdges) {
-//        double minWeight = firstWeight;
+        double minWeight = firstWeight;
         vector <double> newEdgeWeights;
         newEdgeWeights.reserve(100000);
         unsigned nNewEdges = 0;
@@ -973,9 +974,10 @@ public:
             for ( ; it2 != cluster.end(); ++it2) {
                 //if (!isThisEdgeExplained(*it1,*it2) && (edgesToClusters[*it1][*it2] == 1)) {
                 double thisDistance = nodeDistances.getDistance(*it1,*it2);
-                if ( (!isThisEdgeExplained(*it1, *it2) ) && (realEdges.isEdge(*it1, *it2)) ) { //test if real edge
-//                if (thisDistance < minWeight) {
-//                    minWeight = thisDistance;
+                if ( (!isThisEdgeExplained(*it1, *it2) ) && (realEdges.isEdge(*it1, *it2)) ) { //test if new real edge
+                    if (thisDistance < minWeight) {
+                        minWeight = thisDistance;
+                    }
                     newEdgeWeights.push_back(thisDistance);
                     nNewEdges++;
                 }
@@ -996,7 +998,8 @@ public:
             newEdgeWeightsMedian = newEdgeWeights[nNewEdges / 2];
         }
 //        cout << nNewEdges << endl;
-        currentClusters[id].setWeight(newEdgeWeightsMedian); // the cluster weight is set as the min of the real edges;
+//        currentClusters[id].setWeight(newEdgeWeightsMedian); // the cluster weight is set as the min of the real edges;
+        currentClusters[id].setWeight(minWeight);
         return;
     }
 
@@ -1109,6 +1112,7 @@ private:
     // Maximum weight of any new cluster curently in this list
     double maxNewWeight;
     double nextThreshold;
+
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1630,10 +1634,10 @@ namespace dagConstruct {
 
 
             vector<boost::dynamic_bitset<unsigned long> > newClustersToAdd;
-            newClustersToAdd.reserve(20000); //maybe this is problematic? 5000 not handle human genome size. set to 20000?
+            newClustersToAdd.reserve(100000); //maybe this is problematic? 5000 not handle human genome size. set to 20000?
 
             unsigned deleted = 0;
-            cout <<"# "<< currentClusters.maxClusterID() <<"\t"<< affectedClusters.size() <<endl;
+//            cout <<"# "<< currentClusters.maxClusterID() <<"\t"<< affectedClusters.size() <<endl;
             for (unsigned i = 0; i < affectedClusters.size(); ++i) {
                 if (affectedClusters[i]) {
 
@@ -1925,7 +1929,7 @@ namespace dagConstruct {
                     bool checkForFinal = false;
                     double clustWeight = currentClusters.getClusterWeight(*newClusterIt);
 
-                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt)) { // should be compared with dt (updated) right?
+                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt)) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
                         checkForFinal = true; // if not checked for final, keep it around
                         currentClusters.setCheckedFinal(*newClusterIt);
                     }
