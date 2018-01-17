@@ -12,6 +12,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo" afterPath="$PROJECT_DIR$/clixo" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo.o" afterPath="$PROJECT_DIR$/clixo.o" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG" afterPath="$PROJECT_DIR$/clustersToDAG" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG.o" afterPath="$PROJECT_DIR$/clustersToDAG.o" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dagConstruct.h" afterPath="$PROJECT_DIR$/dagConstruct.h" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -32,8 +36,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="75">
-              <caret line="1650" column="0" lean-forward="true" selection-start-line="1650" selection-start-column="0" selection-end-line="1650" selection-end-column="0" />
+            <state relative-caret-position="905">
+              <caret line="1939" column="37" lean-forward="true" selection-start-line="1939" selection-start-column="37" selection-end-line="1939" selection-end-column="37" />
               <folding>
                 <element signature="e#45#62#0" expanded="true" />
               </folding>
@@ -135,7 +139,6 @@
       <find>Valid</find>
       <find>clusterWeight</find>
       <find>setWeight</find>
-      <find>Explain</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -476,7 +479,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="123969000" />
+    <option name="totallyTimeSpent" value="121876000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -958,8 +961,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="1650" column="0" lean-forward="true" selection-start-line="1650" selection-start-column="0" selection-end-line="1650" selection-end-column="0" />
+        <state relative-caret-position="905">
+          <caret line="1939" column="37" lean-forward="true" selection-start-line="1939" selection-start-column="37" selection-end-line="1939" selection-end-column="37" />
           <folding>
             <element signature="e#45#62#0" expanded="true" />
           </folding>
