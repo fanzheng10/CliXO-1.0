@@ -416,13 +416,15 @@ public:
         return true;
     }
 
-    inline bool addClusterToExplanation(const vector<unsigned> & cluster, const unsigned long & clustID) {
+    inline bool addClusterToExplanation(const vector<unsigned> & cluster, const unsigned long & clustID, graph_undirected_bitset & clusterGraph) {
         bool validClust = false;
         for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
             vector<unsigned>::const_iterator it2 = it1;
             ++it2;
             for ( ; it2 != cluster.end(); ++it2) {
-                validClust = addClusterToExplainEdge(*it1,*it2,clustID);
+                if (clusterGraph.isEdge(*it1, *it2)) {
+                    validClust = addClusterToExplainEdge(*it1, *it2, clustID);
+                }
             }
         }
         currentClusters[clustID].setAddedToExplain();
@@ -538,7 +540,7 @@ public:
         }
     }
 
-    /*inline*/ void setClusterValid(const boost::dynamic_bitset<unsigned long> & cluster) {
+    /*inline*/ void setClusterValid(const boost::dynamic_bitset<unsigned long> & cluster, graph_undirected_bitset & realEdges) {
         vector<unsigned> clusterElems;
         clusterElems.reserve(cluster.size());
         for (unsigned i = cluster.find_first(); i < cluster.size(); i = cluster.find_next(i)) {
@@ -546,15 +548,18 @@ public:
         }
         for (unsigned i = 0; i < clusterElems.size()-1;  ++i) {
             for (unsigned j = i+1; j < clusterElems.size(); ++j) {
-                setEdgeExplained(clusterElems[i],clusterElems[j]);
+                if (realEdges.isEdge(i,j))
+                {
+                    setEdgeExplained(clusterElems[i], clusterElems[j]);
+                }
             }
         }
         return;
     }
 
-    inline void setClusterValid(unsigned long clusterID) {
+    inline void setClusterValid(unsigned long clusterID, graph_undirected_bitset & realEdges) {
         setNumUniquelyUnexplainedEdges(clusterID);
-        setClusterValid(getElements(clusterID));
+        setClusterValid(getElements(clusterID), realEdges);
         currentClusters[clusterID].setValid();
         return;
     }
@@ -792,20 +797,20 @@ public:
         return;
     }
 
-    inline void addClustersToExplanations(vector<unsigned long> & sortedNewClusters) {
+    inline void addClustersToExplanations(vector<unsigned long> & sortedNewClusters, graph_undirected_bitset & clusterGraph) {
         for (vector<unsigned long>::iterator newClustIt = sortedNewClusters.begin();
              newClustIt != sortedNewClusters.end(); ++newClustIt) {
             if (!currentClusters[*newClustIt].isAddedToExplain()) {
-                addClusterToExplanation(currentClusters[*newClustIt].getElementsVector(), *newClustIt);
+                addClusterToExplanation(currentClusters[*newClustIt].getElementsVector(), *newClustIt, clusterGraph);
             }
         }
         return;
     }
 
 
-    /*inline*/ void prepareForValidityCheck(vector<unsigned long> & sortedNewClusters) {
+    /*inline*/ void prepareForValidityCheck(vector<unsigned long> & sortedNewClusters,graph_undirected_bitset & clusterGraph) {
         sortNewClusters(sortedNewClusters);
-        addClustersToExplanations(sortedNewClusters);
+        addClustersToExplanations(sortedNewClusters, clusterGraph);
         return;
     }
 
@@ -1356,7 +1361,7 @@ namespace dagConstruct {
     inline void performValidityCheck(currentClusterClassBitset & currentClusters, graph_undirected_bitset & clusterGraph,
                                      nodeDistanceObject & nodeDistances, vector<string> & nodeIDsToNames) {
         vector<unsigned long> newClustersSorted;
-        currentClusters.prepareForValidityCheck(newClustersSorted);
+        currentClusters.prepareForValidityCheck(newClustersSorted, clusterGraph);
         unsigned deleted = 0;
 //        cout << "# Perform validity check for necessary clusters: ";
         for (vector<unsigned long>::iterator newClusterIt = newClustersSorted.begin();
@@ -1845,7 +1850,7 @@ namespace dagConstruct {
         unsigned totalEdges = numNodes*(numNodes-1) / 2;
 
         while ((clusterGraph.numEdges() != totalEdges) && (distanceIt != nodeDistances.sortedDistancesEnd()) && (distanceIt->second >= threshold)) {
-//            clusterGraph = realEdges; //reset clusterGraph
+            clusterGraph = realEdges; //reset clusterGraph
             vector<pair<pair<unsigned, unsigned>, double> > edgesToAdd;
             edgesToAdd.reserve(10000000); //Fan: whether this will be slow if exceeded?
             double addUntil = currentClusters.getNextThresh(); //Fan's understanding: if current clusters have lots of inferred edges (maybe determining threshold), does not go down so much as alpha //should be the lowest edge of this round minus alpha
@@ -1888,24 +1893,24 @@ namespace dagConstruct {
 
                 vector<unsigned long> newClustersSorted;
                 if (density < 1) {
-                    performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this
+                    performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this (clusterGraph actually not used here, so no worries
 
                     // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
                     cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
-                    bool newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
+                    bool newEdgesAdded = addMissingEdges(currentClusters, realEdges, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
 
                     time (&end);
                     dif = difftime(end,start);
                     cout << "# Time elapsed: " << dif << " seconds" << endl;
 
                     while (newEdgesAdded == true) { //not sure
-                        performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
-                        newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
+                        performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
+                        newEdgesAdded = addMissingEdges(currentClusters, realEdges, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
                     }// clusters are iteratively merged here before being output, so resetting nodeDistance has the snowball effect
 
                     currentClusters.sortNewClusters(newClustersSorted);
                 } else {
-                    currentClusters.prepareForValidityCheck(newClustersSorted);
+                    currentClusters.prepareForValidityCheck(newClustersSorted, realEdges);
                 }
 
                 time (&end);
@@ -1931,7 +1936,7 @@ namespace dagConstruct {
                         cout << "# Valid cluster:\t";
                         printCluster(currentClusters.getElements(*newClusterIt), nodeIDsToNames);
                         //currentClusters.setClusterValid(currentClusters.getElements(*newClusterIt));
-                        currentClusters.setClusterValid(*newClusterIt);
+                        currentClusters.setClusterValid(*newClusterIt, realEdges);
                         cout << "\t" << clustWeight << "\t"
                              << currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt) << "\t"
                              << currentClusters.getThresh(*newClusterIt) << "\t" << dt << endl;
@@ -1978,18 +1983,18 @@ namespace dagConstruct {
             vector<unsigned long> newClustersSorted;
 
             if (density < 1) {
-                performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
+                performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
 
                 // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
                 cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " clusters" << endl;
                 bool newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
                 while (newEdgesAdded == true) {
-                    performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
+                    performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
                     newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
                 }
                 currentClusters.sortNewClusters(newClustersSorted);
             } else {
-                currentClusters.prepareForValidityCheck(newClustersSorted);
+                currentClusters.prepareForValidityCheck(newClustersSorted, realEdges);
             }
 
             vector<char> idsChecked(currentClusters.maxClusterID(), 0);
@@ -2010,7 +2015,7 @@ namespace dagConstruct {
                     cout << "# Valid cluster:\t";
                     printCluster(currentClusters.getElements(*newClusterIt), nodeIDsToNames);
                     //currentClusters.setClusterValid(currentClusters.getElements(*newClusterIt));
-                    currentClusters.setClusterValid(*newClusterIt);
+                    currentClusters.setClusterValid(*newClusterIt, realEdges);
                     cout << "\t" << clustWeight << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt) << "\t" << currentClusters.getThresh(*newClusterIt) << "\t" << dt << endl;
                     if (validClusters.back().numElements() > largestCluster) {
                         largestCluster = validClusters.back().numElements();
