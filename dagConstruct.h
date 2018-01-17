@@ -465,7 +465,7 @@ public:
         removeClusterFromExplanation(currentClusters[clusterToRemove].getElementsVector(), currentClusters[clusterToRemove].getID());
     }
 
-    /*inline*/ unsigned long addCluster(const boost::dynamic_bitset<unsigned long> & newCluster, nodeDistanceObject & nodeDistances, vector<string> & nodeIDsToNames, graph_undirected_bitset & realEdges) {
+    /*inline*/ unsigned long addCluster(const boost::dynamic_bitset<unsigned long> & newCluster, nodeDistanceObject & nodeDistances, vector<string> & nodeIDsToNames, graph_undirected_bitset & realEdges, unsigned & largestCluster) {
         unsigned long newClusterTrieID = 0;
         unsigned long newID = 0;
         if (clusterMap.addKey(newCluster) == true) {
@@ -488,7 +488,7 @@ public:
             }
             ++clustersAdded;
             ++newClusts;
-            resetClusterWeight(newID, nodeDistances, realEdges);
+            resetClusterWeight(newID, nodeDistances, realEdges, largestCluster);
 
         }
         return newID;
@@ -962,7 +962,7 @@ public:
         return minWeightAdded;
     }
 
-    void resetClusterWeight(unsigned long id, nodeDistanceObject & nodeDistances, graph_undirected_bitset & realEdges) {
+    void resetClusterWeight(unsigned long id, nodeDistanceObject & nodeDistances, graph_undirected_bitset & realEdges, unsigned & largestCluster) {
         double minWeight = firstWeight;
         vector <double> newEdgeWeights;
         newEdgeWeights.reserve(100000);
@@ -999,7 +999,15 @@ public:
         }
 //        cout << nNewEdges << endl;
 //        currentClusters[id].setWeight(newEdgeWeightsMedian); // the cluster weight is set as the min of the real edges;
-        currentClusters[id].setWeight(minWeight);
+
+        unsigned clusterSize = currentClusters[id].getElements().count();
+        if (clusterSize > largestCluster) {
+            currentClusters[id].setWeight(newEdgeWeightsMedian);
+        }
+        else {
+            currentClusters[id].setWeight(minWeight);
+        }
+
         return;
     }
 
@@ -1572,7 +1580,7 @@ namespace dagConstruct {
     void updateClustersWithEdges(vector<pair<pair<unsigned, unsigned>, double> > & edgesToAdd,
                                  currentClusterClassBitset & currentClusters, graph_undirected_bitset & clusterGraph,
                                  nodeDistanceObject & nodeDistances, unsigned & lastCurrent, vector<string> & nodeIDsToNames,
-                                 graph_undirected_bitset & realEdges) {
+                                 graph_undirected_bitset & realEdges, unsigned & largestCluster) {
 
         cout << "# Adding " << edgesToAdd.size() << " edges" << endl;
         unsigned long edgesToAddCounter = 0;
@@ -1667,7 +1675,7 @@ namespace dagConstruct {
             for (vector<boost::dynamic_bitset<unsigned long> >::iterator clustersToAddIt = newClustersToAdd.begin();
                  clustersToAddIt != newClustersToAdd.end(); ++clustersToAddIt) {
 //                cout << "# adding Clusters" << endl;
-                currentClusters.addCluster(*clustersToAddIt,nodeDistances, nodeIDsToNames, realEdges);
+                currentClusters.addCluster(*clustersToAddIt,nodeDistances, nodeIDsToNames, realEdges, largestCluster);
             }
 
             if ((currentClusters.numCurrentClusters() > 4*lastCurrent) || ((currentClusters.numCurrentClusters() > lastCurrent) && ((currentClusters.numCurrentClusters() - lastCurrent) > 1000))) {//invalid clusters are notnecessary. Why doing it now? maybe drop some clusters and free up. So if drop necessary, also need to drop from here.
@@ -1685,7 +1693,7 @@ namespace dagConstruct {
     void combineClusters(vector<pair<pair<unsigned long, unsigned long>, double> > & clustersToCombine,
                          currentClusterClassBitset & currentClusters, graph_undirected_bitset & clusterGraph,
                          unsigned & lastCurrent, vector<string> & nodeIDsToNames,
-                         nodeDistanceObject & nodeDistances, graph_undirected_bitset & realEdges) {
+                         nodeDistanceObject & nodeDistances, graph_undirected_bitset & realEdges, unsigned & largestCluster) {
 
         time_t start, end;
         time (&start);
@@ -1738,7 +1746,7 @@ namespace dagConstruct {
 //        cout << "Time elapsed: " << dif << " seconds" << endl;
 //        time (&start);
 
-        updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, realEdges);
+        updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, realEdges, largestCluster);
 
 //        cout << "# Added all edges. ";
 //        time (&end);
@@ -1756,7 +1764,7 @@ namespace dagConstruct {
 
     bool addMissingEdges(currentClusterClassBitset & currentClusters, graph_undirected_bitset & clusterGraph, double density, double threshold,
                          unsigned & lastCurrent, vector<string> & nodeIDsToNames, graph_undirected_bitset & realEdges,
-                         nodeDistanceObject & nodeDistances) { //real edges are not used anywhere
+                         nodeDistanceObject & nodeDistances, unsigned & largestCluster) { //real edges are not used anywhere
         // clustersToCombine is a pair.  The first element of the pair is itself a pair, which is the ids of the two clusters to combine.
         // The second element of the pair is the weight of the combined edges
         vector<pair<pair<unsigned long, unsigned long>, double> > clustersToCombine;
@@ -1815,7 +1823,7 @@ namespace dagConstruct {
         if (clustersToCombine.size() > 0) {
             double curWeight = currentClusters.getCurWeight();
 //            cout << "# Current Weight is " << curWeight << endl;
-            combineClusters(clustersToCombine, currentClusters, clusterGraph, lastCurrent, nodeIDsToNames, nodeDistances, realEdges);
+            combineClusters(clustersToCombine, currentClusters, clusterGraph, lastCurrent, nodeIDsToNames, nodeDistances, realEdges, largestCluster);
             currentClusters.setCurWeight(curWeight);
             return true;
         }
@@ -1838,6 +1846,8 @@ namespace dagConstruct {
         unsigned largestCluster = 0;
         unsigned lastCurrent = 10;
         unsigned numRealEdgesAdded = 0;
+        unsigned numRealEdgesThisRound = 0;
+        unsigned numRealEdgesLastRound = 0;
 
         vector<string> nodeIDsToNames(nodeNamesToIDs.size(), string(""));
         for (map<string,unsigned>::iterator it = nodeNamesToIDs.begin(); it != nodeNamesToIDs.end(); ++it) {
@@ -1855,9 +1865,13 @@ namespace dagConstruct {
 
         while ((clusterGraph.numEdges() != totalEdges) && (distanceIt != nodeDistances.sortedDistancesEnd()) && (distanceIt->second >= threshold)) {
             clusterGraph = realEdges; //reset clusterGraph
+//            unsigned numRealEdgesThisRound = 0;
             vector<pair<pair<unsigned, unsigned>, double> > edgesToAdd;
             edgesToAdd.reserve(10000000); //Fan: whether this will be slow if exceeded?
             double addUntil = currentClusters.getNextThresh(); //Fan's understanding: if current clusters have lots of inferred edges (maybe determining threshold), does not go down so much as alpha //should be the lowest edge of this round minus alpha
+            if (addUntil > dt) {
+                addUntil = dt;
+            }
             if ((dt - threshold) > addUntil) { // this is to prevent the lowest edge from this round going to low, but without inferred edges, maybe unnecessary
                 addUntil = dt - threshold;
             }
@@ -1867,6 +1881,7 @@ namespace dagConstruct {
                 unsigned secondNode = distanceIt->first.second;
                 realEdges.addEdge(firstNode, secondNode);
                 ++numRealEdgesAdded;
+                ++numRealEdgesThisRound;
                 edgesToAdd.push_back(make_pair(make_pair(firstNode, secondNode), distanceIt->second));
                 ++distanceIt;
             }
@@ -1876,7 +1891,7 @@ namespace dagConstruct {
             dif = difftime(end,start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
 
-            updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, realEdges);//Fani change distanceIt->second to addUntil maybe?
+            updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, realEdges, largestCluster);//Fani change distanceIt->second to addUntil maybe?
 
             time (&end);
             dif = difftime(end,start);
@@ -1892,7 +1907,7 @@ namespace dagConstruct {
 
             double maxThresh = currentClusters.getMaxThresh(); // this seems to be redundant, who not check clusters one by one anyway
 
-            if (maxThresh >= dt) {
+            if ((maxThresh >= dt) && (numRealEdgesThisRound > numRealEdgesLastRound) && (numRealEdgesThisRound < totalEdges - numRealEdgesAdded)) {
                 unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
 
                 vector<unsigned long> newClustersSorted;
@@ -1901,7 +1916,7 @@ namespace dagConstruct {
 
                     // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
                     cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
-                    bool newEdgesAdded = addMissingEdges(currentClusters, realEdges, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
+                    bool newEdgesAdded = addMissingEdges(currentClusters, realEdges, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances, largestCluster);
 
                     time (&end);
                     dif = difftime(end,start);
@@ -1909,7 +1924,7 @@ namespace dagConstruct {
 
                     while (newEdgesAdded == true) { //not sure
                         performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
-                        newEdgesAdded = addMissingEdges(currentClusters, realEdges, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
+                        newEdgesAdded = addMissingEdges(currentClusters, realEdges, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances, largestCluster);
                     }// clusters are iteratively merged here before being output, so resetting nodeDistance has the snowball effect
 
                     currentClusters.sortNewClusters(newClustersSorted);
@@ -1969,74 +1984,77 @@ namespace dagConstruct {
                 cout << "# Largest cluster: " << largestCluster << endl;
                 cout << "# Num edges in clusterGraph: " << clusterGraph.numEdges() << endl;
                 cout << "# Num real edges: " << numRealEdgesAdded << endl;
-                cout << "# Num edges inferred: " << clusterGraph.numEdges() - realEdges.numEdges() << endl;
+//                cout << "# Num edges inferred: " << clusterGraph.numEdges() - realEdges.numEdges() << endl;
                 time (&end);
                 dif = difftime(end,start);
                 cout << "# Time elapsed: " << dif << " seconds" << endl;
+
+                numRealEdgesLastRound = numRealEdgesThisRound;
+                numRealEdgesThisRound = 0;
             }
         } //Fan: while loop ends here
 
 
         // Add clusters at end to valid clusters
-        if (addAtEnd) {
-            clusterGraph = realEdges;
-            cout << "# Adding at end" << endl;
-            double last_dt = dt;
-            dt = 0;
-            currentClusters.setCurWeight(dt);
-            vector<unsigned long> newClustersSorted;
+//        if (addAtEnd) {
+//            clusterGraph = realEdges;
+//            cout << "# Adding at end" << endl;
+//            double last_dt = dt;
+//            dt = 0;
+//            currentClusters.setCurWeight(dt);
+//            vector<unsigned long> newClustersSorted;
+//
+//            if (density < 1) {
+//                performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
+//
+//                // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
+//                cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " clusters" << endl;
+//                bool newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
+//                while (newEdgesAdded == true) {
+//                    performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
+//                    newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
+//                }
+//                currentClusters.sortNewClusters(newClustersSorted);
+//            } else {
+//                currentClusters.prepareForValidityCheck(newClustersSorted, realEdges);
+//            }
+//
+//            vector<char> idsChecked(currentClusters.maxClusterID(), 0);
+//            for (vector<unsigned long>::iterator newClusterIt = newClustersSorted.begin();
+//                 newClusterIt != newClustersSorted.end(); ++newClusterIt) {
+//                bool isNecessary = false;
+//                bool checkForFinal = false;
+//                double clustWeight = currentClusters.getClusterWeight(*newClusterIt);
+//
+//                if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= 0)) { // should be compared with dt (updated) right?
+//                    checkForFinal = true; // if not checked for final, keep it around
+//                    currentClusters.setCheckedFinal(*newClusterIt);
+//                }
+//
+//                if ( checkForFinal && currentClusters.checkClusterFinalValidity(*newClusterIt,isNecessary, idsChecked, checkForFinal)) {
+//
+//                    validClusters.push_back(validClusterBitset(currentClusters.getElements(*newClusterIt), 0, clustWeight));
+//                    cout << "# Valid cluster:\t";
+//                    printCluster(currentClusters.getElements(*newClusterIt), nodeIDsToNames);
+//                    //currentClusters.setClusterValid(currentClusters.getElements(*newClusterIt));
+//                    currentClusters.setClusterValid(*newClusterIt, realEdges);
+//                    cout << "\t" << clustWeight << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt) << "\t" << currentClusters.getThresh(*newClusterIt) << "\t" << dt << endl;
+//                    if (validClusters.back().numElements() > largestCluster) {
+//                        largestCluster = validClusters.back().numElements();
+//                    }
+//                    currentClusters.setOld(*newClusterIt);
+//
+//                } else  {
+//                    currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
+//                }
+//            }
 
-            if (density < 1) {
-                performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
-
-                // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
-                cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " clusters" << endl;
-                bool newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
-                while (newEdgesAdded == true) {
-                    performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
-                    newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances);
-                }
-                currentClusters.sortNewClusters(newClustersSorted);
-            } else {
-                currentClusters.prepareForValidityCheck(newClustersSorted, realEdges);
-            }
-
-            vector<char> idsChecked(currentClusters.maxClusterID(), 0);
-            for (vector<unsigned long>::iterator newClusterIt = newClustersSorted.begin();
-                 newClusterIt != newClustersSorted.end(); ++newClusterIt) {
-                bool isNecessary = false;
-                bool checkForFinal = false;
-                double clustWeight = currentClusters.getClusterWeight(*newClusterIt);
-
-                if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= 0)) { // should be compared with dt (updated) right?
-                    checkForFinal = true; // if not checked for final, keep it around
-                    currentClusters.setCheckedFinal(*newClusterIt);
-                }
-
-                if ( checkForFinal && currentClusters.checkClusterFinalValidity(*newClusterIt,isNecessary, idsChecked, checkForFinal)) {
-
-                    validClusters.push_back(validClusterBitset(currentClusters.getElements(*newClusterIt), 0, clustWeight));
-                    cout << "# Valid cluster:\t";
-                    printCluster(currentClusters.getElements(*newClusterIt), nodeIDsToNames);
-                    //currentClusters.setClusterValid(currentClusters.getElements(*newClusterIt));
-                    currentClusters.setClusterValid(*newClusterIt, realEdges);
-                    cout << "\t" << clustWeight << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt) << "\t" << currentClusters.getThresh(*newClusterIt) << "\t" << dt << endl;
-                    if (validClusters.back().numElements() > largestCluster) {
-                        largestCluster = validClusters.back().numElements();
-                    }
-                    currentClusters.setOld(*newClusterIt);
-
-                } else  {
-                    currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
-                }
-            }
-
-            cout << "# dt: " << last_dt << endl;
-            cout << "# Num current clusters: " << currentClusters.numCurrentClusters() << endl;
-            cout << "# Num valid clusters: " << validClusters.size() << endl;
-            cout << "# Largest cluster: " << largestCluster << endl;
-            cout << "# Num edges in clusterGraph: " << clusterGraph.numEdges() << endl;
-        }
+//            cout << "# dt: " << last_dt << endl;
+//            cout << "# Num current clusters: " << currentClusters.numCurrentClusters() << endl;
+//            cout << "# Num valid clusters: " << validClusters.size() << endl;
+//            cout << "# Largest cluster: " << largestCluster << endl;
+//            cout << "# Num edges in clusterGraph: " << clusterGraph.numEdges() << endl;
+//        }
         return currentClusters.numCurrentClusters();
     }
 

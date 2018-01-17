@@ -12,7 +12,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo" afterPath="$PROJECT_DIR$/clixo" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo.o" afterPath="$PROJECT_DIR$/clixo.o" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG" afterPath="$PROJECT_DIR$/clustersToDAG" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG.o" afterPath="$PROJECT_DIR$/clustersToDAG.o" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dagConstruct.h" afterPath="$PROJECT_DIR$/dagConstruct.h" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -33,8 +36,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="33">
-              <caret line="1878" column="131" lean-forward="true" selection-start-line="1878" selection-start-column="131" selection-end-line="1878" selection-end-column="131" />
+            <state relative-caret-position="345">
+              <caret line="1972" column="0" lean-forward="true" selection-start-line="1972" selection-start-column="0" selection-end-line="1972" selection-end-column="0" />
               <folding>
                 <element signature="e#45#62#0" expanded="true" />
               </folding>
@@ -476,7 +479,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="124735000" />
+    <option name="totallyTimeSpent" value="127773000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -958,8 +961,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="33">
-          <caret line="1878" column="131" lean-forward="true" selection-start-line="1878" selection-start-column="131" selection-end-line="1878" selection-end-column="131" />
+        <state relative-caret-position="345">
+          <caret line="1972" column="0" lean-forward="true" selection-start-line="1972" selection-start-column="0" selection-end-line="1972" selection-end-column="0" />
           <folding>
             <element signature="e#45#62#0" expanded="true" />
           </folding>
