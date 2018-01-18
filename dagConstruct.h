@@ -1001,13 +1001,13 @@ public:
 //        currentClusters[id].setWeight(newEdgeWeightsMedian); // the cluster weight is set as the min of the real edges;
 
         unsigned clusterSize = currentClusters[id].getElements().count();
-        if (clusterSize > largestCluster) {
-            currentClusters[id].setWeight(newEdgeWeightsMedian);
-        }
-        else {
-            currentClusters[id].setWeight(minWeight);
-        }
-
+//        if (clusterSize > largestCluster) {
+//            currentClusters[id].setWeight(newEdgeWeightsMedian);
+//        }
+//        else {
+//            currentClusters[id].setWeight(minWeight);
+//        }
+        currentClusters[id].setWeight(newEdgeWeightsMedian);
         return;
     }
 
@@ -1844,6 +1844,8 @@ namespace dagConstruct {
         time (&start);
         double dif;
         unsigned largestCluster = 0;
+        unsigned lastLargestCluster = 0;
+        unsigned largestClusterWeight = 0;
         unsigned lastCurrent = 10;
         unsigned numRealEdgesAdded = 0;
         unsigned numRealEdgesThisRound = 0;
@@ -1907,7 +1909,7 @@ namespace dagConstruct {
 
             double maxThresh = currentClusters.getMaxThresh(); // this seems to be redundant, who not check clusters one by one anyway
 
-            if ((maxThresh >= dt) && (numRealEdgesThisRound > numRealEdgesLastRound) && (numRealEdgesThisRound < totalEdges - numRealEdgesAdded)) {
+            if ((maxThresh >= dt) && (numRealEdgesThisRound < totalEdges - numRealEdgesAdded)) {
                 unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
 
                 vector<unsigned long> newClustersSorted;
@@ -1943,8 +1945,13 @@ namespace dagConstruct {
                     bool isNecessary = false;
                     bool checkForFinal = false;
                     double clustWeight = currentClusters.getClusterWeight(*newClusterIt);
+                    double correction = 0;
+                    if (currentClusters.getElements(*newClusterIt).count() < density * lastLargestCluster) {
+                        correction = threshold * (log(lastLargestCluster) - log(currentClusters.getElements(*newClusterIt).count()))/log(lastLargestCluster);
+                        cout << "#" << lastLargestCluster << "\t" << currentClusters.getElements(*newClusterIt).count() << "\t" << correction << endl;
+                    }// really strong correction
 
-                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt)) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
+                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt + correction)) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
                         checkForFinal = true; // if not checked for final, keep it around
                         currentClusters.setCheckedFinal(*newClusterIt);
                     }
@@ -1975,6 +1982,7 @@ namespace dagConstruct {
                 if (lastCurrent < 25) {
                     lastCurrent = 25;
                 }
+                lastLargestCluster = largestCluster;
 
                 cout << "# dt: " << last_dt << endl;
                 cout << "# Next dt: " << dt << endl;
