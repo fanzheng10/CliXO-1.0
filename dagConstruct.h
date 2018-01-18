@@ -1845,7 +1845,8 @@ namespace dagConstruct {
         double dif;
         unsigned largestCluster = 0;
         unsigned lastLargestCluster = 0;
-        unsigned largestClusterWeight = 0;
+        double largestClusterWeight = 0;
+        double lastLargestClusterWeight = 0;
         unsigned lastCurrent = 10;
         unsigned numRealEdgesAdded = 0;
         unsigned numRealEdgesThisRound = 0;
@@ -1859,7 +1860,7 @@ namespace dagConstruct {
         graph_undirected_bitset clusterGraph(numNodes);
         graph_undirected_bitset realEdges(numNodes);
 //        graph_undirected_bitset inferredEdges(numNodes);
-        double dt = nodeDistances.sortedDistancesBegin()->second; // Current threshold distance
+        double dt = nodeDistances.sortedDistancesBegin()->second; // Current threshold distanceG
         currentClusterClassBitset currentClusters(numNodes, clusterGraph.get_num_blocks(),dt, threshold);
         bool addAtEnd = false;
         sortedDistanceStruct::iterator distanceIt = nodeDistances.sortedDistancesBegin(); //this may be problematic since
@@ -1909,7 +1910,7 @@ namespace dagConstruct {
 
             double maxThresh = currentClusters.getMaxThresh(); // this seems to be redundant, who not check clusters one by one anyway
 
-            if ((maxThresh >= dt) && (numRealEdgesThisRound < totalEdges - numRealEdgesAdded)) {
+            if ((maxThresh >= dt) && (numRealEdgesThisRound > numRealEdgesLastRound) && (numRealEdgesThisRound < totalEdges - numRealEdgesAdded)) {
                 unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
 
                 vector<unsigned long> newClustersSorted;
@@ -1944,16 +1945,31 @@ namespace dagConstruct {
                      newClusterIt != newClustersSorted.end(); ++newClusterIt) {
                     bool isNecessary = false;
                     bool checkForFinal = false;
+                    bool latesmall = false;
                     double clustWeight = currentClusters.getClusterWeight(*newClusterIt);
-                    double correction = 0;
+//                    double correction = 0;
                     if (currentClusters.getElements(*newClusterIt).count() < density * lastLargestCluster) {
-                        correction = threshold * (log(lastLargestCluster) - log(currentClusters.getElements(*newClusterIt).count()))/log(lastLargestCluster);
-                        cout << "#" << lastLargestCluster << "\t" << currentClusters.getElements(*newClusterIt).count() << "\t" << correction << endl;
+                        latesmall = true;
+//                        correction = threshold * (log(lastLargestCluster) - log(currentClusters.getElements(*newClusterIt).count()))/log(lastLargestCluster);
+//                        cout << "#" << lastLargestCluster << "\t" << currentClusters.getElements(*newClusterIt).count() << "\t" << correction << endl;
                     }// really strong correction
 
-                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt + correction)) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
-                        checkForFinal = true; // if not checked for final, keep it around
-                        currentClusters.setCheckedFinal(*newClusterIt);
+                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt)) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
+//                        cout << "#" << lastLargestClusterWeight << "\t" << currentClusters.getThresh(*newClusterIt) + threshold << endl;
+                        if (!latesmall) {
+                            checkForFinal = true; // if not checked for final, keep it around
+                            currentClusters.setCheckedFinal(*newClusterIt);
+                        }
+                        else if (currentClusters.getThresh(*newClusterIt) + threshold > lastLargestClusterWeight) {
+                            checkForFinal = true; // if not checked for final, keep it around
+                            currentClusters.setCheckedFinal(*newClusterIt);
+//                            cout << "# Rejected" << endl;
+                        }
+//                        else {
+//                            cout << "# Rejected" << endl;
+//                        }
+//                        checkForFinal = true; // if not checked for final, keep it around
+//                        currentClusters.setCheckedFinal(*newClusterIt);
                     }
 
                     if (currentClusters.checkClusterFinalValidity(*newClusterIt,isNecessary, idsChecked, checkForFinal)) { // think about the condition here
@@ -1968,6 +1984,7 @@ namespace dagConstruct {
                              << currentClusters.getThresh(*newClusterIt) << "\t" << dt << endl;
                         if (validClusters.back().numElements() > largestCluster) {
                             largestCluster = validClusters.back().numElements();
+                            largestClusterWeight = currentClusters.getThresh(*newClusterIt) +threshold;
                         }
                         currentClusters.setOld(*newClusterIt);//important
                     } else if (!isNecessary) {
@@ -1983,6 +2000,7 @@ namespace dagConstruct {
                     lastCurrent = 25;
                 }
                 lastLargestCluster = largestCluster;
+                lastLargestClusterWeight = largestClusterWeight;
 
                 cout << "# dt: " << last_dt << endl;
                 cout << "# Next dt: " << dt << endl;
