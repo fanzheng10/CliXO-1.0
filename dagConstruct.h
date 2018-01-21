@@ -465,7 +465,7 @@ public:
         removeClusterFromExplanation(currentClusters[clusterToRemove].getElementsVector(), currentClusters[clusterToRemove].getID());
     }
 
-    /*inline*/ unsigned long addCluster(const boost::dynamic_bitset<unsigned long> & newCluster, nodeDistanceObject & nodeDistances, vector<string> & nodeIDsToNames, graph_undirected_bitset & realEdges, unsigned & largestCluster) {
+    /*inline*/ unsigned long addCluster(const boost::dynamic_bitset<unsigned long> & newCluster, nodeDistanceObject & nodeDistances, vector<string> & nodeIDsToNames, graph_undirected_bitset & clusterGraph, unsigned & largestCluster) {
         unsigned long newClusterTrieID = 0;
         unsigned long newID = 0;
         if (clusterMap.addKey(newCluster) == true) {
@@ -488,7 +488,7 @@ public:
             }
             ++clustersAdded;
             ++newClusts;
-            resetClusterWeight(newID, nodeDistances, realEdges, largestCluster);
+            resetClusterWeight(newID, nodeDistances, clusterGraph, largestCluster);
 
         }
         return newID;
@@ -1675,7 +1675,7 @@ namespace dagConstruct {
             for (vector<boost::dynamic_bitset<unsigned long> >::iterator clustersToAddIt = newClustersToAdd.begin();
                  clustersToAddIt != newClustersToAdd.end(); ++clustersToAddIt) {
 //                cout << "# adding Clusters" << endl;
-                currentClusters.addCluster(*clustersToAddIt,nodeDistances, nodeIDsToNames, realEdges, largestCluster);
+                currentClusters.addCluster(*clustersToAddIt,nodeDistances, nodeIDsToNames, clusterGraph, largestCluster);
             }
 
             if ((currentClusters.numCurrentClusters() > 4*lastCurrent) || ((currentClusters.numCurrentClusters() > lastCurrent) && ((currentClusters.numCurrentClusters() - lastCurrent) > 1000))) {//invalid clusters are notnecessary. Why doing it now? maybe drop some clusters and free up. So if drop necessary, also need to drop from here.
@@ -1780,7 +1780,7 @@ namespace dagConstruct {
                 for (unsigned long j = 0; j < maxClusterID; ++j) {
                     if ((j != i) && (currentClusters.numElements(j) != 0) &&
                         !clustersChecked[j] && (currentClusters.getThresh(j) >= currentClusters.getCurWeight())) {
-                        if (isMinNodeDegreeMet(i,j,currentClusters, clusterGraph, density, nodeIDsToNames)) {
+                        if (isMinNodeDegreeMet(i,j,currentClusters, realEdges, density, nodeIDsToNames)) {
                             double newEdgeWeight = currentClusters.getClusterWeight(i);
                             if (currentClusters.getClusterWeight(j) < newEdgeWeight) {
                                 newEdgeWeight = currentClusters.getClusterWeight(j);//ewww
@@ -1867,7 +1867,7 @@ namespace dagConstruct {
         unsigned totalEdges = numNodes*(numNodes-1) / 2;
 
         while ((clusterGraph.numEdges() != totalEdges) && (distanceIt != nodeDistances.sortedDistancesEnd()) && (distanceIt->second >= threshold)) {
-            clusterGraph = realEdges; //reset clusterGraph
+//            clusterGraph = realEdges; //reset clusterGraph
 //            unsigned numRealEdgesThisRound = 0;
             vector<pair<pair<unsigned, unsigned>, double> > edgesToAdd;
             edgesToAdd.reserve(10000000); //Fan: whether this will be slow if exceeded?
@@ -1882,7 +1882,7 @@ namespace dagConstruct {
             while ((distanceIt != nodeDistances.sortedDistancesEnd()) && (distanceIt->second >= addUntil) && (distanceIt->second >= threshold)) {
                 unsigned firstNode = distanceIt->first.first;
                 unsigned secondNode = distanceIt->first.second;
-                realEdges.addEdge(firstNode, secondNode);
+//                realEdges.addEdge(firstNode, secondNode);
                 ++numRealEdgesAdded;
                 ++numRealEdgesThisRound;
                 edgesToAdd.push_back(make_pair(make_pair(firstNode, secondNode), distanceIt->second));
@@ -1915,24 +1915,24 @@ namespace dagConstruct {
 
                 vector<unsigned long> newClustersSorted;
                 if (density < 1) {
-                    performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this (clusterGraph actually not used here, so no worries
+                    performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this (clusterGraph actually not used here, so no worries
 
                     // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
                     cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
-                    bool newEdgesAdded = addMissingEdges(currentClusters, realEdges, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances, largestCluster);
+                    bool newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances, largestCluster);
 
                     time (&end);
                     dif = difftime(end,start);
                     cout << "# Time elapsed: " << dif << " seconds" << endl;
 
                     while (newEdgesAdded == true) { //not sure
-                        performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
-                        newEdgesAdded = addMissingEdges(currentClusters, realEdges, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances, largestCluster);
+                        performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
+                        newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, realEdges, nodeDistances, largestCluster);
                     }// clusters are iteratively merged here before being output, so resetting nodeDistance has the snowball effect
 
                     currentClusters.sortNewClusters(newClustersSorted);
                 } else {
-                    currentClusters.prepareForValidityCheck(newClustersSorted, realEdges);
+                    currentClusters.prepareForValidityCheck(newClustersSorted, clusterGraph);
                 }
 
                 time (&end);
