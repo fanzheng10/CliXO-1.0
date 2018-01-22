@@ -974,7 +974,7 @@ public:
             for ( ; it2 != cluster.end(); ++it2) {
 //                if (!isThisEdgeExplained(*it1,*it2) && (edgesToClusters[*it1][*it2] == 1)) {
                 double thisDistance = nodeDistances.getDistance(*it1,*it2);
-                if ( (!isThisEdgeExplained(*it1, *it2) ) && (clusterGraph.isEdge(*it1, *it2))  ) { //test if new real edde
+                if ( (!isThisEdgeExplained(*it1, *it2) ) && (clusterGraph.isEdge(*it1, *it2))  ) { // second condition seems useless
 //                if (clusterGraph.isEdge(*it1, *it2)) {
 //                    if (thisDistance < minWeight) {
 //                        minWeight = thisDistance;
@@ -1791,9 +1791,11 @@ namespace dagConstruct {
                 clustersChecked[i] = true; // this is only requiring one cluster to have sufficient weight; that makes sense
 //                ++clusterbeenchecked;
                 for (unsigned long j = 0; j < maxClusterID; ++j) {
-                    if ((j != i) && (currentClusters.numElements(j) != 0) && !clustersChecked[j]) {
+                    if ((j != i) && (currentClusters.numElements(j) != 0) && (!clustersChecked[j]) &&
+                        currentClusters.isNew(j) &&
+                        (currentClusters.getThresh(j) >= currentClusters.getCurWeight())) {
 //                        !clustersChecked[j] && (currentClusters.getThresh(j) >= currentClusters.getCurWeight())) {
-                        if (isMinNodeDegreeMet(i,j,currentClusters, realEdges, density, nodeIDsToNames)) {
+                        if (isMinNodeDegreeMet(i,j,currentClusters,realEdges, density, nodeIDsToNames)) {
                             double newEdgeWeight = currentClusters.getClusterWeight(i);
                             if (currentClusters.getClusterWeight(j) < newEdgeWeight) {
                                 newEdgeWeight = currentClusters.getClusterWeight(j);//ewww
@@ -1864,6 +1866,7 @@ namespace dagConstruct {
         unsigned numRealEdgesAdded = 0;
         unsigned numRealEdgesThisRound = 0;
         unsigned numRealEdgesLastRound = 0;
+        unsigned maxNumUniqueUnexplainedEdges = 0;
 
         vector<string> nodeIDsToNames(nodeNamesToIDs.size(), string(""));
         for (map<string,unsigned>::iterator it = nodeNamesToIDs.begin(); it != nodeNamesToIDs.end(); ++it) {
@@ -1880,7 +1883,7 @@ namespace dagConstruct {
         unsigned totalEdges = numNodes*(numNodes-1) / 2;
 
         while ((clusterGraph.numEdges() != totalEdges) && (distanceIt != nodeDistances.sortedDistancesEnd()) && (distanceIt->second >= threshold)) {
-//            clusterGraph = clusterGraph; //reset clusterGraph
+//            clusterGraph = realEdges; //reset clusterGraph
 //            unsigned numRealEdgesThisRound = 0;
             vector<pair<pair<unsigned, unsigned>, double> > edgesToAdd;
             edgesToAdd.reserve(10000000); //Fan: whether this will be slow if exceeded?
@@ -1954,6 +1957,7 @@ namespace dagConstruct {
 
                 vector<char> idsChecked(currentClusters.maxClusterID(), 0);
                 cout << "# Current number of clusters:" << currentClusters.maxClusterID() << endl;
+//                unsigned maxNumUniqueUnexplainedEdges = 0;
                 for (vector<unsigned long>::iterator newClusterIt = newClustersSorted.begin(); //how to sort? sorted by size of clusteri, small terms checked first
                      newClusterIt != newClustersSorted.end(); ++newClusterIt) {
                     bool isNecessary = false;
@@ -1986,12 +1990,22 @@ namespace dagConstruct {
                     }
 
                     if (currentClusters.checkClusterFinalValidity(*newClusterIt,isNecessary, idsChecked, checkForFinal)) { // think about the condition here
+                        //* some big changes here *//
+                        unsigned numUniqueUnexplainedEdges = currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt);
+                        if ((numUniqueUnexplainedEdges < maxNumUniqueUnexplainedEdges) && (numUniqueUnexplainedEdges < density * currentClusters.getElements(*newClusterIt).count())) {
+                            currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
+                            continue;
+                        }
+                        else if (numUniqueUnexplainedEdges > maxNumUniqueUnexplainedEdges) {
+                            maxNumUniqueUnexplainedEdges = numUniqueUnexplainedEdges;
+                        }
+
                         validClusters.push_back(
                                 validClusterBitset(currentClusters.getElements(*newClusterIt), 0, clustWeight));
                         cout << "# Valid cluster:\t";
                         printCluster(currentClusters.getElements(*newClusterIt), nodeIDsToNames);
                         //currentClusters.setClusterValid(currentClusters.getElements(*newClusterIt));
-                        currentClusters.setClusterValid(*newClusterIt, realEdges);
+                        currentClusters.setClusterValid(*newClusterIt, clusterGraph);
                         cout << "\t" << clustWeight << "\t"
                              << currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt) << "\t"
                              << currentClusters.getThresh(*newClusterIt) << "\t" << dt << endl;
