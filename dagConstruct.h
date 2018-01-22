@@ -972,9 +972,9 @@ public:
             vector<unsigned>::const_iterator it2 = it1;
             ++it2;
             for ( ; it2 != cluster.end(); ++it2) {
-                //if (!isThisEdgeExplained(*it1,*it2) && (edgesToClusters[*it1][*it2] == 1)) {
+//                if (!isThisEdgeExplained(*it1,*it2) && (edgesToClusters[*it1][*it2] == 1)) {
                 double thisDistance = nodeDistances.getDistance(*it1,*it2);
-                if ( (!isThisEdgeExplained(*it1, *it2) ) && (clusterGraph.isEdge(*it1, *it2)) ) { //test if new real edde
+                if ( (!isThisEdgeExplained(*it1, *it2) ) && (clusterGraph.isEdge(*it1, *it2))  ) { //test if new real edde
 //                if (clusterGraph.isEdge(*it1, *it2)) {
 //                    if (thisDistance < minWeight) {
 //                        minWeight = thisDistance;
@@ -987,19 +987,19 @@ public:
         sort(newEdgeWeights.begin(), newEdgeWeights.end());
         double newEdgeWeightsMedian;
 //        cout << nNewEdges << endl;
-//        if (nNewEdges == 0) {
-//            newEdgeWeightsMedian = 0;
-//        }
+        if (nNewEdges ==0) {
+            newEdgeWeightsMedian = 0;
+        }
 //        else if (nNewEdges  % 2 == 0)
 //        {
 ////            newEdgeWeightsMedian = (newEdgeWeights[nNewEdges / 2 - 1] + newEdgeWeights[nNewEdges/ 2]) / 2;
 //            newEdgeWeightsMedian = newEdgeWeights[nNewEdges / 2];
 //        }
-////        else
-////        {
-////            newEdgeWeightsMedian = newEdgeWeights[nNewEdges / 2];
-////        }
-        newEdgeWeightsMedian = newEdgeWeights[nNewEdges / 2];
+        else
+        {
+            newEdgeWeightsMedian = newEdgeWeights[(nNewEdges-1) / 2];
+        }
+//        newEdgeWeightsMedian = newEdgeWeights[nNewEdges / 2];
         //        cout << nNewEdges << endl;
 //        currentClusters[id].setWeight(newEdgeWeightsMedian); // the cluster weight is set as the min of the real edges;
 
@@ -1991,7 +1991,7 @@ namespace dagConstruct {
                         cout << "# Valid cluster:\t";
                         printCluster(currentClusters.getElements(*newClusterIt), nodeIDsToNames);
                         //currentClusters.setClusterValid(currentClusters.getElements(*newClusterIt));
-                        currentClusters.setClusterValid(*newClusterIt, clusterGraph);
+                        currentClusters.setClusterValid(*newClusterIt, realEdges);
                         cout << "\t" << clustWeight << "\t"
                              << currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt) << "\t"
                              << currentClusters.getThresh(*newClusterIt) << "\t" << dt << endl;
@@ -2004,7 +2004,7 @@ namespace dagConstruct {
                         currentClusters.deleteCluster(*newClusterIt,nodeIDsToNames,false);
 
                     } else { // && currentClusters.isNew(*newClusterIt) && !currentClusters.wasNecessary(*newClusterIt) && checkForFinal) {
-                        currentClusters.setNecessary(*newClusterIt); //what's the effect of this line
+                        currentClusters.setNecessary(*newClusterIt); //what's the effect of this line, seem to have no effect
                     }
                 }
 

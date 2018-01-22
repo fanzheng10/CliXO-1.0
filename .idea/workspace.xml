@@ -12,10 +12,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo" afterPath="$PROJECT_DIR$/clixo" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo.o" afterPath="$PROJECT_DIR$/clixo.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG" afterPath="$PROJECT_DIR$/clustersToDAG" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG.o" afterPath="$PROJECT_DIR$/clustersToDAG.o" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dagConstruct.h" afterPath="$PROJECT_DIR$/dagConstruct.h" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -36,8 +32,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="443">
-              <caret line="1839" column="23" lean-forward="false" selection-start-line="1839" selection-start-column="23" selection-end-line="1839" selection-end-column="23" />
+            <state relative-caret-position="195">
+              <caret line="405" column="16" lean-forward="false" selection-start-line="405" selection-start-column="16" selection-end-line="405" selection-end-column="16" />
               <folding>
                 <element signature="e#45#62#0" expanded="true" />
               </folding>
@@ -479,7 +475,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="146634000" />
+    <option name="totallyTimeSpent" value="148902000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -960,8 +956,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="443">
-          <caret line="1839" column="23" lean-forward="false" selection-start-line="1839" selection-start-column="23" selection-end-line="1839" selection-end-column="23" />
+        <state relative-caret-position="195">
+          <caret line="405" column="16" lean-forward="false" selection-start-line="405" selection-start-column="16" selection-end-line="405" selection-end-column="16" />
           <folding>
             <element signature="e#45#62#0" expanded="true" />
           </folding>
