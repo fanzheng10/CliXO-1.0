@@ -32,8 +32,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="196">
-              <caret line="1886" column="49" lean-forward="true" selection-start-line="1886" selection-start-column="49" selection-end-line="1886" selection-end-column="49" />
+            <state relative-caret-position="124">
+              <caret line="1989" column="73" lean-forward="true" selection-start-line="1989" selection-start-column="73" selection-end-line="1989" selection-end-column="73" />
               <folding>
                 <element signature="e#45#62#0" expanded="true" />
               </folding>
@@ -159,8 +159,8 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="1690" />
-    <option name="y" value="95" />
+    <option name="x" value="-1953" />
+    <option name="y" value="188" />
     <option name="width" value="1565" />
     <option name="height" value="929" />
   </component>
@@ -475,7 +475,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="151722000" />
+    <option name="totallyTimeSpent" value="154272000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -487,7 +487,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1690" y="95" width="1565" height="929" extended-state="0" />
+    <frame x="-1953" y="188" width="1565" height="929" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15463258" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -956,8 +956,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="196">
-          <caret line="1886" column="49" lean-forward="true" selection-start-line="1886" selection-start-column="49" selection-end-line="1886" selection-end-column="49" />
+        <state relative-caret-position="124">
+          <caret line="1989" column="73" lean-forward="true" selection-start-line="1989" selection-start-column="73" selection-end-line="1989" selection-end-column="73" />
           <folding>
             <element signature="e#45#62#0" expanded="true" />
           </folding>

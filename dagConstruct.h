@@ -1651,13 +1651,13 @@ namespace dagConstruct {
 //            cout <<"# "<< currentClusters.maxClusterID() <<"\t"<< affectedClusters.size() <<endl;
             for (unsigned i = 0; i < affectedClusters.size(); ++i) {
                 if (affectedClusters[i] && currentClusters.isNew(i)) {
-                    printCluster(currentClusters.getElements(i), nodeIDsToNames);
-                    cout <<endl;
+//                    printCluster(currentClusters.getElements(i), nodeIDsToNames);
+//                    cout <<endl;
                     if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd, nodeIDsToNames)) {
                         // Cluster was not maximal - delete iti
-                        cout << "Not maximal:" ;
-                        printCluster(currentClusters.getElements(i), nodeIDsToNames);
-                        cout <<endl;
+//                        cout << "Not maximal:" ;
+//                        printCluster(currentClusters.getElements(i), nodeIDsToNames);
+//                        cout <<endl;
                         currentClusters.deleteCluster(i, nodeIDsToNames, false);
                         ++deleted;
                     }
@@ -1727,10 +1727,10 @@ namespace dagConstruct {
 //            printCluster(currentClusters.getElements())
             boost::dynamic_bitset<unsigned long> onlyIn1 = currentClusters.getElements(clustersToCombineIt->first.first);
             boost::dynamic_bitset<unsigned long> onlyIn2 = currentClusters.getElements(clustersToCombineIt->first.second);
-            printCluster(onlyIn1, nodeIDsToNames);
-            cout <<endl;
-            printCluster(onlyIn2, nodeIDsToNames);
-            cout<<endl;
+//            printCluster(onlyIn1, nodeIDsToNames);
+//            cout <<endl;
+//            printCluster(onlyIn2, nodeIDsToNames);
+//            cout<<endl;
             onlyIn1 -= currentClusters.getElements(clustersToCombineIt->first.second);
             onlyIn2 -= currentClusters.getElements(clustersToCombineIt->first.first);
 //
@@ -1958,6 +1958,7 @@ namespace dagConstruct {
                 vector<char> idsChecked(currentClusters.maxClusterID(), 0);
                 cout << "# Current number of clusters:" << currentClusters.maxClusterID() << endl;
 //                unsigned maxNumUniqueUnexplainedEdges = 0;
+                cout << "# New clusters to evaluate:" << newClustersSorted.size() << endl;
                 for (vector<unsigned long>::iterator newClusterIt = newClustersSorted.begin(); //how to sort? sorted by size of clusteri, small terms checked first
                      newClusterIt != newClustersSorted.end(); ++newClusterIt) {
                     bool isNecessary = false;
@@ -1991,8 +1992,9 @@ namespace dagConstruct {
 
                     if (currentClusters.checkClusterFinalValidity(*newClusterIt,isNecessary, idsChecked, checkForFinal)) { // think about the condition here
                         //* some big changes here *//
+                        currentClusters.setNumUniquelyUnexplainedEdges(*newClusterIt);
                         unsigned numUniqueUnexplainedEdges = currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt);
-                        if ((numUniqueUnexplainedEdges < maxNumUniqueUnexplainedEdges) && (numUniqueUnexplainedEdges < density * currentClusters.getElements(*newClusterIt).count())) {
+                        if ((numUniqueUnexplainedEdges < maxNumUniqueUnexplainedEdges) && (numUniqueUnexplainedEdges < 0.1 * (1-density) * pow(currentClusters.getElements(*newClusterIt).count(),2.0 ))) {//my secret sauce
                             currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
                             continue;
                         }
