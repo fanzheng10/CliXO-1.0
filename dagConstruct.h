@@ -768,7 +768,7 @@ public:
     }
 
 
-    /*inline*/ void sortNewClusters(vector<unsigned long> & sortedNewClusters) {
+    /*inline*/ void sortNewClusters(vector<unsigned long> & sortedNewClusters) {//if robustness not desired, considering sorting by weight
         vector<pair<unsigned long, unsigned> > newClustersAndCounts;
         newClustersAndCounts.reserve(numCurrentClusters());
         unsigned numFound = 0;
@@ -1605,8 +1605,10 @@ namespace dagConstruct {
             for (; edgesToAddCounter != edgesToAdd.size() ; ++edgesToAddCounter) {
 //                clusterGraph.addEdge(edgesToAdd[edgesToAddCounter].first.first, edgesToAdd[edgesToAddCounter].first.second);
 
-//                if (!clusterGraph.isEdge(edgesToAdd[edgesToAddCounter].first.first, edgesToAdd[edgesToAddCounter].first.second)) {
-                clusterGraph.addEdge(edgesToAdd[edgesToAddCounter].first.first, edgesToAdd[edgesToAddCounter].first.second);
+                if (!clusterGraph.isEdge(edgesToAdd[edgesToAddCounter].first.first, edgesToAdd[edgesToAddCounter].first.second)) {
+                    clusterGraph.addEdge(edgesToAdd[edgesToAddCounter].first.first,
+                                         edgesToAdd[edgesToAddCounter].first.second);
+                }
                 affectedNodes[edgesToAdd[edgesToAddCounter].first.first] = 1;
                 affectedNodes[edgesToAdd[edgesToAddCounter].first.second] = 1;
 //                    newEdges[edgesToAddCounter] = 1;
