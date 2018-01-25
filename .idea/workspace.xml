@@ -11,10 +11,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dagConstruct.h" afterPath="$PROJECT_DIR$/dagConstruct.h" />
-    </list>
+    <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density" />
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/CMakeFiles/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -33,8 +30,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="69">
-              <caret line="705" column="16" lean-forward="false" selection-start-line="705" selection-start-column="16" selection-end-line="705" selection-end-column="16" />
+            <state relative-caret-position="-378">
+              <caret line="1914" column="12" lean-forward="false" selection-start-line="1914" selection-start-column="12" selection-end-line="1914" selection-end-column="12" />
               <folding>
                 <element signature="e#45#62#0" expanded="true" />
               </folding>
@@ -160,8 +157,8 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="-1837" />
-    <option name="y" value="170" />
+    <option name="x" value="61" />
+    <option name="y" value="68" />
     <option name="width" value="1569" />
     <option name="height" value="876" />
   </component>
@@ -464,7 +461,7 @@
       <workItem from="1515100727856" duration="69459000" />
       <workItem from="1515383589840" duration="240000" />
       <workItem from="1515437282749" duration="7406000" />
-      <workItem from="1516683906480" duration="1194000" />
+      <workItem from="1516683906480" duration="1757000" />
     </task>
     <task id="LOCAL-00001" summary="altered density">
       <created>1501882926753</created>
@@ -477,7 +474,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="155671000" />
+    <option name="totallyTimeSpent" value="156234000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -489,7 +486,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1837" y="170" width="1569" height="876" extended-state="0" />
+    <frame x="61" y="68" width="1569" height="876" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.12364563" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -947,8 +944,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="69">
-          <caret line="705" column="16" lean-forward="false" selection-start-line="705" selection-start-column="16" selection-end-line="705" selection-end-column="16" />
+        <state relative-caret-position="-378">
+          <caret line="1914" column="12" lean-forward="false" selection-start-line="1914" selection-start-column="12" selection-end-line="1914" selection-end-column="12" />
           <folding>
             <element signature="e#45#62#0" expanded="true" />
           </folding>
