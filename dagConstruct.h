@@ -12,6 +12,7 @@
 #include "graph_undirected_bitset.h"
 #include "util.h"
 #include "nodeDistanceObject.h"
+#include "boost/dynamic_bitset/dynamic_bitset.hpp"
 
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
     for (unsigned i = 0; i < cluster.size(); ++i) {
@@ -1326,32 +1327,32 @@ namespace dagConstruct {
         }
     }
 
-    inline bool isClusterMaximal(vector<boost::dynamic_bitset<unsigned long> >::reverse_iterator & clustersToAddIt,
-                                 vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd,
-                                 vector<unsigned long> & clustersToExtend,
-                                 currentClusterClassBitset & currentClusters) {
-        for (vector<unsigned long>::iterator clustersExtended_it = clustersToExtend.begin();
-             clustersExtended_it != clustersToExtend.end(); ++clustersExtended_it) {
-            //if ((currentClusters.numElements(*clustersExtended_it) != 0) &&
-            if (clustersToAddIt->is_subset_of(currentClusters.getElements(*clustersExtended_it))) {
-                return false;
-            }
-        }
-
-        if (clustersToAddIt != newClustersToAdd.rbegin()) {
-            vector<boost::dynamic_bitset<unsigned long> >::reverse_iterator possibleMaximalClustersIt = clustersToAddIt;
-            --possibleMaximalClustersIt;
-            for ( ; possibleMaximalClustersIt != newClustersToAdd.rbegin(); --possibleMaximalClustersIt) {
-                if (clustersToAddIt->is_subset_of(*possibleMaximalClustersIt)) {
-                    return false;
-                }
-            }
-            if (clustersToAddIt->is_subset_of(*possibleMaximalClustersIt)) {
-                return false;
-            }
-        }
-        return true;
-    }
+//    inline bool isClusterMaximal(vector<boost::dynamic_bitset<unsigned long> >::reverse_iterator & clustersToAddIt,
+//                                 vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd,
+//                                 vector<unsigned long> & clustersToExtend,
+//                                 currentClusterClassBitset & currentClusters) {
+//        for (vector<unsigned long>::iterator clustersExtended_it = clustersToExtend.begin();
+//             clustersExtended_it != clustersToExtend.end(); ++clustersExtended_it) {
+//            //if ((currentClusters.numElements(*clustersExtended_it) != 0) &&
+//            if (clustersToAddIt->is_subset_of(currentClusters.getElements(*clustersExtended_it))) {
+//                return false;
+//            }
+//        }
+//
+//        if (clustersToAddIt != newClustersToAdd.rbegin()) {
+//            vector<boost::dynamic_bitset<unsigned long> >::reverse_iterator possibleMaximalClustersIt = clustersToAddIt;
+//            --possibleMaximalClustersIt;
+//            for ( ; possibleMaximalClustersIt != newClustersToAdd.rbegin(); --possibleMaximalClustersIt) {
+//                if (clustersToAddIt->is_subset_of(*possibleMaximalClustersIt)) {
+//                    return false;
+//                }
+//            }
+//            if (clustersToAddIt->is_subset_of(*possibleMaximalClustersIt)) {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
 
     // RETURNS WHETHER ANYTHING WAS DELETED
     // (No longer does as follows) RETURNS THE NUMBER OF EXTENSIONS OF THE LARGEST DELETED CLUSTER.
@@ -1477,7 +1478,7 @@ namespace dagConstruct {
         //printCluster(startClust, nodeIDsToNames);
         //cout << endl;
         if (startClust.is_subset_of(clusterGraph.getInteractors(neighborsOfBoth[i]))) {
-            startClust[neighborsOfBoth[i]] = 1;
+            startClust[neighborsOfBoth[i]] = 1; //changed here. Why no ampersand?
             updateCliques(clusterGraph, newClustersToAdd, startClust, neighborsOfBoth, neighborsOfBothBits, i + 1, nodeIDsToNames);
         } else {
             updateCliques(clusterGraph, newClustersToAdd, startClust, neighborsOfBoth, neighborsOfBothBits, i + 1, nodeIDsToNames);
@@ -1550,10 +1551,67 @@ namespace dagConstruct {
         }
     }
 
+//    void clique_enum_tomita_start(graph_undirected_bitset & clusterGraph) { // Kramer sometimes use unsigned sometimes use unsigned long. Non-sense
+//        boost::dynamic_bitset<unsigned> r(clusterGraph.numNodes());
+//        boost::dynamic_bitset<unsigned> p(clusterGraph.numNodes());
+//        boost::dynamic_bitset<unsigned> x(clusterGraph.numNodes());
+//
+//        clique_enum_tomita_apply(clusterGraph, p, x, r);
+//
+//    }
+
+    inline const boost::dynamic_bitset<unsigned long> clique_enum_tomita_pivot(graph_undirected_bitset & clusterGraph, boost::dynamic_bitset<unsigned long> & p, boost::dynamic_bitset<unsigned long> & x, boost::dynamic_bitset<unsigned long> & r) {
+        unsigned long most = 0;
+        unsigned long q = 0;
+
+        boost::dynamic_bitset<unsigned long> nv(clusterGraph.numNodes());
+        boost::dynamic_bitset<unsigned long> Q(clusterGraph.numNodes());
+
+        for (unsigned v = x.find_first(); v < x.size(); v = x.find_next(v)) {
+            nv = clusterGraph.getInteractors(v);
+            unsigned count = (p & nv).count() + 1;
+            if (count > most)
+            {
+                most = count;
+                q = v;
+            }
+        }
+
+        for (unsigned v = p.find_first(); v < p.size(); v = p.find_next(v)) {
+            nv = clusterGraph.getInteractors(v);
+            unsigned count = (p & nv).count()+ 1;
+            if (count > most)
+            {
+                most = count;
+                q = v;
+            }
+        }
+        nv = clusterGraph.getInteractors(q);
+        Q = p - nv; //this should be equivalent to intset_copy_remove(p, nv)
+        return Q;
+    }
+
+    void clique_enum_tomita_apply(graph_undirected_bitset & clusterGraph, boost::dynamic_bitset<unsigned long> & p, boost::dynamic_bitset<unsigned long> & x, boost::dynamic_bitset<unsigned long> & r) {
+        boost::dynamic_bitset<unsigned long>  q = clique_enum_tomita_pivot(clusterGraph, p, x, r);
+        if ((p.count() != 0) && (q.count() !=0)) { //figure this out
+            boost::dynamic_bitset<unsigned long>  p2, x2, nv;
+
+            for (unsigned v = q.find_first(); v < q.size(); v = q.find_next(v)) {
+                nv = clusterGraph.getInteractors(v);
+                p2 &= nv; //not sure whether this is correct
+                x2 &= nv;
+                r[v] = 1; // the is similar to have an r2
+                clique_enum_tomita_apply(clusterGraph, p2, x2, r);
+                r[v] = 0;
+                x[v] = 1;
+            }
+        }
+    }
+
     // Return true if there is a cluster which contains this one.  Return false otherwise, does it check older cliques?
     bool findClustsWithSeed(boost::dynamic_bitset<unsigned long> seedClust, graph_undirected_bitset & clusterGraph,
                             vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd, vector<string> & nodeIDsToNames) {
-
+        //it seems that memory of old SeedClust should be saved
         for (unsigned i = 0; i < newClustersToAdd.size(); ++i) {//how can this happen
             if (seedClust.is_subset_of(newClustersToAdd[i])) {
                 return true;
@@ -1562,7 +1620,7 @@ namespace dagConstruct {
 
         // Make a vector containing all nodes which are neighbors of all nodes contained in the seed cluster (called "Both" but really "All")
         vector<unsigned> neighborsOfBoth;
-        vector<char> neighborsOfBothBits(clusterGraph.numNodes(), 0);
+        vector<char> neighborsOfBothBits(clusterGraph.numNodes(), 0); // this should be dynamic_bitset as well. Is char more memory friendly?
         neighborsOfBoth.reserve(clusterGraph.numNodes());
         for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
             if ((seedClust[i] == 0) && (seedClust.is_subset_of(clusterGraph.getInteractors(i)))) {
@@ -1570,12 +1628,26 @@ namespace dagConstruct {
                 neighborsOfBothBits[i] = 1;
             }
         }
+        boost::dynamic_bitset<unsigned long> neighborsOfBothBits_p(clusterGraph.numNodes());
+        boost::dynamic_bitset<unsigned long> neighborsOfBothBits_x(clusterGraph.numNodes());
+
+        for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
+            if ((seedClust[i] == 0) && (seedClust.is_subset_of(clusterGraph.getInteractors(i)))) {
+                neighborsOfBothBits_p[i] = 1;
+                neighborsOfBothBits_x[i] = 1;
+            }
+        }
 
         if (neighborsOfBoth.size() > 0) {
-            updateCliques(clusterGraph, newClustersToAdd, seedClust, neighborsOfBoth, neighborsOfBothBits, 0, nodeIDsToNames);
+            printCluster(seedClust, nodeIDsToNames);
+            cout << endl;
+//            updateCliques(clusterGraph, newClustersToAdd, seedClust, neighborsOfBoth, neighborsOfBothBits, 0, nodeIDsToNames); //what is changed?
+            clique_enum_tomita_apply(clusterGraph, neighborsOfBothBits_p, neighborsOfBothBits_x, seedClust);
+            printCluster(seedClust, nodeIDsToNames); //check if seedClust is changed
+            cout << endl;
             return true;
         }
-        //cout << "# Edge: " << nodeIDsToNames[seedEdge.first] << "\t" << nodeIDsToNames[seedEdge.second] << endl;
+
         return false;
     }
 
