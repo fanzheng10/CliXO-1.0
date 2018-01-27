@@ -1551,15 +1551,6 @@ namespace dagConstruct {
         }
     }
 
-//    void clique_enum_tomita_start(graph_undirected_bitset & clusterGraph) { // Kramer sometimes use unsigned sometimes use unsigned long. Non-sense
-//        boost::dynamic_bitset<unsigned> r(clusterGraph.numNodes());
-//        boost::dynamic_bitset<unsigned> p(clusterGraph.numNodes());
-//        boost::dynamic_bitset<unsigned> x(clusterGraph.numNodes());
-//
-//        clique_enum_tomita_apply(clusterGraph, p, x, r);
-//
-//    }
-
     inline const boost::dynamic_bitset<unsigned long> clique_enum_tomita_pivot(graph_undirected_bitset & clusterGraph, boost::dynamic_bitset<unsigned long> & p, boost::dynamic_bitset<unsigned long> & x, boost::dynamic_bitset<unsigned long> & r) {
         unsigned long most = 0;
         unsigned long q = 0;
@@ -1568,8 +1559,12 @@ namespace dagConstruct {
         boost::dynamic_bitset<unsigned long> Q(clusterGraph.numNodes());
 
         for (unsigned v = x.find_first(); v < x.size(); v = x.find_next(v)) {
+//            cout << p.size() <<";"<< nv.size() << endl;
             nv = clusterGraph.getInteractors(v);
-            unsigned count = (p & nv).count() + 1;
+//            cout << p.size() <<";"<< nv.size() << endl;
+            boost::dynamic_bitset<unsigned long> common = p & nv;
+            unsigned count = common.count() + 1;
+//            cout << endl;
             if (count > most)
             {
                 most = count;
@@ -1579,7 +1574,8 @@ namespace dagConstruct {
 
         for (unsigned v = p.find_first(); v < p.size(); v = p.find_next(v)) {
             nv = clusterGraph.getInteractors(v);
-            unsigned count = (p & nv).count()+ 1;
+            boost::dynamic_bitset<unsigned long> common = p & nv;
+            unsigned count = common.count() + 1;
             if (count > most)
             {
                 most = count;
@@ -1587,6 +1583,7 @@ namespace dagConstruct {
             }
         }
         nv = clusterGraph.getInteractors(q);
+//        cout << "Hey" <<endl;
         Q = p - nv; //this should be equivalent to intset_copy_remove(p, nv)
         return Q;
     }
@@ -1594,13 +1591,17 @@ namespace dagConstruct {
     void clique_enum_tomita_apply(graph_undirected_bitset & clusterGraph, boost::dynamic_bitset<unsigned long> & p, boost::dynamic_bitset<unsigned long> & x, boost::dynamic_bitset<unsigned long> & r) {
         boost::dynamic_bitset<unsigned long>  q = clique_enum_tomita_pivot(clusterGraph, p, x, r);
         if ((p.count() != 0) && (q.count() !=0)) { //figure this out
-            boost::dynamic_bitset<unsigned long>  p2, x2, nv;
+            boost::dynamic_bitset<unsigned long>  p2(clusterGraph.numNodes());
+            boost::dynamic_bitset<unsigned long>  x2(clusterGraph.numNodes());
+            boost::dynamic_bitset<unsigned long> nv(clusterGraph.numNodes());
 
             for (unsigned v = q.find_first(); v < q.size(); v = q.find_next(v)) {
                 nv = clusterGraph.getInteractors(v);
+//                cout << "hoho" <<endl;
                 p2 &= nv; //not sure whether this is correct
                 x2 &= nv;
                 r[v] = 1; // the is similar to have an r2
+//                cout << "hehe" <<endl;
                 clique_enum_tomita_apply(clusterGraph, p2, x2, r);
                 r[v] = 0;
                 x[v] = 1;
