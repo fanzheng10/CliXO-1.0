@@ -14,6 +14,10 @@
 #include "nodeDistanceObject.h"
 #include "boost/dynamic_bitset/dynamic_bitset.hpp"
 
+//can I have global variable here?
+unsigned long recursion;
+unsigned long recursion2;
+
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
     for (unsigned i = 0; i < cluster.size(); ++i) {
         if (cluster[i]) {
@@ -1588,64 +1592,89 @@ namespace dagConstruct {
         return Q;
     }
 
-    void clique_enum_tomita_apply(graph_undirected_bitset & clusterGraph, boost::dynamic_bitset<unsigned long> & p, boost::dynamic_bitset<unsigned long> & x, boost::dynamic_bitset<unsigned long> & r) {
+    unsigned long clique_enum_tomita_apply(graph_undirected_bitset & clusterGraph, boost::dynamic_bitset<unsigned long> & p, boost::dynamic_bitset<unsigned long> & x, boost::dynamic_bitset<unsigned long> & r, vector<string> & nodeIDsToNames, vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd) {
+        //p: CAND, ; x: FINI; r:Q
+//        ++recursion;
+        unsigned long recur = 1;
         boost::dynamic_bitset<unsigned long>  q = clique_enum_tomita_pivot(clusterGraph, p, x, r);
+//        cout << "x: ";
+//        printCluster(x, nodeIDsToNames);
+//        cout << "p: ";
+//        printCluster(p, nodeIDsToNames);
+//        cout << "r: ";
+//        printCluster(r, nodeIDsToNames);
+//        cout << "q: ";
+//        printCluster(q, nodeIDsToNames);
         if ((p.count() != 0) && (q.count() !=0)) { //figure this out
             boost::dynamic_bitset<unsigned long>  p2(clusterGraph.numNodes());
             boost::dynamic_bitset<unsigned long>  x2(clusterGraph.numNodes());
+
             boost::dynamic_bitset<unsigned long> nv(clusterGraph.numNodes());
+
+//            if (startClust.is_subset_of(clusterGraph.getInteractors(neighborsOfBoth[i]))) {
+//                startClust[neighborsOfBoth[i]] = 1; //changed here. Why no ampersand?
+//                updateCliques(clusterGraph, newClustersToAdd, startClust, neighborsOfBoth, neighborsOfBothBits, i + 1, nodeIDsToNames);
+//            }
 
             for (unsigned v = q.find_first(); v < q.size(); v = q.find_next(v)) {
                 nv = clusterGraph.getInteractors(v);
 //                cout << "hoho" <<endl;
-                p2 &= nv; //not sure whether this is correct
-                x2 &= nv;
-                r[v] = 1; // the is similar to have an r2
+                p2 = p & nv; //not sure whether this is correct
+                x2 = x & nv;
+                r[v] = 1; // maybe this is wrong and suppose r2?
 //                cout << "hehe" <<endl;
-                clique_enum_tomita_apply(clusterGraph, p2, x2, r);
+                recur = recur + clique_enum_tomita_apply(clusterGraph, p2, x2, r, nodeIDsToNames, newClustersToAdd);
+                p[v] = 0;
                 r[v] = 0;
                 x[v] = 1;
             }
         }
+        else if ((p.count()==0) && (x.count() == 0) ) {
+//            return;
+            Utils::insertInOrder(newClustersToAdd, r);
+//            printCluster(r, nodeIDsToNames);
+//            cout << endl;
+        }
+        return recur;
     }
 
     // Return true if there is a cluster which contains this one.  Return false otherwise, does it check older cliques?
     bool findClustsWithSeed(boost::dynamic_bitset<unsigned long> seedClust, graph_undirected_bitset & clusterGraph,
                             vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd, vector<string> & nodeIDsToNames) {
-        //it seems that memory of old SeedClust should be saved
-        for (unsigned i = 0; i < newClustersToAdd.size(); ++i) {//how can this happen
+        for (unsigned i = 0; i < newClustersToAdd.size(); ++i) {
             if (seedClust.is_subset_of(newClustersToAdd[i])) {
                 return true;
             }
         }
 
         // Make a vector containing all nodes which are neighbors of all nodes contained in the seed cluster (called "Both" but really "All")
-        vector<unsigned> neighborsOfBoth;
-        vector<char> neighborsOfBothBits(clusterGraph.numNodes(), 0); // this should be dynamic_bitset as well. Is char more memory friendly?
-        neighborsOfBoth.reserve(clusterGraph.numNodes());
-        for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
-            if ((seedClust[i] == 0) && (seedClust.is_subset_of(clusterGraph.getInteractors(i)))) {
-                neighborsOfBoth.push_back(i);
-                neighborsOfBothBits[i] = 1;
-            }
-        }
-        boost::dynamic_bitset<unsigned long> neighborsOfBothBits_p(clusterGraph.numNodes());
-        boost::dynamic_bitset<unsigned long> neighborsOfBothBits_x(clusterGraph.numNodes());
+//        vector<unsigned> neighborsOfBoth;
+//        vector<char> neighborsOfBothBits(clusterGraph.numNodes(), 0); // this should be dynamic_bitset as well. Is char more memory friendly?
+//        neighborsOfBoth.reserve(clusterGraph.numNodes());
+//        for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
+//            if ((seedClust[i] == 0) && (seedClust.is_subset_of(clusterGraph.getInteractors(i)))) {
+//                neighborsOfBoth.push_back(i);
+//                neighborsOfBothBits[i] = 1;
+//            }
+//        }
+        boost::dynamic_bitset<unsigned long> neighborsOfBothBits_p(clusterGraph.numNodes(), 0);
+//        boost::dynamic_bitset<unsigned long> neighborsOfBothBits_x(clusterGraph.numNodes());
 
         for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
             if ((seedClust[i] == 0) && (seedClust.is_subset_of(clusterGraph.getInteractors(i)))) {
                 neighborsOfBothBits_p[i] = 1;
-                neighborsOfBothBits_x[i] = 1;
+//                neighborsOfBothBits_x[i] = 1;
             }
         }
 
-        if (neighborsOfBoth.size() > 0) {
-            printCluster(seedClust, nodeIDsToNames);
-            cout << endl;
+        if (neighborsOfBothBits_p.count() > 0) {
+//            printCluster(seedClust, nodeIDsToNames);
+//            cout << endl;
+            boost::dynamic_bitset<unsigned long> neighborsOfBothBits_x(clusterGraph.numNodes(), 0);
 //            updateCliques(clusterGraph, newClustersToAdd, seedClust, neighborsOfBoth, neighborsOfBothBits, 0, nodeIDsToNames); //what is changed?
-            clique_enum_tomita_apply(clusterGraph, neighborsOfBothBits_p, neighborsOfBothBits_x, seedClust);
-            printCluster(seedClust, nodeIDsToNames); //check if seedClust is changed
-            cout << endl;
+            recursion += clique_enum_tomita_apply(clusterGraph, neighborsOfBothBits_p, neighborsOfBothBits_x, seedClust, nodeIDsToNames, newClustersToAdd);
+//            printCluster(seedClust, nodeIDsToNames); //check if seedClust is changed
+//            cout << endl;
             return true;
         }
 
@@ -1664,12 +1693,6 @@ namespace dagConstruct {
             currentClusters.resetAllUnexplained();
         }
         while (edgesToAddCounter < edgesToAdd.size()) {// is this while loop useful?
-
-//            //let's see if this trick works:
-//            if (inferredEdges.isEdge(edgesToAdd[edgesToAddCounter].first.first, edgesToAdd[edgesToAddCounter].first.second)) {
-//                ++edgesToAddCounter;
-//                continue;
-//            }
 
             unsigned long thisRoundCounter = edgesToAddCounter;
 //            vector<unsigned long> newEdges(edgesToAdd.size(), 0);
@@ -1748,15 +1771,20 @@ namespace dagConstruct {
                 if (!findClustsWithSeed(seedClust, clusterGraph, newClustersToAdd, nodeIDsToNames)) {
                     // seedClust is a maximal clique of just two nodes
                     Utils::insertInOrder(newClustersToAdd, seedClust);
+//                    printCluster(seedClust, nodeIDsToNames);
+//                    cout << endl;
+//                    }
                 }
-//                }
             }
 //            cout << inferredEdges.numEdges() << "\t" << clusterGraph.numEdges() << endl;
             cout << "# Found " << newClustersToAdd.size() << " new clusters to add" << endl;
+            cout << "Current BK recursion count:" << recursion << endl;
 
             for (vector<boost::dynamic_bitset<unsigned long> >::iterator clustersToAddIt = newClustersToAdd.begin();
                  clustersToAddIt != newClustersToAdd.end(); ++clustersToAddIt) {
 //                cout << "# adding Clusters" << endl;
+//                printCluster(*clustersToAddIt, nodeIDsToNames);
+//                cout << endl;
                 currentClusters.addCluster(*clustersToAddIt,nodeDistances, nodeIDsToNames, clusterGraph, largestCluster);
             }
 
@@ -1770,6 +1798,26 @@ namespace dagConstruct {
 
             ++edgesToAddCounter; //just for one edge!
         }
+        // just run a plan tomita to compare time of recursion
+//        boost::dynamic_bitset<unsigned long> p(clusterGraph.numNodes(), 1);
+//        boost::dynamic_bitset<unsigned long> r(clusterGraph.numNodes(), 0);
+//        boost::dynamic_bitset<unsigned long> x(clusterGraph.numNodes(), 0);
+//        vector<boost::dynamic_bitset<unsigned long> > newClustersToAdd_fake;
+//        newClustersToAdd_fake.reserve(100000);
+//
+//        for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
+//            p[i] = 1;
+//        }
+//
+//        cout << p.count() << endl;
+//        recursion += clique_enum_tomita_apply(clusterGraph, p,x,r, nodeIDsToNames,  newClustersToAdd_fake);
+//        cout << "Current BK recursion count global:" << recursion << endl;
+//        cout << currentClusters.numCurrentClusters()<<endl;
+//        cout << newClustersToAdd_fake.size()<< endl;
+//        for (unsigned i = 0; i < newClustersToAdd_fake.size(); ++i) {
+//            printCluster(newClustersToAdd_fake[i], nodeIDsToNames);
+//            cout << endl;
+//        }
     }
 
     bool combineClusters(vector<pair<pair<unsigned long, unsigned long>, double> > & clustersToCombine,
@@ -1943,6 +1991,8 @@ namespace dagConstruct {
         unsigned numRealEdgesLastRound = 0;
         unsigned maxNumUniqueUnexplainedEdges = 0;
 
+        recursion = 0;
+
         vector<string> nodeIDsToNames(nodeNamesToIDs.size(), string(""));
         for (map<string,unsigned>::iterator it = nodeNamesToIDs.begin(); it != nodeNamesToIDs.end(); ++it) {
             nodeIDsToNames[it->second] = it->first;
@@ -2000,7 +2050,6 @@ namespace dagConstruct {
             currentClusters.setCurWeight(dt);
 
             double maxThresh = currentClusters.getMaxThresh(); // this seems to be redundant, who not check clusters one by one anyway
-
             if ((maxThresh >= dt) && (numRealEdgesThisRound > numRealEdgesLastRound) && (numRealEdgesThisRound < totalEdges - numRealEdgesAdded)) {
                 unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
 
