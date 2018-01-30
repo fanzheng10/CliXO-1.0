@@ -1556,13 +1556,13 @@ namespace dagConstruct {
     }
 
     inline const boost::dynamic_bitset<unsigned long> clique_enum_tomita_pivot(graph_undirected_bitset & clusterGraph, boost::dynamic_bitset<unsigned long> & p, boost::dynamic_bitset<unsigned long> & x, boost::dynamic_bitset<unsigned long> & r) {
-        unsigned long most = 0;
+        unsigned most = 0;
         unsigned long q = 0;
 
         boost::dynamic_bitset<unsigned long> nv(clusterGraph.numNodes());
         boost::dynamic_bitset<unsigned long> Q(clusterGraph.numNodes());
 
-        for (unsigned v = x.find_first(); v < x.size(); v = x.find_next(v)) {
+        for (unsigned long v = x.find_first(); v < x.size(); v = x.find_next(v)) {
 //            cout << p.size() <<";"<< nv.size() << endl;
             nv = clusterGraph.getInteractors(v);
 //            cout << p.size() <<";"<< nv.size() << endl;
@@ -1576,7 +1576,7 @@ namespace dagConstruct {
             }
         }
 
-        for (unsigned v = p.find_first(); v < p.size(); v = p.find_next(v)) {
+        for (unsigned long v = p.find_first(); v < p.size(); v = p.find_next(v)) {
             nv = clusterGraph.getInteractors(v);
             boost::dynamic_bitset<unsigned long> common = p & nv;
             unsigned count = common.count() + 1;
@@ -1596,15 +1596,8 @@ namespace dagConstruct {
         //p: CAND, ; x: FINI; r:Q
 //        ++recursion;
         unsigned long recur = 1;
-        boost::dynamic_bitset<unsigned long>  q = clique_enum_tomita_pivot(clusterGraph, p, x, r);
-//        cout << "x: ";
-//        printCluster(x, nodeIDsToNames);
-//        cout << "p: ";
-//        printCluster(p, nodeIDsToNames);
-//        cout << "r: ";
-//        printCluster(r, nodeIDsToNames);
-//        cout << "q: ";
-//        printCluster(q, nodeIDsToNames);
+        boost::dynamic_bitset<unsigned long>  q = clique_enum_tomita_pivot(clusterGraph, p, x, r);//what if no pivot
+
         if ((p.count() != 0) && (q.count() !=0)) { //figure this out
             boost::dynamic_bitset<unsigned long>  p2(clusterGraph.numNodes());
             boost::dynamic_bitset<unsigned long>  x2(clusterGraph.numNodes());
@@ -1616,7 +1609,7 @@ namespace dagConstruct {
 //                updateCliques(clusterGraph, newClustersToAdd, startClust, neighborsOfBoth, neighborsOfBothBits, i + 1, nodeIDsToNames);
 //            }
 
-            for (unsigned v = q.find_first(); v < q.size(); v = q.find_next(v)) {
+            for (unsigned long v = q.find_first(); v < q.size(); v = q.find_next(v)) {
                 nv = clusterGraph.getInteractors(v);
 //                cout << "hoho" <<endl;
                 p2 = p & nv; //not sure whether this is correct
@@ -1635,7 +1628,122 @@ namespace dagConstruct {
 //            printCluster(r, nodeIDsToNames);
 //            cout << endl;
         }
+//        cout << recur << endl;
         return recur;
+    }
+
+    void elinminationGame(graph_undirected_bitset & clusterGraph, graph_undirected_bitset & chordGraph) {
+
+//        graph_undirected_bitset chordGraph(clusterGraph.numNodes());
+        graph_undirected_bitset helperGraph(clusterGraph.numNodes());
+
+        //initialize the degree and chordal graph
+        for (unsigned i = 0; i < clusterGraph.numNodes()-1; ++i) {
+            for (unsigned j = i+1; j < clusterGraph.numNodes(); ++j) {
+                if (clusterGraph.isEdge(i, j)) {
+                    chordGraph.addEdge(i, j);
+//                    helperGraph.addEdge(i, j);
+                }
+            }
+        }
+        boost::dynamic_bitset<unsigned long> removed(clusterGraph.numNodes());
+        unsigned long mindegV = 0;
+        unsigned long mindeg = clusterGraph.numNodes();
+
+        for (unsigned k = 0; k < clusterGraph.numNodes(); k++) { // this is n^3 in worst case
+            //choose a v
+
+            for (unsigned long v = 0;  v < clusterGraph.numNodes(); ++v) {
+                if (!removed[v]) {
+                    unsigned long deg = helperGraph.getInteractors(v).count();
+                    if ((deg >=2) && (deg < mindeg)) {
+                        mindeg = deg;
+                        mindegV = v;
+                    }
+                }
+            }
+            boost::dynamic_bitset<unsigned long> nv = helperGraph.getInteractors(mindegV);
+            if (nv.count() < 2) {
+                break;
+            }
+            for (unsigned long i = nv.find_first(); i < nv.size() -1; i = nv.find_next(i)) {  // a little worried
+                for (unsigned long j = nv.find_next(i); j < nv.size(); j = nv.find_next(j)) {
+                    helperGraph.addEdge(i, j);
+                    chordGraph.addEdge(i, j);
+                }
+            }
+            // delete mindegV from helperGraph
+            removed[mindegV] = 1;
+            for (unsigned long i = nv.find_first(); i < nv.size() -1; i = nv.find_next(i) ) {
+                helperGraph.removeEdge(i, mindegV);
+            }
+        }
+    }
+
+    void maximumCardinalitySearch(graph_undirected_bitset & clusterGraph, vector <unsigned long> & sigma ) {
+        vector<unsigned long> label(clusterGraph.numNodes(), 0);
+        boost::dynamic_bitset<unsigned long> numbered(clusterGraph.numNodes());
+        for (unsigned long i = clusterGraph.numNodes(); i > 0; ++i) {
+            unsigned long v = distance(label.begin(), max_element(label.begin(), label.end()));
+            sigma[v] = i;
+            boost::dynamic_bitset<unsigned long> nv = clusterGraph.getInteractors(v);
+            for (unsigned long w = nv.find_first(); w < nv.size(); w = nv.find_next(w)) {
+                ++label[w];
+            }
+        }
+    }
+
+    void chordMaximalCliques(graph_undirected_bitset & clusterGraph, vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd) { //not sure if this is valid
+
+        vector<unsigned long> sigma(clusterGraph.numNodes());
+        //triangulate clusterGraph; do this in a copy called chordGraph
+        graph_undirected_bitset chordGraph(clusterGraph.numNodes());
+        elinminationGame(clusterGraph, chordGraph);
+
+        maximumCardinalitySearch(chordGraph, sigma); // get elimination order
+
+        vector<unsigned long> size(clusterGraph.numNodes());
+        unsigned long v = 0;
+        vector<unsigned long> sigma_arg(clusterGraph.numNodes());
+        vector<unsigned long> m(clusterGraph.numNodes());
+
+        for (unsigned long i = 0; i < clusterGraph.numNodes(); ++i) {
+            sigma_arg[sigma[i]] = i;
+        }
+
+        for (unsigned long i = 0; i < clusterGraph.numNodes(); ++i) {
+            v = sigma_arg[i];
+            boost::dynamic_bitset<unsigned long> X(clusterGraph.numNodes());
+            boost::dynamic_bitset<unsigned long> nv(clusterGraph.numNodes());
+            nv = clusterGraph.getInteractors(v);
+
+            if (nv.count() == 0) {
+                continue;
+            }
+            for (unsigned long w = nv.find_first(); w < clusterGraph.numNodes(); ++w) {
+                //to figure out
+                if (sigma[w] > sigma[v]) {
+                    X[w] = 1;
+                }
+            }
+            if (X.count() == 0) {
+                if (size[v] < X.count()) {
+                    X[v] = 1;
+                    Utils::insertInOrder(newClustersToAdd, X);
+                    X[v] = 0;
+                }
+            }
+            unsigned long sigmaw = sigma[X.find_first()];
+            for (unsigned long w = X.find_first(); w < X.size(); w = X.find_next(w)) {
+                if (sigma[w] < sigmaw) {
+                    m[v] = sigmaw;
+                }
+            }
+
+            if (X.count() - 1 > size[m[v]]) {
+                size[m[v]] = X.count() - 1;
+            }
+        }
     }
 
     // Return true if there is a cluster which contains this one.  Return false otherwise, does it check older cliques?
@@ -1747,20 +1855,20 @@ namespace dagConstruct {
 
             unsigned deleted = 0;
 //            cout <<"# "<< currentClusters.maxClusterID() <<"\t"<< affectedClusters.size() <<endl;
-            for (unsigned i = 0; i < affectedClusters.size(); ++i) {
-                if (affectedClusters[i] && currentClusters.isNew(i)) {
-//                    printCluster(currentClusters.getElements(i), nodeIDsToNames);
-//                    cout <<endl;
-                    if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd, nodeIDsToNames)) {
-                        // Cluster was not maximal - delete iti
-//                        cout << "Not maximal:" ;
-//                        printCluster(currentClusters.getElements(i), nodeIDsToNames);
-//                        cout <<endl;
-                        currentClusters.deleteCluster(i, nodeIDsToNames, false);
-                        ++deleted;
-                    }
-                }
-            }
+//            for (unsigned i = 0; i < affectedClusters.size(); ++i) {
+//                if (affectedClusters[i] && currentClusters.isNew(i)) {
+////                    printCluster(currentClusters.getElements(i), nodeIDsToNames);
+////                    cout <<endl;
+//                    if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd, nodeIDsToNames)) {
+//                        // Cluster was not maximal - delete iti
+////                        cout << "Not maximal:" ;
+////                        printCluster(currentClusters.getElements(i), nodeIDsToNames);
+////                        cout <<endl;
+//                        currentClusters.deleteCluster(i, nodeIDsToNames, false);
+//                        ++deleted;
+//                    }
+//                }
+//            }
             cout << "# Num of non-maximal clusters deleted here: " << deleted << endl;
 
             for ( ; thisRoundCounter < edgesToAddCounter; ++thisRoundCounter) {

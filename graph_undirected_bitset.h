@@ -19,10 +19,20 @@ class graph_undirected_bitset {
   }
 
   inline void addEdge(unsigned node1, unsigned node2) {
-    graph[node1][node2] = 1;
-    graph[node2][node1] = 1;
-    ++numTotalEdges;
+      if (!graph[node1].test(node2)) {
+          graph[node1][node2] = 1;
+          graph[node2][node1] = 1;
+          ++numTotalEdges;
+      }
   }
+
+    inline void removeEdge(unsigned node1, unsigned node2) {
+        if (graph[node1].test(node2)) {
+            graph[node1][node2] = 0;
+            graph[node2][node1] = 0;
+            --numTotalEdges;
+        }
+    }
 
   inline unsigned numEdges() {
     return numTotalEdges;
