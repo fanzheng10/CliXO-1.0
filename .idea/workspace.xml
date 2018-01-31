@@ -12,9 +12,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo" afterPath="$PROJECT_DIR$/clixo" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo.o" afterPath="$PROJECT_DIR$/clixo.o" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG" afterPath="$PROJECT_DIR$/clustersToDAG" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG.o" afterPath="$PROJECT_DIR$/clustersToDAG.o" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dagConstruct.h" afterPath="$PROJECT_DIR$/dagConstruct.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/graph_undirected_bitset.h" afterPath="$PROJECT_DIR$/graph_undirected_bitset.h" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/CMakeFiles/" />
@@ -34,8 +36,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="473">
-              <caret line="1870" column="14" lean-forward="false" selection-start-line="1870" selection-start-column="14" selection-end-line="1870" selection-end-column="14" />
+            <state relative-caret-position="200">
+              <caret line="2041" column="37" lean-forward="true" selection-start-line="2041" selection-start-column="37" selection-end-line="2041" selection-end-column="37" />
               <folding>
                 <element signature="e#45#62#0" expanded="true" />
               </folding>
@@ -150,8 +152,8 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="-1817" />
-    <option name="y" value="127" />
+    <option name="x" value="-1691" />
+    <option name="y" value="73" />
     <option name="width" value="1596" />
     <option name="height" value="962" />
   </component>
@@ -478,7 +480,7 @@
       <workItem from="1515383589840" duration="240000" />
       <workItem from="1515437282749" duration="7406000" />
       <workItem from="1516683906480" duration="56476000" />
-      <workItem from="1517294753035" duration="14342000" />
+      <workItem from="1517294753035" duration="23685000" />
     </task>
     <task id="LOCAL-00001" summary="altered density">
       <created>1501882926753</created>
@@ -491,7 +493,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="225295000" />
+    <option name="totallyTimeSpent" value="234638000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -503,7 +505,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1817" y="127" width="1596" height="962" extended-state="0" />
+    <frame x="-1691" y="73" width="1596" height="962" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.17355889" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -938,8 +940,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="473">
-          <caret line="1870" column="14" lean-forward="false" selection-start-line="1870" selection-start-column="14" selection-end-line="1870" selection-end-column="14" />
+        <state relative-caret-position="200">
+          <caret line="2041" column="37" lean-forward="true" selection-start-line="2041" selection-start-column="37" selection-end-line="2041" selection-end-column="37" />
           <folding>
             <element signature="e#45#62#0" expanded="true" />
           </folding>

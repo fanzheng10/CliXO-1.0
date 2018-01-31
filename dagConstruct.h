@@ -1636,22 +1636,22 @@ namespace dagConstruct {
 
 //        graph_undirected_bitset chordGraph(clusterGraph.numNodes());
         graph_undirected_bitset helperGraph(clusterGraph.numNodes());
-
+        unsigned helperEdges = 0;
         //initialize the degree and chordal graph
         for (unsigned i = 0; i < clusterGraph.numNodes()-1; ++i) {
             for (unsigned j = i+1; j < clusterGraph.numNodes(); ++j) {
                 if (clusterGraph.isEdge(i, j)) {
                     chordGraph.addEdge(i, j);
-//                    helperGraph.addEdge(i, j);
+                    helperGraph.addEdge(i, j);
                 }
             }
         }
         boost::dynamic_bitset<unsigned long> removed(clusterGraph.numNodes());
-        unsigned long mindegV = 0;
-        unsigned long mindeg = clusterGraph.numNodes();
 
         for (unsigned k = 0; k < clusterGraph.numNodes(); k++) { // this is n^3 in worst case
             //choose a v
+            unsigned long mindegV = 0;
+            unsigned long mindeg = clusterGraph.numNodes();
 
             for (unsigned long v = 0;  v < clusterGraph.numNodes(); ++v) {
                 if (!removed[v]) {
@@ -1666,42 +1666,62 @@ namespace dagConstruct {
             if (nv.count() < 2) {
                 break;
             }
+//            cout << nv.count() <<endl;
             for (unsigned long i = nv.find_first(); i < nv.size() -1; i = nv.find_next(i)) {  // a little worried
                 for (unsigned long j = nv.find_next(i); j < nv.size(); j = nv.find_next(j)) {
-                    helperGraph.addEdge(i, j);
-                    chordGraph.addEdge(i, j);
+//                    cout << i << " " << j << endl;
+                    if (!helperGraph.isEdge(i, j)){
+                        helperGraph.addEdge(i, j);
+                        chordGraph.addEdge(i, j);
+                        ++helperEdges; // this maybe time consuming step
+                    }
                 }
             }
             // delete mindegV from helperGraph
             removed[mindegV] = 1;
-            for (unsigned long i = nv.find_first(); i < nv.size() -1; i = nv.find_next(i) ) {
+            for (unsigned long i = nv.find_first(); i < nv.size(); i = nv.find_next(i) ) {
                 helperGraph.removeEdge(i, mindegV);
             }
         }
+        cout << "# " << helperEdges << " added during triangulation; Originally has " << clusterGraph.numEdges() << " edges" << endl;
     }
 
     void maximumCardinalitySearch(graph_undirected_bitset & clusterGraph, vector <unsigned long> & sigma ) {
         vector<unsigned long> label(clusterGraph.numNodes(), 0);
-        boost::dynamic_bitset<unsigned long> numbered(clusterGraph.numNodes());
-        for (unsigned long i = clusterGraph.numNodes(); i > 0; ++i) {
-            unsigned long v = distance(label.begin(), max_element(label.begin(), label.end()));
-            sigma[v] = i;
-            boost::dynamic_bitset<unsigned long> nv = clusterGraph.getInteractors(v);
+        boost::dynamic_bitset<unsigned long> unnumbered(clusterGraph.numNodes());
+        for (unsigned long i = 0; i < clusterGraph.numNodes(); ++i) {
+            unnumbered[i] = 1;
+        }
+        for (unsigned long i = 0; i < clusterGraph.numNodes(); ++i) {
+            unsigned long x = clusterGraph.numNodes()- 1- i;
+            unsigned long V = unnumbered.find_first();
+//            unsigned long maxLabel = 0;
+            for (unsigned long v = unnumbered.find_first(); v < clusterGraph.numNodes(); v = unnumbered.find_next(v)) {
+                if (label[v] > label[V]) {
+                    V = v;
+                }
+            }
+//            unsigned long v = distance(label.begin(), max_element(label.begin(), label.end()));
+            sigma[V] = x;
+//            cout << V << "\t" << x << endl;
+            unnumbered[V] = 0;
+            boost::dynamic_bitset<unsigned long> nv = clusterGraph.getInteractors(V);
             for (unsigned long w = nv.find_first(); w < nv.size(); w = nv.find_next(w)) {
                 ++label[w];
             }
         }
     }
 
-    void chordMaximalCliques(graph_undirected_bitset & clusterGraph, vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd) { //not sure if this is valid
+    void chordMaximalCliques(graph_undirected_bitset & clusterGraph, vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd, vector<string> & nodeIDsToNames) { //not sure if this is valid
 
         vector<unsigned long> sigma(clusterGraph.numNodes());
         //triangulate clusterGraph; do this in a copy called chordGraph
         graph_undirected_bitset chordGraph(clusterGraph.numNodes());
+
         elinminationGame(clusterGraph, chordGraph);
-
+        cout << "# Finish triangulation" << endl;
         maximumCardinalitySearch(chordGraph, sigma); // get elimination order
-
+        cout << "# Finish vertex ordering" << endl;
         vector<unsigned long> size(clusterGraph.numNodes());
         unsigned long v = 0;
         vector<unsigned long> sigma_arg(clusterGraph.numNodes());
@@ -1710,40 +1730,47 @@ namespace dagConstruct {
         for (unsigned long i = 0; i < clusterGraph.numNodes(); ++i) {
             sigma_arg[sigma[i]] = i;
         }
-
+//        boost::dynamic_bitset<unsigned long> X(clusterGraph.numNodes());
         for (unsigned long i = 0; i < clusterGraph.numNodes(); ++i) {
             v = sigma_arg[i];
+//            cout << v << endl;
             boost::dynamic_bitset<unsigned long> X(clusterGraph.numNodes());
             boost::dynamic_bitset<unsigned long> nv(clusterGraph.numNodes());
-            nv = clusterGraph.getInteractors(v);
+            nv = chordGraph.getInteractors(v);
 
             if (nv.count() == 0) {
                 continue;
             }
-            for (unsigned long w = nv.find_first(); w < clusterGraph.numNodes(); ++w) {
+            for (unsigned long w = nv.find_first(); w < clusterGraph.numNodes(); w = nv.find_next(w)) {
                 //to figure out
                 if (sigma[w] > sigma[v]) {
                     X[w] = 1;
                 }
             }
-            if (X.count() == 0) {
+            if (X.count() > 0) {
+//                cout << size[v] << "\t" << X.count() << endl;
                 if (size[v] < X.count()) {
+
                     X[v] = 1;
                     Utils::insertInOrder(newClustersToAdd, X);
+//                    printCluster(X, nodeIDsToNames);
+//                    cout << endl;
                     X[v] = 0;
                 }
-            }
-            unsigned long sigmaw = sigma[X.find_first()];
-            for (unsigned long w = X.find_first(); w < X.size(); w = X.find_next(w)) {
-                if (sigma[w] < sigmaw) {
-                    m[v] = sigmaw;
+//            }
+                unsigned long sigmaw = sigma[X.find_first()];
+                for (unsigned long w = X.find_first(); w < X.size(); w = X.find_next(w)) {
+                    if (sigma[w] < sigmaw) {
+                        m[v] = sigma_arg[sigma[w]];
+                    }
+                }
+
+                if (X.count() - 1 > size[m[v]]) {
+                    size[m[v]] = X.count() - 1;
                 }
             }
-
-            if (X.count() - 1 > size[m[v]]) {
-                size[m[v]] = X.count() - 1;
-            }
         }
+        clusterGraph = chordGraph;
     }
 
     // Return true if there is a cluster which contains this one.  Return false otherwise, does it check older cliques?
@@ -1869,24 +1896,49 @@ namespace dagConstruct {
 //                    }
 //                }
 //            }
-            cout << "# Num of non-maximal clusters deleted here: " << deleted << endl;
-
-            for ( ; thisRoundCounter < edgesToAddCounter; ++thisRoundCounter) {
-//                if (newEdges[thisRoundCounter] >0) {
-                boost::dynamic_bitset<unsigned long> seedClust(clusterGraph.numNodes());
-                seedClust[edgesToAdd[thisRoundCounter].first.first] = 1;
-                seedClust[edgesToAdd[thisRoundCounter].first.second] = 1;
-                if (!findClustsWithSeed(seedClust, clusterGraph, newClustersToAdd, nodeIDsToNames)) {
-                    // seedClust is a maximal clique of just two nodes
-                    Utils::insertInOrder(newClustersToAdd, seedClust);
-//                    printCluster(seedClust, nodeIDsToNames);
-//                    cout << endl;
+            for (unsigned i = 0; i < affectedClusters.size(); ++i) {
+                if (affectedClusters[i] && currentClusters.isNew(i)) {
+//                    printCluster(currentClusters.getElements(i), nodeIDsToNames);
+//                    cout <<endl;
+                    for (unsigned j = 0; j < newClustersToAdd.size(); ++j) {
+                        if (currentClusters.getElements(i).is_subset_of(newClustersToAdd[j])) {
+//                            return true;
+//                        }
 //                    }
+//                    if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd, nodeIDsToNames)) {
+                            // Cluster was not maximal - delete iti
+//                        cout << "Not maximal:" ;
+//                        printCluster(currentClusters.getElements(i), nodeIDsToNames);
+//                        cout <<endl;
+                            currentClusters.deleteCluster(i, nodeIDsToNames, false);
+                            ++deleted;
+                        }
+                    }
                 }
             }
+
+            cout << "# Num of non-maximal clusters deleted here: " << deleted << endl;
+
+//            for ( ; thisRoundCounter < edgesToAddCounter; ++thisRoundCounter) {
+////                if (newEdges[thisRoundCounter] >0) {
+//                boost::dynamic_bitset<unsigned long> seedClust(clusterGraph.numNodes());
+//                seedClust[edgesToAdd[thisRoundCounter].first.first] = 1;
+//                seedClust[edgesToAdd[thisRoundCounter].first.second] = 1;
+//                if (!findClustsWithSeed(seedClust, clusterGraph, newClustersToAdd, nodeIDsToNames)) {
+//                    // seedClust is a maximal clique of just two nodes
+//                    Utils::insertInOrder(newClustersToAdd, seedClust);
+////                    printCluster(seedClust, nodeIDsToNames);
+////                    cout << endl;
+////                    }
+//                }
+//            }
+
+
+            chordMaximalCliques(clusterGraph, newClustersToAdd, nodeIDsToNames); //very risky
+
 //            cout << inferredEdges.numEdges() << "\t" << clusterGraph.numEdges() << endl;
             cout << "# Found " << newClustersToAdd.size() << " new clusters to add" << endl;
-            cout << "Current BK recursion count:" << recursion << endl;
+//            cout << "Current BK recursion count:" << recursion << endl;
 
             for (vector<boost::dynamic_bitset<unsigned long> >::iterator clustersToAddIt = newClustersToAdd.begin();
                  clustersToAddIt != newClustersToAdd.end(); ++clustersToAddIt) {
@@ -1970,7 +2022,7 @@ namespace dagConstruct {
 //            // ADD EDGES BETWEEN GENES THAT ARE ONLY IN ONE OF THE CLUSTERS TO THE CLUSTER GRAPH
             for (unsigned i = onlyIn1.find_first(); i < onlyIn1.size(); i = onlyIn1.find_next(i)) {
                 boost::dynamic_bitset<unsigned long> newEdgesFrom1To2 = onlyIn2;
-                newEdgesFrom1To2 -= realEdges.getInteractors(i); //excluding old edges (THINK ABOUT IT IS clusterGraph or clusterGraph)
+                newEdgesFrom1To2 -= clusterGraph.getInteractors(i); //excluding old edges (THINK ABOUT IT IS clusterGraph or clusterGraph)
                 for (unsigned j = newEdgesFrom1To2.find_first(); j < newEdgesFrom1To2.size(); j = newEdgesFrom1To2.find_next(j)) {
                     if (!edgeWillBeAdded[i][j]) { // don't comment out this line
                         edgesToAdd.push_back(make_pair(make_pair(i,j), weight)); //here you are adding all edges!
