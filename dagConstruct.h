@@ -1158,36 +1158,6 @@ namespace dagConstruct {
         }
     }
 
-    inline void getNewCluster(const vector<unsigned>& currentCluster, const vector<unsigned>& neighborsOfNewInteractor,
-                              unsigned newInteractor, vector<unsigned> & newCluster) {
-        newCluster.clear();
-        newCluster.reserve(currentCluster.size() + 1);
-        vector<unsigned>::const_iterator currentCluster_it = currentCluster.begin();
-        vector<unsigned>::const_iterator neighbors_it = neighborsOfNewInteractor.begin();
-        bool addedNewInteractor = false;
-        while ((currentCluster_it != currentCluster.end()) && (neighbors_it != neighborsOfNewInteractor.end())) {
-            if (*currentCluster_it == *neighbors_it) {
-                if (!addedNewInteractor && (*currentCluster_it > newInteractor)) {
-                    newCluster.push_back(newInteractor);
-                    addedNewInteractor = true;
-                }
-                newCluster.push_back(*currentCluster_it);
-                ++currentCluster_it;
-                ++neighbors_it;
-            } else if (*currentCluster_it < *neighbors_it) {
-                ++currentCluster_it;
-            } else if (*neighbors_it < *currentCluster_it) {
-                ++neighbors_it;
-            }
-        }
-        if (!addedNewInteractor) {
-            newCluster.push_back(newInteractor);
-        }
-
-        return;
-    }
-
-
     // newCluster = intersection of currentCluster and neighborsOfNewInteractor + newInteractor
     inline void getNewCluster(const boost::dynamic_bitset<unsigned long>& currentCluster, const boost::dynamic_bitset<unsigned long>& neighborsOfNewInteractor,
                               unsigned newInteractor, boost::dynamic_bitset<unsigned long> & newCluster) {
@@ -1195,36 +1165,6 @@ namespace dagConstruct {
         newCluster &= neighborsOfNewInteractor;
         newCluster[newInteractor] = 1;
         return;
-    }
-
-    bool isClusterAncestor(const vector<unsigned> & cluster, const vector<unsigned> & possibleAncestorCluster, vector<bool> & unaccountedFor) {
-        // Keep track of which genes in the ancestor cluster are "accounted for" (i.e. contained in) decsendent
-        vector<unsigned> accountedFor;
-        accountedFor.reserve(unaccountedFor.size());
-
-        vector<unsigned>::const_iterator clusterIt = cluster.begin();
-        vector<unsigned>::const_iterator ancestorIt = possibleAncestorCluster.begin();
-        unsigned ancestorPos = 0;
-        while ((clusterIt != cluster.end()) && (ancestorIt != possibleAncestorCluster.end())) {
-            if (*ancestorIt < *clusterIt) {
-                ++ancestorIt;
-                ++ancestorPos;
-            } else if (*ancestorIt > *clusterIt) {
-                return false;
-            } else if (*ancestorIt == *clusterIt) {
-                accountedFor.push_back(ancestorPos);
-                ++ancestorPos;
-                ++ancestorIt;
-                ++clusterIt;
-            }
-        }
-        if (clusterIt == cluster.end()) {
-            for (vector<unsigned>::iterator accountedForIt = accountedFor.begin(); accountedForIt != accountedFor.end(); ++accountedForIt) {
-                unaccountedFor[*accountedForIt] = false;
-            }
-            return true;
-        }
-        return false;
     }
 
     bool isClusterAncestor(const boost::dynamic_bitset<unsigned long> & cluster, const boost::dynamic_bitset<unsigned long> & possibleAncestorCluster, boost::dynamic_bitset<unsigned long> & unaccountedFor) {
@@ -1256,18 +1196,11 @@ namespace dagConstruct {
     }
 
     inline bool checkClusterValidity(const vector<unsigned> & cluster, nodeDistanceObject & nodeDistances, vector<vector<bool> > & pairLCAFound) {
-        //cout << "Checking size " << cluster.size() << endl;
-        /*cout << "Checking ";
-        for (unsigned i = 0; i < cluster.size(); ++i) {
-          cout << cluster[i] << " ";
-        }
-        cout << endl;*/
         bool firstPairFound = false;
         double firstPairDistance;
         for (unsigned i = 0; i < (cluster.size() - 1); ++i) {
             for (unsigned j = (i+1); j < cluster.size(); ++j) {
                 if (!pairLCAFound[cluster[i]][cluster[j]]) {
-                    //cout << "Pair " << cluster[i] << " " << cluster[j] << " " << nodeDistances.getDistance(cluster[i],cluster[j]) << endl;
                     if (firstPairFound) {
                         if (firstPairDistance != nodeDistances.getDistance(cluster[i],cluster[j])) {
                             return false;
@@ -1285,7 +1218,6 @@ namespace dagConstruct {
                     pairLCAFound[cluster[i]][cluster[j]] = true;
                 }
             }
-            //clusterWeight = (1 - firstPairDistance) / 2.0;
             return true;
         } else {
             return false;
@@ -1300,7 +1232,6 @@ namespace dagConstruct {
                 for (unsigned j = (i+1); j < cluster.size(); ++j) {
                     if (cluster[j] == true) {
                         if (!pairLCAFound[i][j]) {
-                            //cout << "Pair " << cluster[i] << " " << cluster[j] << " " << nodeDistances.getDistance(cluster[i],cluster[j]) << endl;
                             if (firstPairFound) {
                                 if (firstPairDistance != nodeDistances.getDistance(i,j)) {
                                     return false;
@@ -1324,39 +1255,11 @@ namespace dagConstruct {
                     }
                 }
             }
-            //clusterWeight = (1 - firstPairDistance) / 2.0;
             return true;
         } else {
             return false;
         }
     }
-
-//    inline bool isClusterMaximal(vector<boost::dynamic_bitset<unsigned long> >::reverse_iterator & clustersToAddIt,
-//                                 vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd,
-//                                 vector<unsigned long> & clustersToExtend,
-//                                 currentClusterClassBitset & currentClusters) {
-//        for (vector<unsigned long>::iterator clustersExtended_it = clustersToExtend.begin();
-//             clustersExtended_it != clustersToExtend.end(); ++clustersExtended_it) {
-//            //if ((currentClusters.numElements(*clustersExtended_it) != 0) &&
-//            if (clustersToAddIt->is_subset_of(currentClusters.getElements(*clustersExtended_it))) {
-//                return false;
-//            }
-//        }
-//
-//        if (clustersToAddIt != newClustersToAdd.rbegin()) {
-//            vector<boost::dynamic_bitset<unsigned long> >::reverse_iterator possibleMaximalClustersIt = clustersToAddIt;
-//            --possibleMaximalClustersIt;
-//            for ( ; possibleMaximalClustersIt != newClustersToAdd.rbegin(); --possibleMaximalClustersIt) {
-//                if (clustersToAddIt->is_subset_of(*possibleMaximalClustersIt)) {
-//                    return false;
-//                }
-//            }
-//            if (clustersToAddIt->is_subset_of(*possibleMaximalClustersIt)) {
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
 
     // RETURNS WHETHER ANYTHING WAS DELETED
     // (No longer does as follows) RETURNS THE NUMBER OF EXTENSIONS OF THE LARGEST DELETED CLUSTER.
@@ -1392,7 +1295,6 @@ namespace dagConstruct {
             }
         }
         currentClusters.resetAllUnexplained(); // this only reset per cluster features
-//        cout << deleted << " clusters removed" << endl;
 
         return;
     }
@@ -1464,7 +1366,7 @@ namespace dagConstruct {
         Utils::insertInOrder(newClustersToAdd, startingCluster);
     }
 
-
+// Core algorithm used before
     void updateCliques(graph_undirected_bitset & clusterGraph,
                        vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd,
                        boost::dynamic_bitset<unsigned long> startClust, vector<unsigned> & neighborsOfBoth,
@@ -1555,6 +1457,7 @@ namespace dagConstruct {
         }
     }
 
+    // Bron-Kersborch algorithm, with pivot selection of Tomita et al. 2006
     inline const boost::dynamic_bitset<unsigned long> clique_enum_tomita_pivot(graph_undirected_bitset & clusterGraph, boost::dynamic_bitset<unsigned long> & p, boost::dynamic_bitset<unsigned long> & x, boost::dynamic_bitset<unsigned long> & r) {
         unsigned most = 0;
         unsigned long q = 0;
@@ -1587,7 +1490,6 @@ namespace dagConstruct {
             }
         }
         nv = clusterGraph.getInteractors(q);
-//        cout << "Hey" <<endl;
         Q = p - nv; //this should be equivalent to intset_copy_remove(p, nv)
         return Q;
     }
@@ -1604,18 +1506,11 @@ namespace dagConstruct {
 
             boost::dynamic_bitset<unsigned long> nv(clusterGraph.numNodes());
 
-//            if (startClust.is_subset_of(clusterGraph.getInteractors(neighborsOfBoth[i]))) {
-//                startClust[neighborsOfBoth[i]] = 1; //changed here. Why no ampersand?
-//                updateCliques(clusterGraph, newClustersToAdd, startClust, neighborsOfBoth, neighborsOfBothBits, i + 1, nodeIDsToNames);
-//            }
-
             for (unsigned long v = q.find_first(); v < q.size(); v = q.find_next(v)) {
                 nv = clusterGraph.getInteractors(v);
-//                cout << "hoho" <<endl;
-                p2 = p & nv; //not sure whether this is correct
+                p2 = p & nv;
                 x2 = x & nv;
-                r[v] = 1; // maybe this is wrong and suppose r2?
-//                cout << "hehe" <<endl;
+                r[v] = 1;
                 recur = recur + clique_enum_tomita_apply(clusterGraph, p2, x2, r, nodeIDsToNames, newClustersToAdd);
                 p[v] = 0;
                 r[v] = 0;
@@ -1623,18 +1518,14 @@ namespace dagConstruct {
             }
         }
         else if ((p.count()==0) && (x.count() == 0) ) {
-//            return;
             Utils::insertInOrder(newClustersToAdd, r);
-//            printCluster(r, nodeIDsToNames);
-//            cout << endl;
         }
-//        cout << recur << endl;
         return recur;
     }
 
+    // graph triangulation
     void elinminationGame(graph_undirected_bitset & clusterGraph, graph_undirected_bitset & chordGraph) {
 
-//        graph_undirected_bitset chordGraph(clusterGraph.numNodes());
         graph_undirected_bitset helperGraph(clusterGraph.numNodes());
         unsigned helperEdges = 0;
         //initialize the degree and chordal graph
@@ -1783,15 +1674,15 @@ namespace dagConstruct {
         }
 
         // Make a vector containing all nodes which are neighbors of all nodes contained in the seed cluster (called "Both" but really "All")
-//        vector<unsigned> neighborsOfBoth;
-//        vector<char> neighborsOfBothBits(clusterGraph.numNodes(), 0); // this should be dynamic_bitset as well. Is char more memory friendly?
-//        neighborsOfBoth.reserve(clusterGraph.numNodes());
-//        for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
-//            if ((seedClust[i] == 0) && (seedClust.is_subset_of(clusterGraph.getInteractors(i)))) {
-//                neighborsOfBoth.push_back(i);
-//                neighborsOfBothBits[i] = 1;
-//            }
-//        }
+        vector<unsigned> neighborsOfBoth;
+        vector<char> neighborsOfBothBits(clusterGraph.numNodes(), 0); // this should be dynamic_bitset as well. Is char more memory friendly?
+        neighborsOfBoth.reserve(clusterGraph.numNodes());
+        for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
+            if ((seedClust[i] == 0) && (seedClust.is_subset_of(clusterGraph.getInteractors(i)))) {
+                neighborsOfBoth.push_back(i);
+                neighborsOfBothBits[i] = 1;
+            }
+        }
         boost::dynamic_bitset<unsigned long> neighborsOfBothBits_p(clusterGraph.numNodes(), 0);
 //        boost::dynamic_bitset<unsigned long> neighborsOfBothBits_x(clusterGraph.numNodes());
 
@@ -1806,8 +1697,8 @@ namespace dagConstruct {
 //            printCluster(seedClust, nodeIDsToNames);
 //            cout << endl;
             boost::dynamic_bitset<unsigned long> neighborsOfBothBits_x(clusterGraph.numNodes(), 0);
-//            updateCliques(clusterGraph, newClustersToAdd, seedClust, neighborsOfBoth, neighborsOfBothBits, 0, nodeIDsToNames); //what is changed?
-            recursion += clique_enum_tomita_apply(clusterGraph, neighborsOfBothBits_p, neighborsOfBothBits_x, seedClust, nodeIDsToNames, newClustersToAdd);
+            updateCliques(clusterGraph, newClustersToAdd, seedClust, neighborsOfBoth, neighborsOfBothBits, 0, nodeIDsToNames); //what is changed?
+//            recursion += clique_enum_tomita_apply(clusterGraph, neighborsOfBothBits_p, neighborsOfBothBits_x, seedClust, nodeIDsToNames, newClustersToAdd);
 //            printCluster(seedClust, nodeIDsToNames); //check if seedClust is changed
 //            cout << endl;
             return true;
@@ -1882,31 +1773,18 @@ namespace dagConstruct {
 
             unsigned deleted = 0;
 //            cout <<"# "<< currentClusters.maxClusterID() <<"\t"<< affectedClusters.size() <<endl;
-//            for (unsigned i = 0; i < affectedClusters.size(); ++i) {
-//                if (affectedClusters[i] && currentClusters.isNew(i)) {
-////                    printCluster(currentClusters.getElements(i), nodeIDsToNames);
-////                    cout <<endl;
-//                    if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd, nodeIDsToNames)) {
-//                        // Cluster was not maximal - delete iti
-////                        cout << "Not maximal:" ;
-////                        printCluster(currentClusters.getElements(i), nodeIDsToNames);
-////                        cout <<endl;
-//                        currentClusters.deleteCluster(i, nodeIDsToNames, false);
-//                        ++deleted;
-//                    }
-//                }
-//            }
+
             for (unsigned i = 0; i < affectedClusters.size(); ++i) {
                 if (affectedClusters[i] && currentClusters.isNew(i)) {
 //                    printCluster(currentClusters.getElements(i), nodeIDsToNames);
 //                    cout <<endl;
                     for (unsigned j = 0; j < newClustersToAdd.size(); ++j) {
-                        if (currentClusters.getElements(i).is_subset_of(newClustersToAdd[j])) {
-//                            return true;
-//                        }
-//                    }
-//                    if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd, nodeIDsToNames)) {
-                            // Cluster was not maximal - delete iti
+//                        if (currentClusters.getElements(i).is_subset_of(newClustersToAdd[j])) {
+////                            return true;
+////                        }
+////                    }
+                    if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd, nodeIDsToNames)) {
+//                             // Cluster was not maximal - delete iti
 //                        cout << "Not maximal:" ;
 //                        printCluster(currentClusters.getElements(i), nodeIDsToNames);
 //                        cout <<endl;
@@ -1919,24 +1797,23 @@ namespace dagConstruct {
 
             cout << "# Num of non-maximal clusters deleted here: " << deleted << endl;
 
-//            for ( ; thisRoundCounter < edgesToAddCounter; ++thisRoundCounter) {
-////                if (newEdges[thisRoundCounter] >0) {
-//                boost::dynamic_bitset<unsigned long> seedClust(clusterGraph.numNodes());
-//                seedClust[edgesToAdd[thisRoundCounter].first.first] = 1;
-//                seedClust[edgesToAdd[thisRoundCounter].first.second] = 1;
-//                if (!findClustsWithSeed(seedClust, clusterGraph, newClustersToAdd, nodeIDsToNames)) {
-//                    // seedClust is a maximal clique of just two nodes
-//                    Utils::insertInOrder(newClustersToAdd, seedClust);
-////                    printCluster(seedClust, nodeIDsToNames);
-////                    cout << endl;
-////                    }
-//                }
-//            }
+            for ( ; thisRoundCounter < edgesToAddCounter; ++thisRoundCounter) {
+//                if (newEdges[thisRoundCounter] >0) {
+                boost::dynamic_bitset<unsigned long> seedClust(clusterGraph.numNodes());
+                seedClust[edgesToAdd[thisRoundCounter].first.first] = 1;
+                seedClust[edgesToAdd[thisRoundCounter].first.second] = 1;
+                if (!findClustsWithSeed(seedClust, clusterGraph, newClustersToAdd, nodeIDsToNames)) {
+                    // seedClust is a maximal clique of just two nodes
+                    Utils::insertInOrder(newClustersToAdd, seedClust);
+//                    printCluster(seedClust, nodeIDsToNames);
+//                    cout << endl;
+//                    }
+                }
+            }
 
 
-            chordMaximalCliques(clusterGraph, newClustersToAdd, nodeIDsToNames); //very risky
+//            chordMaximalCliques(clusterGraph, newClustersToAdd, nodeIDsToNames); //very risky
 
-//            cout << inferredEdges.numEdges() << "\t" << clusterGraph.numEdges() << endl;
             cout << "# Found " << newClustersToAdd.size() << " new clusters to add" << endl;
 //            cout << "Current BK recursion count:" << recursion << endl;
 
@@ -1958,7 +1835,7 @@ namespace dagConstruct {
 
             ++edgesToAddCounter; //just for one edge!
         }
-        // just run a plan tomita to compare time of recursion
+        // just run a plain tomita to compare time of recursion
 //        boost::dynamic_bitset<unsigned long> p(clusterGraph.numNodes(), 1);
 //        boost::dynamic_bitset<unsigned long> r(clusterGraph.numNodes(), 0);
 //        boost::dynamic_bitset<unsigned long> x(clusterGraph.numNodes(), 0);
@@ -1983,7 +1860,7 @@ namespace dagConstruct {
     bool combineClusters(vector<pair<pair<unsigned long, unsigned long>, double> > & clustersToCombine,
                          currentClusterClassBitset & currentClusters, graph_undirected_bitset & clusterGraph,
                          unsigned & lastCurrent, vector<string> & nodeIDsToNames,
-                         nodeDistanceObject & nodeDistances, graph_undirected_bitset & realEdges,unsigned & largestCluster) {
+                         nodeDistanceObject & nodeDistances, graph_undirected_bitset & realEdges, unsigned & largestCluster) {
 
         time_t start, end;
         time (&start);
@@ -2034,20 +1911,11 @@ namespace dagConstruct {
             }
         }
 
-//        cout << "# Got all " << edgesToAdd.size() << " edges. ";
-//        time (&end);
-//        dif = difftime(end,start);
-//        cout << "Time elapsed: " << dif << " seconds" << endl;
-//        time (&start);
         if (edgesToAdd.size() == 0) {
             return false;
         }
         updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, largestCluster);
 
-//        cout << "# Added all edges. ";
-//        time (&end);
-//        dif = difftime(end,start);
-//        cout << "Time elapsed: " << dif << " seconds" << endl;
         return true;
     }
 
@@ -2075,10 +1943,10 @@ namespace dagConstruct {
 //                ++clusterbeenchecked;
                 for (unsigned long j = 0; j < maxClusterID; ++j) {
                     if ((j != i) && (currentClusters.numElements(j) != 0) && (!clustersChecked[j]) &&
-                        currentClusters.isNew(j) &&
+//                        currentClusters.isNew(j) && //whether require both compared cluster to be new? That's a good question
                         (currentClusters.getThresh(j) >= currentClusters.getCurWeight())) {
 //                        !clustersChecked[j] && (currentClusters.getThresh(j) >= currentClusters.getCurWeight())) {
-                        if (isMinNodeDegreeMet(i,j,currentClusters,realEdges, density, nodeIDsToNames)) {
+                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames)) {
                             double newEdgeWeight = currentClusters.getClusterWeight(i);
                             if (currentClusters.getClusterWeight(j) < newEdgeWeight) {
                                 newEdgeWeight = currentClusters.getClusterWeight(j);//ewww
@@ -2091,6 +1959,8 @@ namespace dagConstruct {
                 }
             }
         }
+        //now there is no point to recheck; since no alteration on clusterWeight; new clusters have not been added here; merging of new cluster will be considered in the outer cycle
+
 //        cout << "# complete initial combine clusters " << clusterbeenchecked << endl;
 
 //        while (clustersToRecheck.size()) { // this while loop is not problematic (recheck happens seems to due to the weight change)
@@ -2250,7 +2120,7 @@ namespace dagConstruct {
                     bool latesmall = false;
                     double clustWeight = currentClusters.getClusterWeight(*newClusterIt);
 //                    double correction = 0;
-                    if (currentClusters.getElements(*newClusterIt).count() < density * lastLargestCluster) {
+                    if (currentClusters.getElements(*newClusterIt).count() < density * lastLargestCluster) {// is latesmall really helpful?
                         latesmall = true;
 //                        correction = threshold * (log(lastLargestCluster) - log(currentClusters.getElements(*newClusterIt).count()))/log(lastLargestCluster);
 //                        cout << "#" << lastLargestCluster << "\t" << currentClusters.getElements(*newClusterIt).count() << "\t" << correction << endl;
