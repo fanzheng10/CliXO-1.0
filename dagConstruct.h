@@ -863,7 +863,7 @@ public:
                 ++it2;
                 for ( ; it2 != cluster.end(); ++it2) {
                     if (edgesToClusters[*it1][*it2] == 1) {
-                        isNecessary = true;
+                        isNecessary = true; // do I still need this?
                         if (!isThisEdgeExplained(*it1,*it2)) {
                             return true;
                         }
@@ -2037,6 +2037,7 @@ namespace dagConstruct {
 //            unsigned numRealEdgesThisRound = 0;
             vector<pair<pair<unsigned, unsigned>, double> > edgesToAdd;
             edgesToAdd.reserve(10000000); //Fan: whether this will be slow if exceeded?
+
             double addUntil = currentClusters.getNextThresh(); //Fan's understanding: if current clusters have lots of inferred edges (maybe determining threshold), does not go down so much as alpha //should be the lowest edge of this round minus alpha
             if (addUntil > dt) {
                 addUntil = dt;
@@ -2067,7 +2068,10 @@ namespace dagConstruct {
             cout << "# Time elapsed: " << dif << " seconds" << endl;
 
             double last_dt = dt;
-            if (distanceIt != nodeDistances.sortedDistancesEnd()) {
+            if (useChordal) {
+                dt = dt - threshold;
+            }
+            else if (distanceIt != nodeDistances.sortedDistancesEnd()) {
                 dt = distanceIt->second; //dt is already moved to the next level
             } else {
                 dt = 0;
@@ -2127,6 +2131,7 @@ namespace dagConstruct {
                     }
 
                     if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt)) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
+
                         if (!latesmall) {
                             checkForFinal = true; // if not checked for final, keep it around
                             currentClusters.setCheckedFinal(*newClusterIt);
@@ -2136,6 +2141,9 @@ namespace dagConstruct {
                             continue;
                         }
                     } // this piece of code is a little redundant
+                    else if (useChordal){
+                        cout << "Cluster weight not qualified" << endl;
+                    }
 
                     if (currentClusters.checkClusterFinalValidity(*newClusterIt,isNecessary, idsChecked, checkForFinal)) { // think about the condition here
                         //* some big changes here *//
@@ -2144,6 +2152,9 @@ namespace dagConstruct {
                         if ((numUniqueUnexplainedEdges < maxNumUniqueUnexplainedEdges) && (numUniqueUnexplainedEdges < 0.1 * (1-density) * pow(currentClusters.getElements(*newClusterIt).count(),2.0 ))) {//my secret sauce
                             currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
                             continue;
+                            if (useChordal) {
+                                cout << "UnexplainedEdges not qualified" << endl;
+                            }
                         }
                         else if (numUniqueUnexplainedEdges > maxNumUniqueUnexplainedEdges) {
                             maxNumUniqueUnexplainedEdges = numUniqueUnexplainedEdges;
@@ -2164,7 +2175,8 @@ namespace dagConstruct {
                         }
                         currentClusters.setOld(*newClusterIt);//important
                     } else if (!isNecessary) {
-                        currentClusters.deleteCluster(*newClusterIt,nodeIDsToNames,false);
+                        cout << "IsNecessary not qualified" << endl;
+//                        currentClusters.deleteCluster(*newClusterIt,nodeIDsToNames,false);
 
                     } else { // && currentClusters.isNew(*newClusterIt) && !currentClusters.wasNecessary(*newClusterIt) && checkForFinal) {
                         currentClusters.setNecessary(*newClusterIt); //what's the effect of this line, seem to have no effect
