@@ -841,38 +841,38 @@ public:
     // Will return true if cluster is only cluster covering an edge which is not previously explained
     inline bool checkClusterFinalValidity(unsigned long id, bool & isNecessary, vector<char> & idsChecked, bool checkForFinal = true) {
         isNecessary = false;
-        vector<pair<unsigned, unsigned> > unexplainedEdges;
+//        vector<pair<unsigned, unsigned> > unexplainedEdges;
         const vector<unsigned> cluster = currentClusters[id].getElementsVector();
 //        unexplainedEdges.reserve(cluster.size()*(cluster.size()-1)/2);
         idsChecked[id] = 1;
 
         if (!checkForFinal) {
             return false;
-//            for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
-//                vector<unsigned>::const_iterator it2 = it1;
-//                ++it2;
-//                for ( ; it2 != cluster.end(); ++it2) {
-//                    if (edgesToClusters[*it1][*it2] == 1) { // what's the point? will return false anyway
-//                        isNecessary = true;
-//                        return false;
-//                    }
-//                }
-//            }
+            for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
+                vector<unsigned>::const_iterator it2 = it1;
+                ++it2;
+                for ( ; it2 != cluster.end(); ++it2) {
+                    if (edgesToClusters[*it1][*it2] == 1) { // what's the point? will return false anyway
+                        isNecessary = true;
+                        return false;
+                    }
+                }
+            }
         } else {
             for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
                 vector<unsigned>::const_iterator it2 = it1;
                 ++it2;
                 for ( ; it2 != cluster.end(); ++it2) {
-//                    if (edgesToClusters[*it1][*it2] == 1) {
-//                        isNecessary = true; // do I still need this?
-//                        if (!isThisEdgeExplained(*it1,*it2)) {
-//                            return true;
-//                        }
-//                    }
-                    if (!isThisEdgeExplained(*it1,*it2)) {
-                        return true;
-//                        unexplainedEdges.push_back(make_pair(*it1,*it2));
+                    if (edgesToClusters[*it1][*it2] == 1) {
+                        isNecessary = true; // do I still need this?
+                        if (!isThisEdgeExplained(*it1,*it2)) {
+                            return true;
+                        }
                     }
+//                    if (!isThisEdgeExplained(*it1,*it2)) {
+//                        return true;
+////                        unexplainedEdges.push_back(make_pair(*it1,*it2));
+//                    }
                 }
             }
 //            if (checkForFinal && isNecessary) {
@@ -2089,7 +2089,7 @@ namespace dagConstruct {
 
                 vector<unsigned long> newClustersSorted;
                 if (density < 1) {
-//                    performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this (clusterGraph actually not used here, so no worries
+                    performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this (clusterGraph actually not used here, so no worries
 
                     // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
                     cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
@@ -2100,14 +2100,14 @@ namespace dagConstruct {
                     cout << "# Time elapsed: " << dif << " seconds" << endl;
 
                     while (newEdgesAdded == true) { //not sure
-//                        performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
+                        performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
                         newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, nodeDistances, realEdges, largestCluster);
                     }// clusters are iteratively merged here before being output, so resetting nodeDistance has the snowball effect
 
                     currentClusters.sortNewClusters(newClustersSorted);
                 } else {
-                    currentClusters.sortNewClusters(newClustersSorted);
-//                    currentClusters.prepareForValidityCheck(newClustersSorted, realEdges);
+                    currentClusters.prepareForValidityCheck(newClustersSorted, realEdges)
+//                    currentClusters.sortNewClusters(newClustersSorted);
                 }
 
                 time (&end);
