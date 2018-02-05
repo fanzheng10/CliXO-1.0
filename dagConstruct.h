@@ -15,8 +15,9 @@
 #include "boost/dynamic_bitset/dynamic_bitset.hpp"
 
 //can I have global variable here?
-unsigned long recursion;
-unsigned long recursion2;
+//unsigned long recursion;
+//unsigned long recursion2;
+bool useChordal = false;
 
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
     for (unsigned i = 0; i < cluster.size(); ++i) {
@@ -1666,7 +1667,7 @@ namespace dagConstruct {
 
     // Return true if there is a cluster which contains this one.  Return false otherwise, does it check older cliques?
     bool findClustsWithSeed(boost::dynamic_bitset<unsigned long> seedClust, graph_undirected_bitset & clusterGraph,
-                            vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd, vector<string> & nodeIDsToNames) {
+                            vector<boost::dynamic_bitset<unsigned long> > & newClustersToAdd, vector<string> & nodeIDsToNames, bool update) {
         for (unsigned i = 0; i < newClustersToAdd.size(); ++i) {
             if (seedClust.is_subset_of(newClustersToAdd[i])) {
                 return true;
@@ -1683,24 +1684,13 @@ namespace dagConstruct {
                 neighborsOfBothBits[i] = 1;
             }
         }
-        boost::dynamic_bitset<unsigned long> neighborsOfBothBits_p(clusterGraph.numNodes(), 0);
+//        boost::dynamic_bitset<unsigned long> neighborsOfBothBits_p(clusterGraph.numNodes(), 0);
 //        boost::dynamic_bitset<unsigned long> neighborsOfBothBits_x(clusterGraph.numNodes());
 
-        for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
-            if ((seedClust[i] == 0) && (seedClust.is_subset_of(clusterGraph.getInteractors(i)))) {
-                neighborsOfBothBits_p[i] = 1;
-//                neighborsOfBothBits_x[i] = 1;
-            }
-        }
-
-        if (neighborsOfBothBits_p.count() > 0) {
-//            printCluster(seedClust, nodeIDsToNames);
-//            cout << endl;
-            boost::dynamic_bitset<unsigned long> neighborsOfBothBits_x(clusterGraph.numNodes(), 0);
+        if (update && (neighborsOfBoth.size() > 0)) {
+//            boost::dynamic_bitset<unsigned long> neighborsOfBothBits_x(clusterGraph.numNodes(), 0);
             updateCliques(clusterGraph, newClustersToAdd, seedClust, neighborsOfBoth, neighborsOfBothBits, 0, nodeIDsToNames); //what is changed?
 //            recursion += clique_enum_tomita_apply(clusterGraph, neighborsOfBothBits_p, neighborsOfBothBits_x, seedClust, nodeIDsToNames, newClustersToAdd);
-//            printCluster(seedClust, nodeIDsToNames); //check if seedClust is changed
-//            cout << endl;
             return true;
         }
 
@@ -1711,13 +1701,14 @@ namespace dagConstruct {
     void updateClustersWithEdges(vector<pair<pair<unsigned, unsigned>, double> > & edgesToAdd,
                                  currentClusterClassBitset & currentClusters, graph_undirected_bitset & clusterGraph,
                                  nodeDistanceObject & nodeDistances, unsigned & lastCurrent, vector<string> & nodeIDsToNames,
-                                 unsigned & largestCluster) {
+                                 unsigned & largestCluster, bool useChordal) {
 
         cout << "# Adding " << edgesToAdd.size() << " edges" << endl;
         unsigned long edgesToAddCounter = 0;
         if (edgesToAdd.size() != 0) {
             currentClusters.resetAllUnexplained();
         }
+
         while (edgesToAddCounter < edgesToAdd.size()) {// is this while loop useful?
 
             unsigned long thisRoundCounter = edgesToAddCounter;
@@ -1737,82 +1728,86 @@ namespace dagConstruct {
 //                }
             }
 
-            unsigned numAff = 0;
-            for (vector<char>::iterator thisIt = affectedNodes.begin(); thisIt != affectedNodes.end(); ++thisIt) {
-                if (*thisIt) {
-                    ++numAff;
-                }
-            }
-            cout << "# Nodes affected = " << numAff << endl;
+            vector<boost::dynamic_bitset<unsigned long> > newClustersToAdd;
+            newClustersToAdd.reserve(100000); //maybe this is problematic? 5000 not handle human genome size. set to 20000?
+            bool update = true;
 
-            // For each affected node, find all possibly affected clusters
-            // Affected means, the cluster probably can grow with new edges added.
-            // this is probably greedy?
-            vector<char> affectedClusters(currentClusters.maxClusterID(), 0);
+            if (useChordal) {
+                chordMaximalCliques(clusterGraph, newClustersToAdd, nodeIDsToNames);
+                update = false;
 
-            for (unsigned i = 0; i < affectedNodes.size(); ++i) {
-                if (affectedNodes[i]) {
-                    for (vector<unsigned long>::iterator cNodesIt = currentClusters.clustersWithNodeBegin(i);
-                         cNodesIt != currentClusters.clustersWithNodeEnd(i); ++cNodesIt) {
-                        affectedClusters[*cNodesIt] = 1;
+                // need to remove non-maximal cliques from the last round
+                for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
+                    if (currentClusters.isNew(i) && findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd,
+                                                                       nodeIDsToNames, update)) {
+                        currentClusters.deleteCluster(i, nodeIDsToNames, false);
+//                        ++deleted;
                     }
                 }
             }
-
-            numAff = 0;
-            for (vector<char>::iterator thisIt = affectedClusters.begin(); thisIt != affectedClusters.end(); ++thisIt) {
-                if (*thisIt) {
-                    ++numAff;
+            else {
+                unsigned numAff = 0;
+                for (vector<char>::iterator thisIt = affectedNodes.begin(); thisIt != affectedNodes.end(); ++thisIt) {
+                    if (*thisIt) {
+                        ++numAff;
+                    }
                 }
-            }
-            cout << "# Clusters affected = " << numAff << endl;
+                cout << "# Nodes affected = " << numAff << endl;
 
+                // For each affected node, find all possibly affected clusters
+                // Affected means, the cluster probably can grow with new edges added.
+                // this is probably greedy?
+                vector<char> affectedClusters(currentClusters.maxClusterID(), 0);
 
-            vector<boost::dynamic_bitset<unsigned long> > newClustersToAdd;
-            newClustersToAdd.reserve(100000); //maybe this is problematic? 5000 not handle human genome size. set to 20000?
-
-            unsigned deleted = 0;
-//            cout <<"# "<< currentClusters.maxClusterID() <<"\t"<< affectedClusters.size() <<endl;
-
-            for (unsigned i = 0; i < affectedClusters.size(); ++i) {
-                if (affectedClusters[i] && currentClusters.isNew(i)) {
-//                    printCluster(currentClusters.getElements(i), nodeIDsToNames);
-//                    cout <<endl;
-                    for (unsigned j = 0; j < newClustersToAdd.size(); ++j) {
-//                        if (currentClusters.getElements(i).is_subset_of(newClustersToAdd[j])) {
-////                            return true;
-////                        }
-////                    }
-                    if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd, nodeIDsToNames)) {
-//                             // Cluster was not maximal - delete iti
-//                        cout << "Not maximal:" ;
-//                        printCluster(currentClusters.getElements(i), nodeIDsToNames);
-//                        cout <<endl;
-                            currentClusters.deleteCluster(i, nodeIDsToNames, false);
-                            ++deleted;
+                for (unsigned i = 0; i < affectedNodes.size(); ++i) {
+                    if (affectedNodes[i]) {
+                        for (vector<unsigned long>::iterator cNodesIt = currentClusters.clustersWithNodeBegin(i);
+                             cNodesIt != currentClusters.clustersWithNodeEnd(i); ++cNodesIt) {
+                            affectedClusters[*cNodesIt] = 1;
                         }
                     }
                 }
-            }
 
-            cout << "# Num of non-maximal clusters deleted here: " << deleted << endl;
+                numAff = 0;
+                for (vector<char>::iterator thisIt = affectedClusters.begin();
+                     thisIt != affectedClusters.end(); ++thisIt) {
+                    if (*thisIt) {
+                        ++numAff;
+                    }
+                }
+                cout << "# Clusters affected = " << numAff << endl;
 
-            for ( ; thisRoundCounter < edgesToAddCounter; ++thisRoundCounter) {
-//                if (newEdges[thisRoundCounter] >0) {
-                boost::dynamic_bitset<unsigned long> seedClust(clusterGraph.numNodes());
-                seedClust[edgesToAdd[thisRoundCounter].first.first] = 1;
-                seedClust[edgesToAdd[thisRoundCounter].first.second] = 1;
-                if (!findClustsWithSeed(seedClust, clusterGraph, newClustersToAdd, nodeIDsToNames)) {
-                    // seedClust is a maximal clique of just two nodes
-                    Utils::insertInOrder(newClustersToAdd, seedClust);
-//                    printCluster(seedClust, nodeIDsToNames);
-//                    cout << endl;
-//                    }
+
+//            vector<boost::dynamic_bitset<unsigned long> > newClustersToAdd;
+//            newClustersToAdd.reserve(100000); //maybe this is problematic? 5000 not handle human genome size. set to 20000?
+
+                unsigned deleted = 0;
+                //            cout <<"# "<< currentClusters.maxClusterID() <<"\t"<< affectedClusters.size() <<endl;
+
+                for (unsigned i = 0; i < affectedClusters.size(); ++i) {
+                    if (affectedClusters[i] && currentClusters.isNew(i)) {
+                        for (unsigned j = 0; j < newClustersToAdd.size(); ++j) {
+                            if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd,
+                                                   nodeIDsToNames, update)) {
+                                currentClusters.deleteCluster(i, nodeIDsToNames, false);
+                                ++deleted;
+                            }
+                        }
+                    }
+                }
+
+                cout << "# Num of non-maximal clusters deleted here: " << deleted << endl;
+
+                for (; thisRoundCounter < edgesToAddCounter; ++thisRoundCounter) {
+                    boost::dynamic_bitset<unsigned long> seedClust(clusterGraph.numNodes());
+                    seedClust[edgesToAdd[thisRoundCounter].first.first] = 1;
+                    seedClust[edgesToAdd[thisRoundCounter].first.second] = 1;
+                    if (!findClustsWithSeed(seedClust, clusterGraph, newClustersToAdd, nodeIDsToNames, update)) {
+                        // seedClust is a maximal clique of just two nodes
+                        Utils::insertInOrder(newClustersToAdd, seedClust);
+                    }
                 }
             }
-
-
-//            chordMaximalCliques(clusterGraph, newClustersToAdd, nodeIDsToNames); //very risky
 
             cout << "# Found " << newClustersToAdd.size() << " new clusters to add" << endl;
 //            cout << "Current BK recursion count:" << recursion << endl;
@@ -1914,7 +1909,7 @@ namespace dagConstruct {
         if (edgesToAdd.size() == 0) {
             return false;
         }
-        updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, largestCluster);
+        updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, largestCluster, useChordal);
 
         return true;
     }
@@ -2021,7 +2016,7 @@ namespace dagConstruct {
         unsigned numRealEdgesLastRound = 0;
         unsigned maxNumUniqueUnexplainedEdges = 0;
 
-        recursion = 0;
+//        recursion = 0;
 
         vector<string> nodeIDsToNames(nodeNamesToIDs.size(), string(""));
         for (map<string,unsigned>::iterator it = nodeNamesToIDs.begin(); it != nodeNamesToIDs.end(); ++it) {
@@ -2065,7 +2060,7 @@ namespace dagConstruct {
             dif = difftime(end,start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
 
-            updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, largestCluster);//Fani change distanceIt->second to addUntil maybe?
+            updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, largestCluster, useChordal);//Fani change distanceIt->second to addUntil maybe?
 
             time (&end);
             dif = difftime(end,start);
@@ -2078,6 +2073,9 @@ namespace dagConstruct {
                 dt = 0;
             }
             currentClusters.setCurWeight(dt);
+            if ( (!useChordal) && (dif > 10000)) {
+                useChordal = true;
+            }
 
             double maxThresh = currentClusters.getMaxThresh(); // this seems to be redundant, who not check clusters one by one anyway
             if ((maxThresh >= dt) && (numRealEdgesThisRound > numRealEdgesLastRound) && (numRealEdgesThisRound < totalEdges - numRealEdgesAdded)) {
@@ -2119,30 +2117,25 @@ namespace dagConstruct {
                     bool checkForFinal = false;
                     bool latesmall = false;
                     double clustWeight = currentClusters.getClusterWeight(*newClusterIt);
-//                    double correction = 0;
-                    if (currentClusters.getElements(*newClusterIt).count() < density * lastLargestCluster) {// is latesmall really helpful?
+
+
+                    // define late small
+                    double latesmallThres = min( (log(numNodes) - log(currentClusters.getElements(*newClusterIt).count())) / (log(numNodes)-log(2)), lastLargestClusterWeight * (log(numNodes) -log(currentClusters.getElements(*newClusterIt).count())) / (log(numNodes)-log(lastLargestCluster)) );
+//                    cout << latesmallThres << endl;
+                    if (currentClusters.getThresh(*newClusterIt) < latesmallThres ) {
                         latesmall = true;
-//                        correction = threshold * (log(lastLargestCluster) - log(currentClusters.getElements(*newClusterIt).count()))/log(lastLargestCluster);
-//                        cout << "#" << lastLargestCluster << "\t" << currentClusters.getElements(*newClusterIt).count() << "\t" << correction << endl;
-                    }// really strong correction
+                    }
 
                     if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt)) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
-//                        cout << "#" << lastLargestClusterWeight << "\t" << currentClusters.getThresh(*newClusterIt) + threshold << endl;
                         if (!latesmall) {
                             checkForFinal = true; // if not checked for final, keep it around
                             currentClusters.setCheckedFinal(*newClusterIt);
                         }
-                        else if (currentClusters.getThresh(*newClusterIt) + threshold > lastLargestClusterWeight) {
-                            checkForFinal = true; // if not checked for final, keep it around
-                            currentClusters.setCheckedFinal(*newClusterIt);
-//                            cout << "# Rejected" << endl;
+                        else {
+                            currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
+                            continue;
                         }
-//                        else {
-//                            cout << "# Rejected" << endl;
-//                        }
-//                        checkForFinal = true; // if not checked for final, keep it around
-//                        currentClusters.setCheckedFinal(*newClusterIt);
-                    }
+                    } // this piece of code is a little redundant
 
                     if (currentClusters.checkClusterFinalValidity(*newClusterIt,isNecessary, idsChecked, checkForFinal)) { // think about the condition here
                         //* some big changes here *//
