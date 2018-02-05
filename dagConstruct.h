@@ -843,33 +843,35 @@ public:
         isNecessary = false;
         vector<pair<unsigned, unsigned> > unexplainedEdges;
         const vector<unsigned> cluster = currentClusters[id].getElementsVector();
-        unexplainedEdges.reserve(cluster.size()*(cluster.size()-1)/2);
+//        unexplainedEdges.reserve(cluster.size()*(cluster.size()-1)/2);
         idsChecked[id] = 1;
 
         if (!checkForFinal) {
-            for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
-                vector<unsigned>::const_iterator it2 = it1;
-                ++it2;
-                for ( ; it2 != cluster.end(); ++it2) {
-                    if (edgesToClusters[*it1][*it2] == 1) {
-                        isNecessary = true;
-                        return false;
-                    }
-                }
-            }
+            return false;
+//            for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
+//                vector<unsigned>::const_iterator it2 = it1;
+//                ++it2;
+//                for ( ; it2 != cluster.end(); ++it2) {
+//                    if (edgesToClusters[*it1][*it2] == 1) { // what's the point? will return false anyway
+//                        isNecessary = true;
+//                        return false;
+//                    }
+//                }
+//            }
         } else {
             for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
                 vector<unsigned>::const_iterator it2 = it1;
                 ++it2;
                 for ( ; it2 != cluster.end(); ++it2) {
-                    if (edgesToClusters[*it1][*it2] == 1) {
-                        isNecessary = true; // do I still need this?
-                        if (!isThisEdgeExplained(*it1,*it2)) {
-                            return true;
-                        }
-                    }
+//                    if (edgesToClusters[*it1][*it2] == 1) {
+//                        isNecessary = true; // do I still need this?
+//                        if (!isThisEdgeExplained(*it1,*it2)) {
+//                            return true;
+//                        }
+//                    }
                     if (!isThisEdgeExplained(*it1,*it2)) {
-                        unexplainedEdges.push_back(make_pair(*it1,*it2));
+                        return true;
+//                        unexplainedEdges.push_back(make_pair(*it1,*it2));
                     }
                 }
             }
@@ -1820,13 +1822,13 @@ namespace dagConstruct {
                 currentClusters.addCluster(*clustersToAddIt,nodeDistances, nodeIDsToNames, clusterGraph, largestCluster);
             }
 
-            if ((currentClusters.numCurrentClusters() > 4*lastCurrent) || ((currentClusters.numCurrentClusters() > lastCurrent) && ((currentClusters.numCurrentClusters() - lastCurrent) > 1000))) {//invalid clusters are notnecessary. Why doing it now? maybe drop some clusters and free up. So if drop necessary, also need to drop from here.
-                performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
-                lastCurrent = currentClusters.numCurrentClusters();
-                if (lastCurrent < 25) {
-                    lastCurrent = 25;
-                }
-            }
+//            if ((currentClusters.numCurrentClusters() > 4*lastCurrent) || ((currentClusters.numCurrentClusters() > lastCurrent) && ((currentClusters.numCurrentClusters() - lastCurrent) > 1000))) {//invalid clusters are notnecessary. Why doing it now? maybe drop some clusters and free up. So if drop necessary, also need to drop from here.
+//                performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
+//                lastCurrent = currentClusters.numCurrentClusters();
+//                if (lastCurrent < 25) {
+//                    lastCurrent = 25;
+//                }
+//            }
 
             ++edgesToAddCounter; //just for one edge!
         }
@@ -2087,7 +2089,7 @@ namespace dagConstruct {
 
                 vector<unsigned long> newClustersSorted;
                 if (density < 1) {
-                    performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this (clusterGraph actually not used here, so no worries
+//                    performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this (clusterGraph actually not used here, so no worries
 
                     // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
                     cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
@@ -2098,13 +2100,14 @@ namespace dagConstruct {
                     cout << "# Time elapsed: " << dif << " seconds" << endl;
 
                     while (newEdgesAdded == true) { //not sure
-                        performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
+//                        performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
                         newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, nodeDistances, realEdges, largestCluster);
                     }// clusters are iteratively merged here before being output, so resetting nodeDistance has the snowball effect
 
                     currentClusters.sortNewClusters(newClustersSorted);
                 } else {
-                    currentClusters.prepareForValidityCheck(newClustersSorted, realEdges);
+                    currentClusters.sortNewClusters(newClustersSorted);
+//                    currentClusters.prepareForValidityCheck(newClustersSorted, realEdges);
                 }
 
                 time (&end);
@@ -2175,7 +2178,9 @@ namespace dagConstruct {
                         }
                         currentClusters.setOld(*newClusterIt);//important
                     } else if (!isNecessary) {
-                        cout << "IsNecessary not qualified" << endl;
+                        if (useChordal) {
+                            cout << "IsNecessary not qualified" << endl;
+                        }
 //                        currentClusters.deleteCluster(*newClusterIt,nodeIDsToNames,false);
 
                     } else { // && currentClusters.isNew(*newClusterIt) && !currentClusters.wasNecessary(*newClusterIt) && checkForFinal) {
