@@ -1664,7 +1664,7 @@ namespace dagConstruct {
                 }
             }
         }
-        clusterGraph = chordGraph;
+//        clusterGraph = chordGraph;
     }
 
     // Return true if there is a cluster which contains this one.  Return false otherwise, does it check older cliques?
@@ -1822,13 +1822,13 @@ namespace dagConstruct {
                 currentClusters.addCluster(*clustersToAddIt,nodeDistances, nodeIDsToNames, clusterGraph, largestCluster);
             }
 
-//            if ((currentClusters.numCurrentClusters() > 4*lastCurrent) || ((currentClusters.numCurrentClusters() > lastCurrent) && ((currentClusters.numCurrentClusters() - lastCurrent) > 1000))) {//invalid clusters are notnecessary. Why doing it now? maybe drop some clusters and free up. So if drop necessary, also need to drop from here.
-//                performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
-//                lastCurrent = currentClusters.numCurrentClusters();
-//                if (lastCurrent < 25) {
-//                    lastCurrent = 25;
-//                }
-//            }
+            if ((currentClusters.numCurrentClusters() > 4*lastCurrent) || ((currentClusters.numCurrentClusters() > lastCurrent) && ((currentClusters.numCurrentClusters() - lastCurrent) > 1000))) {//invalid clusters are notnecessary. Why doing it now? maybe drop some clusters and free up. So if drop necessary, also need to drop from here.
+                performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
+                lastCurrent = currentClusters.numCurrentClusters();
+                if (lastCurrent < 25) {
+                    lastCurrent = 25;
+                }
+            }
 
             ++edgesToAddCounter; //just for one edge!
         }
@@ -2017,6 +2017,7 @@ namespace dagConstruct {
         unsigned numRealEdgesThisRound = 0;
         unsigned numRealEdgesLastRound = 0;
         unsigned maxNumUniqueUnexplainedEdges = 0;
+        unsigned clusterGraphlastRoundEdges = 0;
 
 //        recursion = 0;
 
@@ -2079,12 +2080,13 @@ namespace dagConstruct {
                 dt = 0;
             }
             currentClusters.setCurWeight(dt);
-            if ( (!useChordal) && (dif > 10000)) {
+//            if ( (!useChordal) && (numRealEdgesAdded > 0.1 * totalEdges) ) {
+            if ( (!useChordal) && (numRealEdgesAdded > 0.1*totalEdges) && (dif > 10000)) {
                 useChordal = true;
             }
 
             double maxThresh = currentClusters.getMaxThresh(); // this seems to be redundant, who not check clusters one by one anyway
-            if ((maxThresh >= dt) && (numRealEdgesThisRound > numRealEdgesLastRound) && (numRealEdgesThisRound < totalEdges - numRealEdgesAdded)) {
+            if ((maxThresh >= dt) && (numRealEdgesThisRound > numRealEdgesLastRound) && (clusterGraphlastRoundEdges  < totalEdges - clusterGraph.numEdges())) {// this may need to change
                 unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
 
                 vector<unsigned long> newClustersSorted;
@@ -2106,7 +2108,7 @@ namespace dagConstruct {
 
                     currentClusters.sortNewClusters(newClustersSorted);
                 } else {
-                    currentClusters.prepareForValidityCheck(newClustersSorted, realEdges)
+                    currentClusters.prepareForValidityCheck(newClustersSorted, realEdges);
 //                    currentClusters.sortNewClusters(newClustersSorted);
                 }
 
@@ -2144,9 +2146,9 @@ namespace dagConstruct {
                             continue;
                         }
                     } // this piece of code is a little redundant
-                    else if (useChordal){
-                        cout << "Cluster weight not qualified" << endl;
-                    }
+//                    else if (useChordal){
+////                        cout << "# Cluster weight not qualified" << endl;
+//                    }
 
                     if (currentClusters.checkClusterFinalValidity(*newClusterIt,isNecessary, idsChecked, checkForFinal)) { // think about the condition here
                         //* some big changes here *//
@@ -2154,10 +2156,10 @@ namespace dagConstruct {
                         unsigned numUniqueUnexplainedEdges = currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt);
                         if ((numUniqueUnexplainedEdges < maxNumUniqueUnexplainedEdges) && (numUniqueUnexplainedEdges < 0.1 * (1-density) * pow(currentClusters.getElements(*newClusterIt).count(),2.0 ))) {//my secret sauce
                             currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
+//                            if (useChordal) {
+//                                cout << "# UnexplainedEdges not qualified" << endl;
+//                            }
                             continue;
-                            if (useChordal) {
-                                cout << "UnexplainedEdges not qualified" << endl;
-                            }
                         }
                         else if (numUniqueUnexplainedEdges > maxNumUniqueUnexplainedEdges) {
                             maxNumUniqueUnexplainedEdges = numUniqueUnexplainedEdges;
@@ -2178,10 +2180,10 @@ namespace dagConstruct {
                         }
                         currentClusters.setOld(*newClusterIt);//important
                     } else if (!isNecessary) {
-                        if (useChordal) {
-                            cout << "IsNecessary not qualified" << endl;
-                        }
-//                        currentClusters.deleteCluster(*newClusterIt,nodeIDsToNames,false);
+//                        if (useChordal) {
+//                            cout << "# IsNecessary not qualified" << endl;
+//                        }
+                        currentClusters.deleteCluster(*newClusterIt,nodeIDsToNames,false);
 
                     } else { // && currentClusters.isNew(*newClusterIt) && !currentClusters.wasNecessary(*newClusterIt) && checkForFinal) {
                         currentClusters.setNecessary(*newClusterIt); //what's the effect of this line, seem to have no effect
@@ -2210,6 +2212,7 @@ namespace dagConstruct {
 
                 numRealEdgesLastRound = numRealEdgesThisRound;
                 numRealEdgesThisRound = 0;
+                clusterGraphlastRoundEdges = clusterGraph.numEdges();
             }
         } //Fan: while loop ends here
 
