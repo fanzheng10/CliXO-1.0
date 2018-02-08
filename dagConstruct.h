@@ -2064,6 +2064,9 @@ namespace dagConstruct {
             dif = difftime(end,start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
 
+            if ( (!useChordal) && (numRealEdgesAdded > 0.05*totalEdges) && (dif > 10000)) {
+                useChordal = true;
+            }
             updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, largestCluster, useChordal);//Fani change distanceIt->second to addUntil maybe?
 
             time (&end);
@@ -2081,9 +2084,9 @@ namespace dagConstruct {
             }
             currentClusters.setCurWeight(dt);
 //            if ( (!useChordal) && (numRealEdgesAdded > 0.1 * totalEdges) ) {
-            if ( (!useChordal) && (numRealEdgesAdded > 0.1*totalEdges) && (dif > 10000)) {
-                useChordal = true;
-            }
+//            if ( (!useChordal) && (numRealEdgesAdded > 0.05*totalEdges) && (dif > 10000)) {
+//                useChordal = true;
+//            }
 
             double maxThresh = currentClusters.getMaxThresh(); // this seems to be redundant, who not check clusters one by one anyway
             if ((maxThresh >= dt) && (numRealEdgesThisRound > numRealEdgesLastRound) && (clusterGraphlastRoundEdges  < totalEdges - clusterGraph.numEdges())) {// this may need to change
