@@ -550,13 +550,17 @@ public:
     /*inline*/ void setClusterValid(const boost::dynamic_bitset<unsigned long> & cluster, graph_undirected_bitset & clusterGraph) {
         vector<unsigned> clusterElems;
         clusterElems.reserve(cluster.size());
+//        cout << "Debug:";
         for (unsigned i = cluster.find_first(); i < cluster.size(); i = cluster.find_next(i)) {
             clusterElems.push_back(i);
+//            cout << i << " ";
         }
+//        cout << endl;
         for (unsigned i = 0; i < clusterElems.size()-1;  ++i) {
             for (unsigned j = i+1; j < clusterElems.size(); ++j) {
-                if (clusterGraph.isEdge(i,j))
+                if (clusterGraph.isEdge(clusterElems[i], clusterElems[j])) //used to be a bug
                 {
+//                    cout << i << " " << j << endl;
                     setEdgeExplained(clusterElems[i], clusterElems[j]);
                 }
             }
@@ -2134,7 +2138,7 @@ namespace dagConstruct {
                     // define late small
                     double latesmallThres = min( (log(numNodes) - log(currentClusters.getElements(*newClusterIt).count())) / (log(numNodes)-log(2)), lastLargestClusterWeight * (log(numNodes) -log(currentClusters.getElements(*newClusterIt).count())) / (log(numNodes)-log(lastLargestCluster)) );
 //                    cout << latesmallThres << endl;
-                    if (currentClusters.getThresh(*newClusterIt) < latesmallThres ) {
+                    if (currentClusters.getThresh(*newClusterIt) < latesmallThres -0.2 ) {
                         latesmall = true;
                     }
 
@@ -2182,6 +2186,15 @@ namespace dagConstruct {
                             largestClusterWeight = currentClusters.getThresh(*newClusterIt) +threshold;
                         }
                         currentClusters.setOld(*newClusterIt);//important
+
+//                        cout << "Debug: ";
+//                        vector<int> v ={3932, 6896, 6897, 6898, 6900, 6901, 6902, 6904, 6906};
+//                        for (int z=0; z < v.size()-1; ++z) {
+//                            for (int z2=z+1; z2<v.size(); ++z2) {
+//                                cout << v[z] << "\t" << v[z2] << "\t" << clusterGraph.isEdge(v[z], v[z2]) << currentClusters.isThisEdgeExplained(v[z], v[z2]) << endl;
+//                            }
+//                        }
+
                     } else if (!isNecessary) {
 //                        if (useChordal) {
 //                            cout << "# IsNecessary not qualified" << endl;
