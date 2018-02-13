@@ -17,7 +17,7 @@
 //can I have global variable here?
 //unsigned long recursion;
 //unsigned long recursion2;
-bool useChordal = false;
+bool useChordal = true;
 
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
     for (unsigned i = 0; i < cluster.size(); ++i) {
@@ -1530,6 +1530,26 @@ namespace dagConstruct {
         return recur;
     }
 
+    // experimental: clustering coefficient
+    double clusterCoefficient(boost::dynamic_bitset<unsigned long> & interactors, graph_undirected_bitset & graph) {
+        double cc = 0;
+        unsigned numEdges = 0;
+        double denom = interactors.count() * (interactors.count()-1) /2;
+        if (denom < 1) {
+            return 0;
+        }
+        for (unsigned i = interactors.find_first(); i < interactors.size()-1; i = interactors.find_next(i)) {
+            for (unsigned j = interactors.find_next(i); j < interactors.size(); j = interactors.find_next(j)) {
+                if (graph.isEdge(i, j)) {
+                    ++numEdges;
+                }
+            }
+        }
+        cc = numEdges / denom;
+        return cc;
+    }
+
+
     // graph triangulation
     void elinminationGame(graph_undirected_bitset & clusterGraph, graph_undirected_bitset & chordGraph) {
 
@@ -1548,22 +1568,37 @@ namespace dagConstruct {
 
         for (unsigned k = 0; k < clusterGraph.numNodes(); k++) { // this is n^3 in worst case
             //choose a v
-            unsigned long mindegV = 0;
+            unsigned long pivotV = 0;
             unsigned long mindeg = clusterGraph.numNodes();
+
+            double maxclustCoef = 0;
 
             for (unsigned long v = 0;  v < clusterGraph.numNodes(); ++v) {
                 if (!removed[v]) {
-                    unsigned long deg = helperGraph.getInteractors(v).count();
-                    if ((deg >=2) && (deg < mindeg)) {
-                        mindeg = deg;
-                        mindegV = v;
+//                    unsigned long deg = helperGraph.getInteractors(v).count();
+//                    if ((deg >=2) && (deg < mindeg)) {
+//                        mindeg = deg;
+//                        pivotV = v;
+//                    }
+
+
+                    // test a new unit, sorted by cluster coefficient. Will this be too slow?
+                    boost::dynamic_bitset<unsigned long>  interactors = helperGraph.getInteractors(v);
+                    double clustCoef = clusterCoefficient(interactors, helperGraph);
+                    if ((interactors.count() >= 2)  && (clustCoef > maxclustCoef)) {
+                        maxclustCoef = clustCoef;
+                        pivotV = v;
                     }
                 }
             }
-            boost::dynamic_bitset<unsigned long> nv = helperGraph.getInteractors(mindegV);
-            if (nv.count() < 2) {
+            boost::dynamic_bitset<unsigned long> nv = helperGraph.getInteractors(pivotV);
+//            if (nv.count() < 2) {
+//                break;
+//            }
+            if (maxclustCoef < 0.5) {
                 break;
             }
+
 //            cout << nv.count() <<endl;
             for (unsigned long i = nv.find_first(); i < nv.size() -1; i = nv.find_next(i)) {  // a little worried
                 for (unsigned long j = nv.find_next(i); j < nv.size(); j = nv.find_next(j)) {
@@ -1576,11 +1611,22 @@ namespace dagConstruct {
                 }
             }
             // delete mindegV from helperGraph
-            removed[mindegV] = 1;
+            removed[pivotV] = 1;
             for (unsigned long i = nv.find_first(); i < nv.size(); i = nv.find_next(i) ) {
-                helperGraph.removeEdge(i, mindegV);
+                helperGraph.removeEdge(i, pivotV);
             }
         }
+
+        // remove those not meeting maxClustCoef criteria
+        for (unsigned long i = 0; i < removed.size(); ++i) {
+            if (!removed[i]) {
+                boost::dynamic_bitset<unsigned long> nv = chordGraph.getInteractors(i);
+                for (unsigned long j= nv.find_first(); j < nv.size(); j = nv.find_next(j) ) {
+                    chordGraph.removeEdge(i, j);
+                }
+            }
+        }
+
         cout << "# " << helperEdges << " added during triangulation; Originally has " << clusterGraph.numEdges() << " edges" << endl;
     }
 
@@ -1742,7 +1788,7 @@ namespace dagConstruct {
                 chordMaximalCliques(clusterGraph, newClustersToAdd, nodeIDsToNames);
                 update = false;
 
-                // need to remove non-maximal cliques from the last round
+                // need to remove non-maximal cliques from the last round (consider that)
                 for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
                     if (currentClusters.isNew(i) && findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd,
                                                                        nodeIDsToNames, update)) {
@@ -2068,7 +2114,7 @@ namespace dagConstruct {
             dif = difftime(end,start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
 
-            if ( (!useChordal) && (numRealEdgesAdded > 0.05*totalEdges) && (dif > 10000)) {
+            if ( (!useChordal) && (dif > 10000)) {
                 useChordal = true;
             }
             updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, largestCluster, useChordal);//Fani change distanceIt->second to addUntil maybe?
@@ -2093,6 +2139,7 @@ namespace dagConstruct {
 //            }
 
             double maxThresh = currentClusters.getMaxThresh(); // this seems to be redundant, who not check clusters one by one anyway
+            cout << "# MaxThresh this round: " << maxThresh << endl;
             if ((maxThresh >= dt) && (numRealEdgesThisRound > numRealEdgesLastRound) && (clusterGraphlastRoundEdges  < totalEdges - clusterGraph.numEdges())) {// this may need to change
                 unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
 
