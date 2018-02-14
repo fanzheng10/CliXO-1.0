@@ -17,7 +17,8 @@
 //can I have global variable here?
 //unsigned long recursion;
 //unsigned long recursion2;
-bool useChordal = true;
+bool useChordal = false;
+bool globalDensity = 1.0;
 
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
     for (unsigned i = 0; i < cluster.size(); ++i) {
@@ -979,6 +980,7 @@ public:
         vector <double> newEdgeWeights;//changed; actually doesn't have to be new
         newEdgeWeights.reserve(100000);
         unsigned nNewEdges = 0;
+        double sumNewEdgeWeights = 0;
         const vector<unsigned> cluster = currentClusters[id].getElementsVector();
         for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
             vector<unsigned>::const_iterator it2 = it1;
@@ -992,6 +994,7 @@ public:
 //                        minWeight = thisDistance;
 //                    }
                     newEdgeWeights.push_back(thisDistance);
+                    sumNewEdgeWeights = sumNewEdgeWeights + thisDistance;
                     nNewEdges++;
                 }
             }
@@ -1546,6 +1549,7 @@ namespace dagConstruct {
             }
         }
         cc = numEdges / denom;
+//        cout << cc << " ";
         return cc;
     }
 
@@ -1554,50 +1558,68 @@ namespace dagConstruct {
     void elinminationGame(graph_undirected_bitset & clusterGraph, graph_undirected_bitset & chordGraph) {
 
         graph_undirected_bitset helperGraph(clusterGraph.numNodes());
+        boost::dynamic_bitset<unsigned long> removed(clusterGraph.numNodes());
+
         unsigned helperEdges = 0;
+
+        //filter by cluster coeffcient
+        for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
+            boost::dynamic_bitset<unsigned long>  ni = clusterGraph.getInteractors(i);
+            double clustCoef = clusterCoefficient(ni, clusterGraph);
+//            cout << clustCoef << endl;
+            if (clustCoef < globalDensity) {
+                removed[i] = 1;
+            }
+        }
+        cout << "# " << removed.count() << "removed by cluster coefficient filters" << endl;
+
         //initialize the degree and chordal graph
         for (unsigned i = 0; i < clusterGraph.numNodes()-1; ++i) {
             for (unsigned j = i+1; j < clusterGraph.numNodes(); ++j) {
-                if (clusterGraph.isEdge(i, j)) {
+                if ((!removed[i]) && (!removed[j]) && clusterGraph.isEdge(i, j)) {
                     chordGraph.addEdge(i, j);
                     helperGraph.addEdge(i, j);
                 }
             }
         }
-        boost::dynamic_bitset<unsigned long> removed(clusterGraph.numNodes());
+//        boost::dynamic_bitset<unsigned long> removed(clusterGraph.numNodes());
 
         for (unsigned k = 0; k < clusterGraph.numNodes(); k++) { // this is n^3 in worst case
             //choose a v
             unsigned long pivotV = 0;
             unsigned long mindeg = clusterGraph.numNodes();
 
-            double maxclustCoef = 0;
+//            double maxclustCoef = 0;
 
             for (unsigned long v = 0;  v < clusterGraph.numNodes(); ++v) {
+//                cout << v << endl;
                 if (!removed[v]) {
-//                    unsigned long deg = helperGraph.getInteractors(v).count();
-//                    if ((deg >=2) && (deg < mindeg)) {
-//                        mindeg = deg;
-//                        pivotV = v;
-//                    }
+                    unsigned long deg = helperGraph.getInteractors(v).count();
+                    if ((deg >=2) && (deg < mindeg)) {
+                        mindeg = deg;
+                        pivotV = v;
+                    }
 
 
                     // test a new unit, sorted by cluster coefficient. Will this be too slow?
-                    boost::dynamic_bitset<unsigned long>  interactors = helperGraph.getInteractors(v);
-                    double clustCoef = clusterCoefficient(interactors, helperGraph);
-                    if ((interactors.count() >= 2)  && (clustCoef > maxclustCoef)) {
-                        maxclustCoef = clustCoef;
-                        pivotV = v;
-                    }
+//                    boost::dynamic_bitset<unsigned long>  interactors = helperGraph.getInteractors(v);
+//                    double clustCoef = clusterCoefficient(interactors, helperGraph);
+//                    cout << clustCoef << endl;
+//                    if ((interactors.count() >= 2)  && (clustCoef > maxclustCoef)) {
+//                        maxclustCoef = clustCoef;
+//                        pivotV = v;
+//                    }
                 }
             }
+//            cout << pivotV << endl;
+//            cout << removed[pivotV] << " " << mindeg << endl;
             boost::dynamic_bitset<unsigned long> nv = helperGraph.getInteractors(pivotV);
-//            if (nv.count() < 2) {
-//                break;
-//            }
-            if (maxclustCoef < 0.5) {
+            if (nv.count() < 2) {
                 break;
             }
+//            if (maxclustCoef < 0.5) {
+//                break;
+//            }
 
 //            cout << nv.count() <<endl;
             for (unsigned long i = nv.find_first(); i < nv.size() -1; i = nv.find_next(i)) {  // a little worried
@@ -1618,14 +1640,14 @@ namespace dagConstruct {
         }
 
         // remove those not meeting maxClustCoef criteria
-        for (unsigned long i = 0; i < removed.size(); ++i) {
-            if (!removed[i]) {
-                boost::dynamic_bitset<unsigned long> nv = chordGraph.getInteractors(i);
-                for (unsigned long j= nv.find_first(); j < nv.size(); j = nv.find_next(j) ) {
-                    chordGraph.removeEdge(i, j);
-                }
-            }
-        }
+//        for (unsigned long i = 0; i < removed.size(); ++i) {
+//            if (!removed[i]) {
+//                boost::dynamic_bitset<unsigned long> nv = chordGraph.getInteractors(i);
+//                for (unsigned long j= nv.find_first(); j < nv.size(); j = nv.find_next(j) ) {
+//                    chordGraph.removeEdge(i, j);
+//                }
+//            }
+//        }
 
         cout << "# " << helperEdges << " added during triangulation; Originally has " << clusterGraph.numEdges() << " edges" << endl;
     }
@@ -1661,7 +1683,7 @@ namespace dagConstruct {
         vector<unsigned long> sigma(clusterGraph.numNodes());
         //triangulate clusterGraph; do this in a copy called chordGraph
         graph_undirected_bitset chordGraph(clusterGraph.numNodes());
-
+        cout << "# Start elimination game:" << endl;
         elinminationGame(clusterGraph, chordGraph);
         cout << "# Finish triangulation" << endl;
         maximumCardinalitySearch(chordGraph, sigma); // get elimination order
@@ -1961,6 +1983,10 @@ namespace dagConstruct {
         if (edgesToAdd.size() == 0) {
             return false;
         }
+        if ( (!useChordal) && (edgesToAdd.size()> 500000)) {
+            useChordal = true;
+            cout << "# Start the chordal phase: " << endl;
+        }
         updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, largestCluster, useChordal);
 
         return true;
@@ -2070,6 +2096,7 @@ namespace dagConstruct {
         unsigned clusterGraphlastRoundEdges = 0;
 
 //        recursion = 0;
+        globalDensity = density;
 
         vector<string> nodeIDsToNames(nodeNamesToIDs.size(), string(""));
         for (map<string,unsigned>::iterator it = nodeNamesToIDs.begin(); it != nodeNamesToIDs.end(); ++it) {
@@ -2114,8 +2141,9 @@ namespace dagConstruct {
             dif = difftime(end,start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
 
-            if ( (!useChordal) && (dif > 10000)) {
+            if ( (!useChordal) && (edgesToAdd.size()> 800000)) {
                 useChordal = true;
+                cout << "# Start the chordal phase: " << endl;
             }
             updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, lastCurrent, nodeIDsToNames, largestCluster, useChordal);//Fani change distanceIt->second to addUntil maybe?
 
