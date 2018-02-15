@@ -18,7 +18,7 @@
 //unsigned long recursion;
 //unsigned long recursion2;
 bool useChordal = false;
-bool globalDensity = 1.0;
+double globalDensity = 1.0;
 
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
     for (unsigned i = 0; i < cluster.size(); ++i) {
@@ -1571,7 +1571,7 @@ namespace dagConstruct {
                 removed[i] = 1;
             }
         }
-        cout << "# " << removed.count() << "removed by cluster coefficient filters" << endl;
+        cout << "# " << removed.count() << " removed by cluster coefficient filters" << endl;
 
         //initialize the degree and chordal graph
         for (unsigned i = 0; i < clusterGraph.numNodes()-1; ++i) {
@@ -1736,7 +1736,7 @@ namespace dagConstruct {
                 }
             }
         }
-//        clusterGraph = chordGraph;
+        clusterGraph = chordGraph;
     }
 
     // Return true if there is a cluster which contains this one.  Return false otherwise, does it check older cliques?
@@ -2172,8 +2172,8 @@ namespace dagConstruct {
                 unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
 
                 vector<unsigned long> newClustersSorted;
-                if (density < 1) {
-                    performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this (clusterGraph actually not used here, so no worries
+                if ((density < 1) && (!useChordal)) {
+                    performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this (clusterGraph actually not used here, so no worries
 
                     // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
                     cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
@@ -2190,7 +2190,7 @@ namespace dagConstruct {
 
                     currentClusters.sortNewClusters(newClustersSorted);
                 } else {
-                    currentClusters.prepareForValidityCheck(newClustersSorted, realEdges);
+                    currentClusters.prepareForValidityCheck(newClustersSorted, clusterGraph);
 //                    currentClusters.sortNewClusters(newClustersSorted);
                 }
 
@@ -2217,7 +2217,7 @@ namespace dagConstruct {
                         latesmall = true;
                     }
 
-                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt)) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
+                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt - threshold * double(useChordal))) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
 
                         if (!latesmall) {
                             checkForFinal = true; // if not checked for final, keep it around
@@ -2229,18 +2229,22 @@ namespace dagConstruct {
                         }
                     } // this piece of code is a little redundant
 //                    else if (useChordal){
-////                        cout << "# Cluster weight not qualified" << endl;
+//                        cout << "# Cluster weight not qualified" << endl;
 //                    }
 
                     if (currentClusters.checkClusterFinalValidity(*newClusterIt,isNecessary, idsChecked, checkForFinal)) { // think about the condition here
                         //* some big changes here *//
                         currentClusters.setNumUniquelyUnexplainedEdges(*newClusterIt);
                         unsigned numUniqueUnexplainedEdges = currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt);
-                        if ((numUniqueUnexplainedEdges < maxNumUniqueUnexplainedEdges) && (numUniqueUnexplainedEdges < 0.1 * (1-density) * pow(currentClusters.getElements(*newClusterIt).count(),2.0 ))) {//my secret sauce
+                        if ((numUniqueUnexplainedEdges < maxNumUniqueUnexplainedEdges) && (numUniqueUnexplainedEdges < 0.1 * (1-density) * pow(currentClusters.getElements(*newClusterIt).count(), 2.0 ) ) ) {//my secret sauce
                             currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
 //                            if (useChordal) {
 //                                cout << "# UnexplainedEdges not qualified" << endl;
 //                            }
+                            continue;
+                        }
+                        else if (useChordal && (currentClusters.getElements(*newClusterIt).count() < lastLargestCluster/2.0)) {
+                            currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
                             continue;
                         }
                         else if (numUniqueUnexplainedEdges > maxNumUniqueUnexplainedEdges) {

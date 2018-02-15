@@ -12,10 +12,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo" afterPath="$PROJECT_DIR$/clixo" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo.o" afterPath="$PROJECT_DIR$/clixo.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG" afterPath="$PROJECT_DIR$/clustersToDAG" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG.o" afterPath="$PROJECT_DIR$/clustersToDAG.o" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dagConstruct.h" afterPath="$PROJECT_DIR$/dagConstruct.h" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -36,8 +32,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="382">
-              <caret line="2023" column="55" lean-forward="false" selection-start-line="2023" selection-start-column="55" selection-end-line="2023" selection-end-column="55" />
+            <state relative-caret-position="332">
+              <caret line="1738" column="28" lean-forward="false" selection-start-line="1738" selection-start-column="28" selection-end-line="1738" selection-end-column="28" />
               <folding />
             </state>
           </provider>
@@ -86,8 +82,8 @@
       <file leaf-file-name="util.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/util.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="697">
-              <caret line="41" column="23" lean-forward="false" selection-start-line="41" selection-start-column="23" selection-end-line="41" selection-end-column="23" />
+            <state relative-caret-position="276">
+              <caret line="77" column="23" lean-forward="false" selection-start-line="77" selection-start-column="23" selection-end-line="77" selection-end-column="23" />
               <folding />
             </state>
           </provider>
@@ -150,8 +146,8 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="-1697" />
-    <option name="y" value="130" />
+    <option name="x" value="-1586" />
+    <option name="y" value="59" />
     <option name="width" value="1547" />
     <option name="height" value="932" />
   </component>
@@ -482,7 +478,7 @@
       <workItem from="1517436225334" duration="576000" />
       <workItem from="1517620862119" duration="27232000" />
       <workItem from="1518478040413" duration="9806000" />
-      <workItem from="1518542571396" duration="10571000" />
+      <workItem from="1518542571396" duration="17626000" />
     </task>
     <task id="LOCAL-00001" summary="altered density">
       <created>1501882926753</created>
@@ -495,7 +491,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="284114000" />
+    <option name="totallyTimeSpent" value="291169000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -507,7 +503,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1697" y="130" width="1547" height="932" extended-state="0" />
+    <frame x="-1586" y="59" width="1547" height="932" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13380738" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -545,7 +541,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="4" />
+      <option name="time" value="5" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -871,14 +867,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/boost.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/clique_tomita.h" />
     <entry file="file://$PROJECT_DIR$/clique_tomita.c" />
     <entry file="file://$PROJECT_DIR$/intset.dense.h" />
@@ -886,14 +874,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="12291">
           <caret line="723" column="0" lean-forward="false" selection-start-line="723" selection-start-column="0" selection-end-line="723" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/util.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="697">
-          <caret line="41" column="23" lean-forward="false" selection-start-line="41" selection-start-column="23" selection-end-line="41" selection-end-column="23" />
           <folding />
         </state>
       </provider>
@@ -922,10 +902,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/boost.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="276">
+          <caret line="77" column="23" lean-forward="false" selection-start-line="77" selection-start-column="23" selection-end-line="77" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="382">
-          <caret line="2023" column="55" lean-forward="false" selection-start-line="2023" selection-start-column="55" selection-end-line="2023" selection-end-column="55" />
+        <state relative-caret-position="332">
+          <caret line="1738" column="28" lean-forward="false" selection-start-line="1738" selection-start-column="28" selection-end-line="1738" selection-end-column="28" />
           <folding />
         </state>
       </provider>
