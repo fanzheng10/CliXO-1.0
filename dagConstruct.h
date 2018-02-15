@@ -1628,6 +1628,7 @@ namespace dagConstruct {
                     if (!helperGraph.isEdge(i, j)){
                         helperGraph.addEdge(i, j);
                         chordGraph.addEdge(i, j);
+                        clusterGraph.addEdge(i, j);
                         ++helperEdges; // this maybe time consuming step
                     }
                 }
@@ -1736,7 +1737,7 @@ namespace dagConstruct {
                 }
             }
         }
-        clusterGraph = chordGraph;
+//        clusterGraph = chordGraph;
     }
 
     // Return true if there is a cluster which contains this one.  Return false otherwise, does it check older cliques?
@@ -2141,7 +2142,7 @@ namespace dagConstruct {
             dif = difftime(end,start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
 
-            if ( (!useChordal) && (edgesToAdd.size()> 800000)) {
+            if ( (!useChordal) && ( (edgesToAdd.size()> 200000) || (numRealEdgesAdded > 500000))) {
                 useChordal = true;
                 cout << "# Start the chordal phase: " << endl;
             }

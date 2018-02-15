@@ -32,8 +32,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="332">
-              <caret line="1738" column="28" lean-forward="false" selection-start-line="1738" selection-start-column="28" selection-end-line="1738" selection-end-column="28" />
+            <state relative-caret-position="325">
+              <caret line="2234" column="0" lean-forward="false" selection-start-line="2234" selection-start-column="0" selection-end-line="2234" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -478,7 +478,7 @@
       <workItem from="1517436225334" duration="576000" />
       <workItem from="1517620862119" duration="27232000" />
       <workItem from="1518478040413" duration="9806000" />
-      <workItem from="1518542571396" duration="17626000" />
+      <workItem from="1518542571396" duration="19188000" />
     </task>
     <task id="LOCAL-00001" summary="altered density">
       <created>1501882926753</created>
@@ -491,7 +491,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="291169000" />
+    <option name="totallyTimeSpent" value="292731000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -541,7 +541,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="5" />
+      <option name="time" value="6" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -920,8 +920,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="332">
-          <caret line="1738" column="28" lean-forward="false" selection-start-line="1738" selection-start-column="28" selection-end-line="1738" selection-end-column="28" />
+        <state relative-caret-position="325">
+          <caret line="2234" column="0" lean-forward="false" selection-start-line="2234" selection-start-column="0" selection-end-line="2234" selection-end-column="0" />
           <folding />
         </state>
       </provider>
