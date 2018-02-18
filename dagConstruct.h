@@ -2218,7 +2218,7 @@ namespace dagConstruct {
                         latesmall = true;
                     }
 
-                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt - threshold * double(useChordal))) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
+                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt * ( 1- double(useChordal)))) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
 
                         if (!latesmall) {
                             checkForFinal = true; // if not checked for final, keep it around
