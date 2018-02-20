@@ -2153,10 +2153,10 @@ namespace dagConstruct {
             cout << "# Time elapsed: " << dif << " seconds" << endl;
 
             double last_dt = dt;
-            if (useChordal) {
-                dt = dt - threshold;
-            }
-            else if (distanceIt != nodeDistances.sortedDistancesEnd()) {
+//            if (useChordal) {
+//                dt = dt - threshold;
+//            }
+            if (distanceIt != nodeDistances.sortedDistancesEnd()) {
                 dt = distanceIt->second; //dt is already moved to the next level
             } else {
                 dt = 0;
@@ -2237,7 +2237,7 @@ namespace dagConstruct {
                         //* some big changes here *//
                         currentClusters.setNumUniquelyUnexplainedEdges(*newClusterIt);
                         unsigned numUniqueUnexplainedEdges = currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt);
-                        if ((numUniqueUnexplainedEdges < maxNumUniqueUnexplainedEdges) && (numUniqueUnexplainedEdges < 0.1 * (1-density) * pow(currentClusters.getElements(*newClusterIt).count(), 2.0 ) ) ) {//my secret sauce
+                        if ((numUniqueUnexplainedEdges < maxNumUniqueUnexplainedEdges) && (numUniqueUnexplainedEdges < (1-density) * currentClusters.getElements(*newClusterIt).count() )) {//my secret sauce
                             currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
 //                            if (useChordal) {
 //                                cout << "# UnexplainedEdges not qualified" << endl;
