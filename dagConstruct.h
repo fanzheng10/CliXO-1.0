@@ -18,7 +18,7 @@
 //unsigned long recursion;
 //unsigned long recursion2;
 bool useChordal = false;
-double globalDensity = 1.0;
+//double globalDensity = 1.0;
 
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
     for (unsigned i = 0; i < cluster.size(); ++i) {
@@ -716,7 +716,7 @@ public:
 
     inline void deleteCluster(const unsigned long & clusterToDelete, vector<string> & nodeIDsToNames, bool printClusterInfo = true) {
 
-        if (currentClusters[clusterToDelete].isAddedToExplain()) {//doesn't sound right if valid clusters are also included
+        if (currentClusters[clusterToDelete].isAddedToExplain()) {
             removeClusterFromExplanation(clusterToDelete);
         }
         openIDs.push_back(clusterToDelete);
@@ -1567,7 +1567,7 @@ namespace dagConstruct {
             boost::dynamic_bitset<unsigned long>  ni = clusterGraph.getInteractors(i);
             double clustCoef = clusterCoefficient(ni, clusterGraph);
 //            cout << clustCoef << endl;
-            if (clustCoef < globalDensity) {
+            if (clustCoef < 0.5) {
                 removed[i] = 1;
             }
         }
@@ -2097,7 +2097,7 @@ namespace dagConstruct {
         unsigned clusterGraphlastRoundEdges = 0;
 
 //        recursion = 0;
-        globalDensity = density;
+//        globalDensity = density;
 
         vector<string> nodeIDsToNames(nodeNamesToIDs.size(), string(""));
         for (map<string,unsigned>::iterator it = nodeNamesToIDs.begin(); it != nodeNamesToIDs.end(); ++it) {
@@ -2185,7 +2185,7 @@ namespace dagConstruct {
                     cout << "# Time elapsed: " << dif << " seconds" << endl;
 
                     while (newEdgesAdded == true) { //not sure
-                        performValidityCheck(currentClusters, realEdges, nodeDistances, nodeIDsToNames);
+                        performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
                         newEdgesAdded = addMissingEdges(currentClusters, clusterGraph, density, threshold, lastCurrent, nodeIDsToNames, nodeDistances, realEdges, largestCluster);
                     }// clusters are iteratively merged here before being output, so resetting nodeDistance has the snowball effect
 
@@ -2218,7 +2218,7 @@ namespace dagConstruct {
                         latesmall = true;
                     }
 
-                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt * ( 1- double(useChordal)))) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
+                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt )) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
 
                         if (!latesmall) {
                             checkForFinal = true; // if not checked for final, keep it around
@@ -2235,7 +2235,7 @@ namespace dagConstruct {
 
                     if (currentClusters.checkClusterFinalValidity(*newClusterIt,isNecessary, idsChecked, checkForFinal)) { // think about the condition here
                         //* some big changes here *//
-                        currentClusters.setNumUniquelyUnexplainedEdges(*newClusterIt);
+                        currentClusters.setNumUniquelyUnexplainedEdges(*newClusterIt); // this should consider the inactive clusters
                         unsigned numUniqueUnexplainedEdges = currentClusters.getNumUniquelyUnexplainedEdges(*newClusterIt);
                         if ((numUniqueUnexplainedEdges < maxNumUniqueUnexplainedEdges) && (numUniqueUnexplainedEdges < (1-density) * currentClusters.getElements(*newClusterIt).count() )) {//my secret sauce
                             currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
@@ -2267,13 +2267,6 @@ namespace dagConstruct {
                         }
                         currentClusters.setOld(*newClusterIt);//important
 
-//                        cout << "Debug: ";
-//                        vector<int> v ={3932, 6896, 6897, 6898, 6900, 6901, 6902, 6904, 6906};
-//                        for (int z=0; z < v.size()-1; ++z) {
-//                            for (int z2=z+1; z2<v.size(); ++z2) {
-//                                cout << v[z] << "\t" << v[z2] << "\t" << clusterGraph.isEdge(v[z], v[z2]) << currentClusters.isThisEdgeExplained(v[z], v[z2]) << endl;
-//                            }
-//                        }
 
                     } else if (!isNecessary) {
 //                        if (useChordal) {
