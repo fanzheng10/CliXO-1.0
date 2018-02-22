@@ -18,7 +18,7 @@
 //unsigned long recursion;
 //unsigned long recursion2;
 bool useChordal = false;
-//double globalDensity = 1.0;
+double globalDensity = 1.0;
 
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
     for (unsigned i = 0; i < cluster.size(); ++i) {
@@ -976,7 +976,7 @@ public:
     }
 
     void resetClusterWeight(unsigned long id, nodeDistanceObject & nodeDistances, graph_undirected_bitset & clusterGraph, unsigned & largestCluster) {
-        double minWeight = firstWeight;
+//        double minWeight = firstWeight;
         vector <double> newEdgeWeights;//changed; actually doesn't have to be new
         newEdgeWeights.reserve(100000);
         unsigned nNewEdges = 0;
@@ -1025,7 +1025,9 @@ public:
 //        else {
 //            currentClusters[id].setWeight(minWeight);
 //        }
-        currentClusters[id].setWeight(newEdgeWeightsMedian);
+        double newEdgeWeightsMean = sumNewEdgeWeights / nNewEdges;
+        newEdgeWeightsMean = floor(newEdgeWeightsMean*1000+0.5)/1000;
+        currentClusters[id].setWeight(newEdgeWeightsMean);
         return;
     }
 
@@ -1567,7 +1569,7 @@ namespace dagConstruct {
             boost::dynamic_bitset<unsigned long>  ni = clusterGraph.getInteractors(i);
             double clustCoef = clusterCoefficient(ni, clusterGraph);
 //            cout << clustCoef << endl;
-            if (clustCoef < 0.5) {
+            if (clustCoef < globalDensity) {
                 removed[i] = 1;
             }
         }
@@ -2097,7 +2099,7 @@ namespace dagConstruct {
         unsigned clusterGraphlastRoundEdges = 0;
 
 //        recursion = 0;
-//        globalDensity = density;
+        globalDensity = density;
 
         vector<string> nodeIDsToNames(nodeNamesToIDs.size(), string(""));
         for (map<string,unsigned>::iterator it = nodeNamesToIDs.begin(); it != nodeNamesToIDs.end(); ++it) {
@@ -2218,7 +2220,7 @@ namespace dagConstruct {
                         latesmall = true;
                     }
 
-                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt )) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
+                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt *(1- double(useChordal) ))) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
 
                         if (!latesmall) {
                             checkForFinal = true; // if not checked for final, keep it around
