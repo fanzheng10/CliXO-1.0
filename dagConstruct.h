@@ -1565,14 +1565,14 @@ namespace dagConstruct {
         unsigned helperEdges = 0;
 
         //filter by cluster coeffcient
-        for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
-            boost::dynamic_bitset<unsigned long>  ni = clusterGraph.getInteractors(i);
-            double clustCoef = clusterCoefficient(ni, clusterGraph);
-//            cout << clustCoef << endl;
-            if (clustCoef < globalDensity) {
-                removed[i] = 1;
-            }
-        }
+//        for (unsigned i = 0; i < clusterGraph.numNodes(); ++i) {
+//            boost::dynamic_bitset<unsigned long>  ni = clusterGraph.getInteractors(i);
+//            double clustCoef = clusterCoefficient(ni, clusterGraph);
+////            cout << clustCoef << endl;
+//            if (clustCoef < globalDensity) {
+//                removed[i] = 1;
+//            }
+//        }
         cout << "# " << removed.count() << " removed by cluster coefficient filters" << endl;
 
         //initialize the degree and chordal graph

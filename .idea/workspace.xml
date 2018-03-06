@@ -12,10 +12,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo" afterPath="$PROJECT_DIR$/clixo" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo.o" afterPath="$PROJECT_DIR$/clixo.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG" afterPath="$PROJECT_DIR$/clustersToDAG" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clustersToDAG.o" afterPath="$PROJECT_DIR$/clustersToDAG.o" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dagConstruct.h" afterPath="$PROJECT_DIR$/dagConstruct.h" />
     </list>
@@ -37,8 +33,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="284">
-              <caret line="2223" column="0" lean-forward="true" selection-start-line="2223" selection-start-column="0" selection-end-line="2223" selection-end-column="0" />
+            <state relative-caret-position="-80">
+              <caret line="1569" column="61" lean-forward="false" selection-start-line="1569" selection-start-column="61" selection-end-line="1569" selection-end-column="61" />
               <folding />
             </state>
           </provider>
@@ -152,8 +148,8 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="87" />
-    <option name="y" value="52" />
+    <option name="x" value="-1905" />
+    <option name="y" value="105" />
     <option name="width" value="1547" />
     <option name="height" value="932" />
   </component>
@@ -487,7 +483,9 @@
       <workItem from="1518542571396" duration="20277000" />
       <workItem from="1518972272147" duration="4000" />
       <workItem from="1519154032090" duration="4921000" />
-      <workItem from="1519329336412" duration="461000" />
+      <workItem from="1519329336412" duration="4015000" />
+      <workItem from="1519753456380" duration="171000" />
+      <workItem from="1520273891511" duration="1019000" />
     </task>
     <task id="LOCAL-00001" summary="altered density">
       <created>1501882926753</created>
@@ -500,7 +498,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="301323000" />
+    <option name="totallyTimeSpent" value="306067000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -512,19 +510,19 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="87" y="52" width="1547" height="932" extended-state="0" />
+    <frame x="-1905" y="105" width="1547" height="932" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13380738" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32906976" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25724217" sideWeight="0.52165484" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32906976" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
@@ -874,14 +872,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/clustersToDAG.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="10" column="29" lean-forward="false" selection-start-line="10" selection-start-column="29" selection-end-line="10" selection-end-column="29" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/boost.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -908,8 +898,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="284">
-          <caret line="2223" column="0" lean-forward="true" selection-start-line="2223" selection-start-column="0" selection-end-line="2223" selection-end-column="0" />
+        <state relative-caret-position="-80">
+          <caret line="1569" column="61" lean-forward="false" selection-start-line="1569" selection-start-column="61" selection-end-line="1569" selection-end-column="61" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/clustersToDAG.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="10" column="29" lean-forward="false" selection-start-line="10" selection-start-column="29" selection-end-line="10" selection-end-column="29" />
           <folding />
         </state>
       </provider>
