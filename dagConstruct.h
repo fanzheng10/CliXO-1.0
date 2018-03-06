@@ -2022,7 +2022,7 @@ namespace dagConstruct {
 //                        currentClusters.isNew(j) && //whether require both compared cluster to be new? That's a good question
                         (currentClusters.getThresh(j) >= currentClusters.getCurWeight())) {
 //                        !clustersChecked[j] && (currentClusters.getThresh(j) >= currentClusters.getCurWeight())) {
-                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames)) {
+                        if (isMinNodeDegreeMet(i, j, currentClusters, clusterGraph, density, nodeIDsToNames)) {
                             double newEdgeWeight = currentClusters.getClusterWeight(i);
                             if (currentClusters.getClusterWeight(j) < newEdgeWeight) {
                                 newEdgeWeight = currentClusters.getClusterWeight(j);//ewww
@@ -2067,7 +2067,7 @@ namespace dagConstruct {
         if (clustersToCombine.size() > 0) {
             double curWeight = currentClusters.getCurWeight();
 //            cout << "# Current Weight is " << curWeight << endl;
-            bool realCombine = combineClusters(clustersToCombine, currentClusters, clusterGraph, lastCurrent, nodeIDsToNames, nodeDistances, realEdges, largestCluster);
+            bool realCombine = combineClusters(clustersToCombine, currentClusters, clusterGraph, lastCurrent, nodeIDsToNames, nodeDistances, realEdges, largestCluster);//realEdges are not really used in here
             currentClusters.setCurWeight(curWeight);
             return realCombine;
         }
@@ -2175,7 +2175,8 @@ namespace dagConstruct {
                 unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
 
                 vector<unsigned long> newClustersSorted;
-                if ((density < 1) && (!useChordal)) {
+//                if ((density < 1) && (!useChordal)) {
+                if (density < 1) {
                     performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this (clusterGraph actually not used here, so no worries
 
                     // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
@@ -2220,7 +2221,7 @@ namespace dagConstruct {
                         latesmall = true;
                     }
 
-                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt *(1- double(useChordal) ))) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
+                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt *(1- double(useChordal) ))) {//for chordal graph don't check dt
 
                         if (!latesmall) {
                             checkForFinal = true; // if not checked for final, keep it around
