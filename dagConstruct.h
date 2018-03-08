@@ -18,7 +18,7 @@
 //unsigned long recursion;
 //unsigned long recursion2;
 bool useChordal = false;
-//double globalDensity = 1.0;
+double globalDensity = 1.0;
 
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
     for (unsigned i = 0; i < cluster.size(); ++i) {
@@ -138,7 +138,6 @@ public:
     ClusterBitset(const boost::dynamic_bitset<unsigned long> & cluster, unsigned long & clustID, unsigned long & thisTrieID, double thisClusterWeight = 0) {
         elements = cluster;
         isClusterNew = true;
-        isClusterChordal = false;
         isClusterAddedToExplain = false;
         isClusterUnexplainedCounted = false;
         necessary = false;
@@ -153,7 +152,6 @@ public:
 
     ClusterBitset() {
         isClusterNew = false;
-        isClusterChordal = false;
         isClusterAddedToExplain = false;
         isClusterUnexplainedCounted = false;
         necessary = false;
@@ -262,10 +260,6 @@ public:
         return isClusterNew;
     }
 
-    inline bool isChordal() {
-        return isClusterChordal;
-    }
-
     inline bool isAddedToExplain() {
         return isClusterAddedToExplain;
     }
@@ -287,10 +281,6 @@ public:
         necessary = false;
         checkedFinal = false;
         isClusterUnexplainedCounted= false;
-    }
-
-    inline void setChordal() {
-        isClusterChordal = true;
     }
 
     inline bool isElement(unsigned elemID) {
@@ -341,7 +331,6 @@ public:
 private:
     boost::dynamic_bitset<unsigned long> elements;
     bool isClusterNew;
-    bool isClusterChordal;
     bool isClusterAddedToExplain;
     bool isClusterUnexplainedCounted;
     bool necessary;
@@ -968,14 +957,6 @@ public:
 
     inline bool isNew(unsigned long id) {
         return currentClusters[id].isNew();
-    }
-
-    inline void setChordal(unsigned long id) {
-        return currentClusters[id].setChordal();
-    }
-
-    inline bool isChordal(unsigned long id) {
-        return currentClusters[id].isChordal();
     }
 
     inline double getClusterWeight(unsigned long id) {
@@ -1913,10 +1894,7 @@ namespace dagConstruct {
 //                cout << "# adding Clusters" << endl;
 //                printCluster(*clustersToAddIt, nodeIDsToNames);
 //                cout << endl;
-                unsigned long newID = currentClusters.addCluster(*clustersToAddIt,nodeDistances, nodeIDsToNames, clusterGraph, largestCluster);
-                if (useChordal) {
-                    currentClusters.setChordal(newID);
-                }
+                currentClusters.addCluster(*clustersToAddIt,nodeDistances, nodeIDsToNames, clusterGraph, largestCluster);
             }
 
             if ((currentClusters.numCurrentClusters() > 4*lastCurrent) || ((currentClusters.numCurrentClusters() > lastCurrent) && ((currentClusters.numCurrentClusters() - lastCurrent) > 1000))) {//invalid clusters are notnecessary. Why doing it now? maybe drop some clusters and free up. So if drop necessary, also need to drop from here.
@@ -1925,7 +1903,7 @@ namespace dagConstruct {
                 if (lastCurrent < 25) {
                     lastCurrent = 25;
                 }
-            } //get rid of this at some time
+            }
 
             ++edgesToAddCounter; //just for one edge!
         }
@@ -2036,15 +2014,15 @@ namespace dagConstruct {
         vector<unsigned long> clustersToRecheck;
         for (unsigned long i = 0; i < maxClusterID; ++i) {
             if ((currentClusters.numElements(i) != 0) && currentClusters.isNew(i) &&
-                ( (currentClusters.getThresh(i) >= currentClusters.getCurWeight()) || (!currentClusters.isChordal(i)) )) { // should cancel this in the chordal phase
+                (currentClusters.getThresh(i) >= currentClusters.getCurWeight())) {
                 clustersChecked[i] = true; // this is only requiring one cluster to have sufficient weight; that makes sense
 //                ++clusterbeenchecked;
                 for (unsigned long j = 0; j < maxClusterID; ++j) {
                     if ((j != i) && (currentClusters.numElements(j) != 0) && (!clustersChecked[j]) &&
 //                        currentClusters.isNew(j) && //whether require both compared cluster to be new? That's a good question
-                        ( (currentClusters.getThresh(j) >= currentClusters.getCurWeight() ) || (!currentClusters.isChordal(j)) )) {
+                        (currentClusters.getThresh(j) >= currentClusters.getCurWeight())) {
 //                        !clustersChecked[j] && (currentClusters.getThresh(j) >= currentClusters.getCurWeight())) {
-                        if (isMinNodeDegreeMet(i, j, currentClusters, clusterGraph, density, nodeIDsToNames)) {
+                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames)) {
                             double newEdgeWeight = currentClusters.getClusterWeight(i);
                             if (currentClusters.getClusterWeight(j) < newEdgeWeight) {
                                 newEdgeWeight = currentClusters.getClusterWeight(j);//ewww
@@ -2089,7 +2067,7 @@ namespace dagConstruct {
         if (clustersToCombine.size() > 0) {
             double curWeight = currentClusters.getCurWeight();
 //            cout << "# Current Weight is " << curWeight << endl;
-            bool realCombine = combineClusters(clustersToCombine, currentClusters, clusterGraph, lastCurrent, nodeIDsToNames, nodeDistances, realEdges, largestCluster);//realEdges are not really used in here
+            bool realCombine = combineClusters(clustersToCombine, currentClusters, clusterGraph, lastCurrent, nodeIDsToNames, nodeDistances, realEdges, largestCluster);
             currentClusters.setCurWeight(curWeight);
             return realCombine;
         }
@@ -2197,8 +2175,7 @@ namespace dagConstruct {
                 unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
 
                 vector<unsigned long> newClustersSorted;
-//                if ((density < 1) && (!useChordal)) {
-                if (density < 1) {
+                if ((density < 1) && (!useChordal)) {
                     performValidityCheck(currentClusters, clusterGraph, nodeDistances, nodeIDsToNames); // drop unnecessary clusters. It seems this always happen before large cluster operations // this about how to change this (clusterGraph actually not used here, so no worries
 
                     // IN HERE WE NEED TO CHECK FOR MISSING EDGES BY COMBINING CLUSTERS INTO DENSE CLUSTERS
@@ -2243,7 +2220,7 @@ namespace dagConstruct {
                         latesmall = true;
                     }
 
-                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt *(1- double(useChordal) ))) {//for chordal graph don't check dt
+                    if (currentClusters.isNew(*newClusterIt) && (currentClusters.getThresh(*newClusterIt) >= dt *(1- double(useChordal) ))) { // should be compared with dt (updated) right? // is large and equal here. Why still no large terms?
 
                         if (!latesmall) {
                             checkForFinal = true; // if not checked for final, keep it around
