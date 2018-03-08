@@ -32,8 +32,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1535">
-              <caret line="1651" column="51" lean-forward="true" selection-start-line="1651" selection-start-column="51" selection-end-line="1651" selection-end-column="51" />
+            <state relative-caret-position="262">
+              <caret line="2250" column="39" lean-forward="true" selection-start-line="2250" selection-start-column="39" selection-end-line="2250" selection-end-column="39" />
               <folding />
             </state>
           </provider>
@@ -484,7 +484,7 @@
       <workItem from="1519154032090" duration="4921000" />
       <workItem from="1519329336412" duration="4015000" />
       <workItem from="1519753456380" duration="171000" />
-      <workItem from="1520273891511" duration="9784000" />
+      <workItem from="1520273891511" duration="10021000" />
     </task>
     <task id="LOCAL-00001" summary="altered density">
       <created>1501882926753</created>
@@ -497,7 +497,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="314832000" />
+    <option name="totallyTimeSpent" value="315069000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -897,8 +897,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1535">
-          <caret line="1651" column="51" lean-forward="true" selection-start-line="1651" selection-start-column="51" selection-end-line="1651" selection-end-column="51" />
+        <state relative-caret-position="262">
+          <caret line="2250" column="39" lean-forward="true" selection-start-line="2250" selection-start-column="39" selection-end-line="2250" selection-end-column="39" />
           <folding />
         </state>
       </provider>

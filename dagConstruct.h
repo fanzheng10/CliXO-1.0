@@ -2246,10 +2246,10 @@ namespace dagConstruct {
 //                            }
                             continue;
                         }
-                        else if (useChordal && (currentClusters.getElements(*newClusterIt).count() < lastLargestCluster/2.0)) {
-                            currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
-                            continue;
-                        }
+//                        else if (useChordal && (currentClusters.getElements(*newClusterIt).count() < lastLargestCluster/2.0)) {
+//                            currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, false);
+//                            continue;
+//                        }
                         else if (numUniqueUnexplainedEdges > maxNumUniqueUnexplainedEdges) {
                             maxNumUniqueUnexplainedEdges = numUniqueUnexplainedEdges;
                         }
