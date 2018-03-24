@@ -295,10 +295,10 @@ set(SOURCE_FILES
         clixo.cpp
         clustersToDAG.cpp
         dag.h
-        dagConstruct.h
+        dagConstruct_old.h
         graph_undirected.h
         graph_undirected_bitset.h
         nodeDistanceObject.h
-        util.h)
+        util.h dagConstruct.h)
 
 add_executable(clixo_0_3 ${SOURCE_FILES})

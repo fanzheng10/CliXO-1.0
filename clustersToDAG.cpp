@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
-#include "dagConstruct.h"
+#include "dagConstruct_old.h"
 
 
 int main(int argc, char* argv[]) {

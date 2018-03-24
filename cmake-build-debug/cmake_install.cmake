@@ -1,4 +1,4 @@
-# Install script for directory: /Users/fanzheng/Desktop/UCSD Research/2017_1st_half/clixo_0.4
+# Install script for directory: /Users/fanzheng/Desktop/UCSD Research/2018_quarter1/clixo_0.4
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -35,5 +35,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/fanzheng/Desktop/UCSD Research/2017_1st_half/clixo_0.4/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/fanzheng/Desktop/UCSD Research/2018_quarter1/clixo_0.4/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
