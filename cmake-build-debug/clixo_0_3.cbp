@@ -956,9 +956,6 @@
 		<Unit filename="/Users/fanzheng/Desktop/UCSD Research/2018_quarter1/clixo_0.4/dagConstruct.h">
 			<Option target="clixo_0_3"/>
 		</Unit>
-		<Unit filename="/Users/fanzheng/Desktop/UCSD Research/2018_quarter1/clixo_0.4/dagConstruct_old.h">
-			<Option target="clixo_0_3"/>
-		</Unit>
 		<Unit filename="/Users/fanzheng/Desktop/UCSD Research/2018_quarter1/clixo_0.4/graph_undirected.h">
 			<Option target="clixo_0_3"/>
 		</Unit>

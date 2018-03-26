@@ -467,7 +467,7 @@ public:
     }
 
     inline void activateCluster(const unsigned long & clusterToActivate, vector<string> & nodeIDsToNames, bool printClusterInfo = false) {
-        if (!currentClusters[clusterToActivate].isAddedToExplain) {
+        if (!currentClusters[clusterToActivate].isAddedToExplain()) {
             addClusterToExplanation(currentClusters[clusterToActivate].getElementsVector(), clusterToActivate);
         }
         currentClusters[clusterToActivate].setActive();
@@ -680,7 +680,7 @@ public:
     }
 
     inline bool isValid(unsigned long id) {
-        return currentClusters[id].isValid()
+        return currentClusters[id].isValid();
     }
 
     inline double getClusterWeight(unsigned long id) {
@@ -816,75 +816,6 @@ private:
 
 };
 
-class validClusterBitset {
-public:
-    validClusterBitset(const boost::dynamic_bitset<unsigned long> & cluster, unsigned clustID, double thisWeight) {
-        elements = cluster;
-        ID = clustID;
-        weight = thisWeight;
-        numElementsHere = cluster.count();
-    }
-
-    validClusterBitset(const vector<unsigned> & cluster, unsigned clustID, double thisWeight, unsigned numNodes) {
-        elements = boost::dynamic_bitset<unsigned long>(numNodes);
-        for (vector<unsigned>::const_iterator it = cluster.begin(); it != cluster.end(); ++it) {
-            elements[*it] = 1;
-        }
-        ID = clustID;
-        weight = thisWeight;
-        numElementsHere = elements.count();
-    }
-
-    bool operator<(const validClusterBitset & b) const {
-        return numElementsHere < b.numElements();
-    }
-
-    inline unsigned getID() {
-        return ID;
-    }
-
-    inline void setID(unsigned newID) {
-        ID = newID;
-        return;
-    }
-
-    inline double getWeight() {
-        return weight;
-    }
-
-    inline const boost::dynamic_bitset<unsigned long> & getElements() {
-        return elements;
-    }
-
-    inline unsigned isElement(unsigned i) {
-        return elements[i];
-    }
-
-    inline unsigned numElements() const {
-        return numElementsHere;
-    }
-
-    inline void addElement(unsigned newElem) {
-        elements[newElem] = 1;
-        ++numElementsHere;
-        return;
-    }
-
-    inline vector<unsigned> getElementsVector() {
-        vector<unsigned> result;
-        result.reserve(numElements());
-        for (unsigned i = elements.find_first(); i < elements.size(); i = elements.find_next(i)) {
-            result.push_back(i);
-        }
-        return result;
-    }
-
-private:
-    boost::dynamic_bitset<unsigned long> elements;
-    unsigned ID;
-    double weight;
-    unsigned numElementsHere;
-};
 
 namespace dagConstruct {
 
@@ -1071,11 +1002,10 @@ namespace dagConstruct {
                                      nodeDistanceObject &nodeDistances, vector<string> &nodeIDsToNames) {
 
         cout << "# Adding " << edgesToAdd.size() << " edges" << endl;
-        unsigned long edgesToAddCounter = 0;
 
         // add edges, and check affected nodes
         vector<char> affectedNodes(clusterGraph.numNodes(), 0);
-        for (unsigned long edgesToAddCounter; edgesToAddCounter != edgesToAdd.size(); ++edgesToAddCounter) {
+        for (unsigned long edgesToAddCounter = 0; edgesToAddCounter != edgesToAdd.size(); ++edgesToAddCounter) {
 
             if (!clusterGraph.isEdge(edgesToAdd[edgesToAddCounter].first.first,
                                      edgesToAdd[edgesToAddCounter].first.second)) {
@@ -1086,8 +1016,13 @@ namespace dagConstruct {
             affectedNodes[edgesToAdd[edgesToAddCounter].first.second] = 1;
         }
 
-        unsigned numAff = count_if(affectedNodes.begin(), affectedNodes.end(), 1);
-        cout << '# Nodes affected = ' << numAff << endl;
+        unsigned long numAff = 0;
+        for (vector<char>::iterator thisIt = affectedNodes.begin(); thisIt != affectedNodes.end(); ++thisIt) {
+            if (*thisIt) {
+                ++numAff;
+            }
+        }
+        cout << "# Nodes affected = " << numAff << endl;
 
         vector<boost::dynamic_bitset<unsigned long> > newClustersToAdd;
         newClustersToAdd.reserve(20000);
@@ -1104,8 +1039,15 @@ namespace dagConstruct {
                 }
             }
         }
-        numAff = count_if(affectedNodes.begin(), affectedNodes.end(), 1);
-        cout << '# Clusters affected = ' << numAff << endl;
+
+        numAff = 0;
+        for (vector<char>::iterator thisIt = affectedClusters.begin();
+             thisIt != affectedClusters.end(); ++thisIt) {
+            if (*thisIt) {
+                ++numAff;
+            }
+        }
+        cout << "# Clusters affected = " << numAff << endl;
 
         unsigned deleted = 0;
 
@@ -1122,7 +1064,7 @@ namespace dagConstruct {
         cout << "# Num of non-maximal clusters deleted here: " << deleted << endl;
 
         // adding brand new clusters, using new edges added this round
-        for (unsigned long edgesToAddCounter; edgesToAddCounter != edgesToAdd.size(); ++edgesToAddCounter) {
+        for (unsigned long edgesToAddCounter = 0; edgesToAddCounter != edgesToAdd.size(); ++edgesToAddCounter) {
             boost::dynamic_bitset<unsigned long> seedClust(clusterGraph.numNodes());
             seedClust[edgesToAdd[edgesToAddCounter].first.first] = 1;
             seedClust[edgesToAdd[edgesToAddCounter].first.second] = 1;
@@ -1313,12 +1255,13 @@ namespace dagConstruct {
                                              clusterGraph.numEdges()) { // this condition makes sure there are not too many nested cluster close to the top
 
                 unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
+                cout << "# Number of clusters before merging: " << numClustersBeforeDelete << endl;
+
                 vector<unsigned long> newClustersSorted;
 
                 if (beta < 1) { // think about chordal later
 
-                    cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques"
-                         << endl;
+                    cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
                     bool newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, nodeIDsToNames,
                                                          nodeDistances, realEdges);
 
@@ -1335,7 +1278,7 @@ namespace dagConstruct {
 //                currentClusters.sortNewClusters(newClustersSorted); //sort by size, ascending, not needed, since prepareForValidty check performs sorting
                 currentClusters.prepareForValidityCheck(newClustersSorted); // sort and add edge explaination
 
-                cout << "# Current number of clusters:" << currentClusters.maxClusterID() << endl;
+                cout << "# Current number of clusters:" << currentClusters.numCurrentClusters() << endl;
                 cout << "# New clusters to evaluate:" << newClustersSorted.size() << endl;
                 time(&end);
                 dif = difftime(end, start);
@@ -1427,6 +1370,7 @@ namespace dagConstruct {
             dif = difftime(end, start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
         }
+        return currentClusters.numCurrentClusters();
     }
 
 
