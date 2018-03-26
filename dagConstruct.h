@@ -702,10 +702,10 @@ public:
     }
 
     inline double getThresh(unsigned long id) {
-        if (!currentClusters[id].isValid() && !currentClusters[id].isUnexplainedCounted()) {
-            setNumUniquelyUnexplainedEdges(id);
-        }
-        return currentClusters[id].getThresh(alpha, getNumUniquelyUnexplainedEdges(id));
+//        if (!currentClusters[id].isValid() && !currentClusters[id].isUnexplainedCounted()) {
+//            setNumUniquelyUnexplainedEdges(id);
+//        }
+        return currentClusters[id].getThresh(alpha, getNumUnexplainedEdges(id));
     }
 
     inline double getMaxThresh() {
@@ -755,7 +755,7 @@ public:
         double latesmallThres_abs = ( log(numNodes) - log(size) ) / ( log(numNodes) - log(2));
         double latesmallThres_rel = curWeight * ( log(numNodes) - log(size) ) / ( log(numNodes) - log(lastLargestCluster) ) ;
         double latesmallThres = min(latesmallThres_abs, latesmallThres_rel);
-        if (curWeight - alpha < latesmallThres - 0.2) {
+        if (curWeight - alpha < latesmallThres - 0.1) {
             return true;
         }
         else {
@@ -1342,6 +1342,7 @@ namespace dagConstruct {
                     }
 
                     /*filter 2: see if the term does not have many unique edges*/
+                    //TODO: it seems this has been set before;
                     currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
                     double uniqueThresh = (1-beta) * currentClusters.getElements(clusterTop).count();
 
