@@ -265,17 +265,17 @@ public:
         setUnexplainedCounted();
     }
 
-//    inline void setMergedFromID(vector <unsigned long> IDmergedFrom) {
-//        mergedFromID = IDmergedFrom;
-//    }
+    inline void setMergedFromID(vector <unsigned long> & ids) {
+        mergedFromID = ids;
+    }
 
     inline vector <unsigned long> getMergedFromID() {
         return mergedFromID; /*TODO: this would better to be a pair*/
     }
 
-//    inline void setMergeToID(vector <unsigned long> IDmergedTo) {
-//        mergedToID = IDmergedTo;
-//    }
+    inline void setMergeToID(vector <unsigned long> & ids) {
+        mergedToID = ids;
+    }
 
     inline vector <unsigned long> getMergedToID() {
         return mergedToID;
@@ -762,13 +762,13 @@ public:
         return currentClusters[id].getMergedToID();
     }
 
-//    void setMergeFromID(unsigned long id, vector <unsigned long> mergeID) {
-//        currentClusters[id].setMergedFromID(mergeID);
-//    }
+    void setMergedFromID(unsigned long id, vector <unsigned long> & mergeID) {
+        currentClusters[id].setMergedFromID(mergeID);
+    }
 
-//    void setMergeToID(unsigned long id, vector <unsigned long> mergeID) {
-//        currentClusters[id].setMergeToID(mergeID);
-//    }
+    void setMergedToID(unsigned long id, vector <unsigned long> & mergeID) {
+        currentClusters[id].setMergeToID(mergeID);
+    }
 
     void addMergedFromID(unsigned long id, unsigned long mergeID) {
         currentClusters[id].addMergedFromID(mergeID);
@@ -1102,19 +1102,35 @@ namespace dagConstruct {
             if (weight < currentClusters.getCurWeight()) { //weight not enough
                 continue; //doesn't combine
             } else {
+
+                /* TODO: check non-maximality of the combined cluster, inactivate everything that are rendered non-maximal by this one */
+                vector <unsigned long> nonMaximal;
+                nonMaximal.reserve(20);
+                for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
+                    if (currentClusters.isNew(i) && currentClusters.isActive(i)) {
+                        if (currentClusters.getElements(i).is_subset_of(clustersToCombineIt->second)) {
+                            currentClusters.inactivateCluster(i, nodeIDsToNames);
+                            nonMaximal.push_back(i);
+                        }
+                    }
+                }
+
                 /*add the cluster*/
                 realCombine = true;
                 unsigned long newID = currentClusters.addCluster(clustersToCombineIt->second, nodeDistances, nodeIDsToNames);
 
                 /* still delete is a bad idea. Should set them inactive, so there can be reactivated if needed */
-                currentClusters.inactivateCluster(clustersToCombineIt->first.first, nodeIDsToNames);
-                currentClusters.inactivateCluster(clustersToCombineIt->first.second, nodeIDsToNames);
+//                currentClusters.inactivateCluster(clustersToCombineIt->first.first, nodeIDsToNames);
+//                currentClusters.inactivateCluster(clustersToCombineIt->first.second, nodeIDsToNames);
 
-                /* add relationships */
-                currentClusters.addMergedToID(clustersToCombineIt->first.first, newID);
-                currentClusters.addMergedToID(clustersToCombineIt->first.second, newID);
-                currentClusters.addMergedFromID(newID, clustersToCombineIt->first.first);
-                currentClusters.addMergedFromID(newID, clustersToCombineIt->first.second);
+                /* add relationships to the non-maximal clusters*/
+                for (vector<unsigned long>::iterator nonMaximalIt = nonMaximal.begin(); nonMaximalIt < nonMaximal.end(); ++nonMaximalIt ) {
+                    currentClusters.addMergedToID(*nonMaximalIt, newID);
+                }
+//                currentClusters.addMergedToID(clustersToCombineIt->first.first, newID);
+//                currentClusters.addMergedToID(clustersToCombineIt->first.second, newID);
+//                currentClusters.addMergedFromID(newID, clustersToCombineIt->first.first);
+                currentClusters.setMergedFromID(newID, nonMaximal);
             }
 
         }
@@ -1159,7 +1175,7 @@ namespace dagConstruct {
             clustersChecked[i] = true;
         }
         cout << "# Considering combining " << clustersToCombine.size() << " pairs of clusters" << endl;
-
+        //TODO: some bugs here
         if (clustersToCombine.size() > 0) {
 //            cout << "# Current Weight is " << curWeight << endl;
             bool realCombine = combineClusters(clustersToCombine, currentClusters, nodeIDsToNames, nodeDistances);
