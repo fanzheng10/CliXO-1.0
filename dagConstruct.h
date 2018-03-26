@@ -339,6 +339,9 @@ public:
         edgesToClusters = vector<vector<unsigned> >(numNodes, vector<unsigned>(numNodes, 0));
         isEdgeExplained = vector<vector<char> >(numNodes, vector<char>(numNodes, 0));
     };
+    inline double getAlpha() {
+        return alpha;
+    }
 
     inline void setCurWeight(const double & weight) {
         if (weight < minWeightAdded) {
@@ -1107,41 +1110,34 @@ namespace dagConstruct {
         for (vector<pair<pair<unsigned long, unsigned long>, boost::dynamic_bitset<unsigned long>>>::iterator clustersToCombineIt = clustersToCombine.begin(); // why is this complaining
              clustersToCombineIt != clustersToCombine.end(); ++clustersToCombineIt) {
 
-            double weight = calculateClusterWeight(clustersToCombineIt->second, nodeDistances);
-            if (weight < currentClusters.getCurWeight()) { //weight not enough
-                continue; //doesn't combine
-            } else {
-
                 /* TODO: check non-maximality of the combined cluster, inactivate everything that are rendered non-maximal by this one */
-                vector <unsigned long> nonMaximal;
-                nonMaximal.reserve(20);
-                for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
-                    if (currentClusters.isNew(i) && currentClusters.isActive(i)) {
-                        if (currentClusters.getElements(i).is_subset_of(clustersToCombineIt->second)) {
-                            currentClusters.inactivateCluster(i, nodeIDsToNames);
-                            nonMaximal.push_back(i);
-                        }
+            vector <unsigned long> nonMaximal;
+            nonMaximal.reserve(1000);
+            for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
+                if ((currentClusters.numElements(i) !=0) && currentClusters.isNew(i) && currentClusters.isActive(i)) {
+                    if (currentClusters.getElements(i).is_subset_of(clustersToCombineIt->second)) {
+                        currentClusters.inactivateCluster(i, nodeIDsToNames);
+                        nonMaximal.push_back(i);
                     }
                 }
+            }
 
                 /*add the cluster*/
-                realCombine = true;
-                unsigned long newID = currentClusters.addCluster(clustersToCombineIt->second, nodeDistances, nodeIDsToNames);
+            realCombine = true;
+            unsigned long newID = currentClusters.addCluster(clustersToCombineIt->second, nodeDistances, nodeIDsToNames);
 
                 /* still delete is a bad idea. Should set them inactive, so there can be reactivated if needed */
 //                currentClusters.inactivateCluster(clustersToCombineIt->first.first, nodeIDsToNames);
 //                currentClusters.inactivateCluster(clustersToCombineIt->first.second, nodeIDsToNames);
 
                 /* add relationships to the non-maximal clusters*/
-                for (vector<unsigned long>::iterator nonMaximalIt = nonMaximal.begin(); nonMaximalIt < nonMaximal.end(); ++nonMaximalIt ) {
-                    currentClusters.addMergedToID(*nonMaximalIt, newID);
-                }
+            for (vector<unsigned long>::iterator nonMaximalIt = nonMaximal.begin(); nonMaximalIt < nonMaximal.end(); ++nonMaximalIt ) {
+                currentClusters.addMergedToID(*nonMaximalIt, newID);
+            }
 //                currentClusters.addMergedToID(clustersToCombineIt->first.first, newID);
 //                currentClusters.addMergedToID(clustersToCombineIt->first.second, newID);
 //                currentClusters.addMergedFromID(newID, clustersToCombineIt->first.first);
-                currentClusters.setMergedFromID(newID, nonMaximal);
-            }
-
+            currentClusters.setMergedFromID(newID, nonMaximal);
         }
         return realCombine;
     }
@@ -1177,8 +1173,7 @@ namespace dagConstruct {
                             currentClusters.isActive(j) &&
                             (currentClusters.getThresh(j) >= currentClusters.getCurWeight() )) {
                         boost::dynamic_bitset<unsigned long> proposedCombinedCluster(realEdges.numNodes(), 0);
-                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames,
-                                               proposedCombinedCluster)) {
+                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames, proposedCombinedCluster) && (calculateClusterWeight(proposedCombinedCluster, nodeDistances) - currentClusters.getAlpha() >= currentClusters.getCurWeight() )) {
                             clustersToCombine.push_back(make_pair(make_pair(i, j), proposedCombinedCluster));
                         }
                     }
@@ -1272,6 +1267,7 @@ namespace dagConstruct {
 
             numRealEdgesLastRound = numRealEdgesThisRound;
 
+//            currentClusters.setCurWeight(dt);
             // update dt
             double last_dt = dt;
             if (distanceIt != nodeDistances.sortedDistancesEnd()) {
@@ -1325,19 +1321,23 @@ namespace dagConstruct {
                     if (currentClusters.numElements(clusterTop) ==0) {
                         continue;
                     }
+                    if (currentClusters.getThresh(clusterTop) < dt) {
+                        continue;
+                    }
 
                     /*filter 1: see if the term is too small for the current weight*/
                     if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster)) {
                         vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, false);
-                        for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
-                             hidden_it != hiddenClusters.end(); ++hidden_it) {
-                            if ( (currentClusters.isNew(*hidden_it)) &&
-                                    (currentClusters.getMergeToID(*hidden_it).size() == 1) ) { //*the hidden cluster should not be hidden by other merging as well*/
-                                //make it active again
-                                currentClusters.activateCluster(*hidden_it, nodeIDsToNames, false);
-                                newClustersSorted.push_back(*hidden_it);
-                            }
-                        }
+                        // don't need the following because subclusters are smaller
+//                        for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
+//                             hidden_it != hiddenClusters.end(); ++hidden_it) {
+//                            if ( (currentClusters.isNew(*hidden_it)) &&
+//                                    (currentClusters.getMergeToID(*hidden_it).size() == 1) ) { //*the hidden cluster should not be hidden by other merging as well*/
+//                                //make it active again
+//                                currentClusters.activateCluster(*hidden_it, nodeIDsToNames, false);
+//                                newClustersSorted.push_back(*hidden_it);
+//                            }
+//                        }
                         continue;
                     }
 
