@@ -576,7 +576,7 @@ public:
                 ++numFound;
             }
         }//is this only new clusters?
-        sort(newClustersAndCounts.begin(), newClustersAndCounts.end(), compPairSecondAscending);
+        sort(newClustersAndCounts.begin(), newClustersAndCounts.end(), compPairSecondDescending);
 
         sortedNewClusters.reserve(numCurrentClusters());
         for (vector<pair<unsigned long, unsigned> >::iterator it = newClustersAndCounts.begin();
@@ -1171,7 +1171,7 @@ namespace dagConstruct {
 
     // ** Main function ** //
     unsigned getFuzzyClustersBitsetThreshold(nodeDistanceObject &nodeDistances, map<string, unsigned> &nodeNamesToIDs,
-                                             vector<validClusterBitset> &validClusters, double alpha = 0,
+                                             vector<validClusterBitset> & validClusters, double alpha = 0,
                                              double beta = 1) {
 
         // * profiling * //
@@ -1218,7 +1218,7 @@ namespace dagConstruct {
             edgesToAdd.reserve((unsigned long) (estimateNumEdges));
 
             double addUntil = dt;
-            while (numRealEdgesThisRound < numRealEdgesLastRound) {
+            while (numRealEdgesThisRound <= numRealEdgesLastRound) {
                 addUntil = dt - alpha; // addUntil can cross multiple alpha if there is a region with low edge density
                 while ((distanceIt != nodeDistances.sortedDistancesEnd()) &&
                        (distanceIt->second >= alpha) &&
@@ -1292,7 +1292,7 @@ namespace dagConstruct {
 
                 while ((newClustersSorted.size() > 0) &&
                         (currentClusters.getMaxThresh() >= dt)) {
-                    currentClusters.sortNewClusters(newClustersSorted);
+//                    currentClusters.sortNewClusters(newClustersSorted); //TODO: figure out why this change newClusterSorted size
                     unsigned long clusterTop = newClustersSorted.back(); // think about the order
                     newClustersSorted.pop_back();
 
@@ -1312,7 +1312,10 @@ namespace dagConstruct {
                     }
 
                     /*filter 2: see if the term does not have many unique edges*/
-                    if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) == 0) {
+                    currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
+                    double uniqueThresh = (1-beta) * currentClusters.getElements(clusterTop).count();
+
+                    if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {//TODO: figure out why this is zero
                         vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, false);
                         for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
                              hidden_it != hiddenClusters.end(); ++hidden_it) {
@@ -1352,8 +1355,9 @@ namespace dagConstruct {
                 }
 
                 for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i ) {
-                    if ( (!currentClusters.isValid(i)) &&
-                            (!currentClusters.isActive(i)) ) {
+                    if ( !currentClusters.isValid(i) &&
+                            !currentClusters.isActive(i) &&
+                            (currentClusters.numElements(i) > 0) ) { // need the last condition to prevent double deletion
                         currentClusters.deleteCluster(i, nodeIDsToNames, false);
                     }
                 }
