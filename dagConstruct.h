@@ -1233,6 +1233,7 @@ namespace dagConstruct {
                     ++distanceIt;
                 }
             }
+
             cout << "# Current distance: " << distanceIt->second << "\t" << "Add until: " << addUntil << "\t" << endl;
             cout << "# Num of real edges added: " << numRealEdgesAdded << endl;
 
@@ -1241,6 +1242,8 @@ namespace dagConstruct {
             time(&end);
             dif = difftime(end, start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
+
+            numRealEdgesLastRound = numRealEdgesThisRound;
 
             // update dt
             double last_dt = dt;
