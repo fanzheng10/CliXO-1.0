@@ -151,7 +151,10 @@ public:
     }
 
     // clusterweight minus alpha
-    inline double getThresh(double alpha) {
+    inline double getThresh(double alpha, unsigned numUnexplainedEdges) {
+        if (numUnexplainedEdges ==0) {
+            return 0;
+        }
         return clusterWeight - alpha;
     }
 
@@ -495,7 +498,7 @@ public:
         if (clusterToDelete_it->isNew()) {
             --newClusts;
         }
-        *clusterToDelete_it = ClusterBitset();//is this needed?
+        *clusterToDelete_it = ClusterBitset();//this is needed
 
         /* remove the current cluster from the hidden clusters */
         for (vector<unsigned long>::iterator hiddenIt = hiddenClusters.begin(); hiddenIt !=  hiddenClusters.end(); ++hiddenIt) {
@@ -541,7 +544,6 @@ public:
         // don't deal with hidden clusters here. hidden clusters should be deleted alltogether in once
         return;
     }
-
 
     inline unsigned numNew() {
         return newClusts;
@@ -699,6 +701,13 @@ public:
         return minWeightAdded;
     }
 
+    inline double getThresh(unsigned long id) {
+        if (!currentClusters[id].isValid() && !currentClusters[id].isUnexplainedCounted()) {
+            setNumUniquelyUnexplainedEdges(id);
+        }
+        return currentClusters[id].getThresh(alpha, getNumUniquelyUnexplainedEdges(id));
+    }
+
     inline double getMaxThresh() {
         unsigned numFound = 0;
         nextThreshold = 0;
@@ -706,7 +715,7 @@ public:
              clustIt != currentClusters.rend(); ++clustIt) {
             if (clustIt->isNew()) {
                 ++numFound;
-                double clustThresh = currentClusters[clustIt->getID()].getThresh(alpha);
+                double clustThresh = getThresh(clustIt->getID());
                 if (clustThresh > nextThreshold) {
                     nextThreshold = clustThresh;
                 }
@@ -1151,7 +1160,9 @@ namespace dagConstruct {
 
         for (unsigned long i = 0; i < maxClusterID; ++i) {
             if (currentClusters.isNew(i) &&
-                    currentClusters.isActive(i))  {
+                    currentClusters.isActive(i) &&
+                    (currentClusters.numElements(i) !=0) && //don't exactly why I need this,  seems to be duplicated to 1,2
+                    (currentClusters.getThresh(i) >= currentClusters.getCurWeight()))  {
 //            if ((currentClusters.numElements(i) != 0) &&
 //                    currentClusters.isNew(i) &&
 //                    (currentClusters.getThresh(i) >= currentClusters.getCurWeight())) {
@@ -1163,7 +1174,8 @@ namespace dagConstruct {
                     /*I think I should consider all clusters*/
                     if ((j != i) &&
                         (!clustersChecked[j]) &&
-                            currentClusters.isActive(j)) {
+                            currentClusters.isActive(j) &&
+                            (currentClusters.getThresh(j) >= currentClusters.getCurWeight() )) {
                         boost::dynamic_bitset<unsigned long> proposedCombinedCluster(realEdges.numNodes(), 0);
                         if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames,
                                                proposedCombinedCluster)) {
@@ -1175,7 +1187,6 @@ namespace dagConstruct {
             clustersChecked[i] = true;
         }
         cout << "# Considering combining " << clustersToCombine.size() << " pairs of clusters" << endl;
-        //TODO: some bugs here
         if (clustersToCombine.size() > 0) {
 //            cout << "# Current Weight is " << curWeight << endl;
             bool realCombine = combineClusters(clustersToCombine, currentClusters, nodeIDsToNames, nodeDistances);
@@ -1311,6 +1322,9 @@ namespace dagConstruct {
 //                    currentClusters.sortNewClusters(newClustersSorted); //TODO: figure out why this change newClusterSorted size
                     unsigned long clusterTop = newClustersSorted.back(); // think about the order
                     newClustersSorted.pop_back();
+                    if (currentClusters.numElements(clusterTop) ==0) {
+                        continue;
+                    }
 
                     /*filter 1: see if the term is too small for the current weight*/
                     if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster)) {
