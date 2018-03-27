@@ -767,7 +767,7 @@ public:
     }
 
     bool isTooSmallForCurWeight(unsigned long id, unsigned lastLargestCluster, double lastLargestClusterWeight) {
-        unsigned size = currentClusters[id].size();
+        unsigned size = currentClusters[id].getElements().count();
         double latesmallThres_abs = ( log(numNodes) - log(size) ) / ( log(numNodes) - log(2));
         double latesmallThres_rel = lastLargestClusterWeight * ( log(numNodes) - log(size) ) / ( log(numNodes) - log(lastLargestCluster) ) ;
         double latesmallThres = min(latesmallThres_abs, latesmallThres_rel);
@@ -1289,6 +1289,7 @@ namespace dagConstruct {
                     edgesToAdd.push_back(make_pair(make_pair(firstNode, secondNode), distanceIt->second));
                     ++distanceIt;
                 }
+                last_dt = dt;
                 if (distanceIt != nodeDistances.sortedDistancesEnd()) {
                     dt = addUntil; //dt is already moved to the next level
                 } else {
