@@ -766,10 +766,10 @@ public:
         return coveredEdges.numEdges();
     }
 
-    bool isTooSmallForCurWeight(unsigned long id, unsigned lastLargestCluster) {
+    bool isTooSmallForCurWeight(unsigned long id, unsigned lastLargestCluster, double lastLargestClusterWeight) {
         unsigned size = currentClusters[id].size();
         double latesmallThres_abs = ( log(numNodes) - log(size) ) / ( log(numNodes) - log(2));
-        double latesmallThres_rel = curWeight * ( log(numNodes) - log(size) ) / ( log(numNodes) - log(lastLargestCluster) ) ;
+        double latesmallThres_rel = lastLargestClusterWeight * ( log(numNodes) - log(size) ) / ( log(numNodes) - log(lastLargestCluster) ) ;
         double latesmallThres = min(latesmallThres_abs, latesmallThres_rel);
         if (curWeight - alpha < latesmallThres - 0.1) {
             return true;
@@ -1255,6 +1255,8 @@ namespace dagConstruct {
 
         //
         double dt = nodeDistances.sortedDistancesBegin()->second; // Current threshold, starting with the maximum similarity
+        double last_dt = dt;
+        double lastLargestClusterWeight = dt;
         currentClusterClassBitset currentClusters(numNodes, dt, alpha);
 
         sortedDistanceStruct::iterator distanceIt = nodeDistances.sortedDistancesBegin();
@@ -1287,6 +1289,11 @@ namespace dagConstruct {
                     edgesToAdd.push_back(make_pair(make_pair(firstNode, secondNode), distanceIt->second));
                     ++distanceIt;
                 }
+                if (distanceIt != nodeDistances.sortedDistancesEnd()) {
+                    dt = addUntil; //dt is already moved to the next level
+                } else {
+                    dt = 0;
+                }
             }
 
             cout << "# Current distance: " << distanceIt->second << "\t" << "Add until: " << addUntil << "\t" << endl;
@@ -1301,13 +1308,7 @@ namespace dagConstruct {
             numRealEdgesLastRound = numRealEdgesThisRound;
 
 //            currentClusters.setCurWeight(dt);
-            // update dt
-            double last_dt = dt;
-            if (distanceIt != nodeDistances.sortedDistancesEnd()) {
-                dt = addUntil; //dt is already moved to the next level
-            } else {
-                dt = 0;
-            }
+
             currentClusters.setCurWeight(dt);
 
             if (clusterGraphlastRoundEdges < totalEdges -
@@ -1366,7 +1367,7 @@ namespace dagConstruct {
                     }
 
                     /*filter 1: see if the term is too small for the current weight*/
-                    if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster)) {
+                    if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster, lastLargestClusterWeight)) {
                         vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, false);
                         // don't need the following because subclusters are smaller
 //                        for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
@@ -1383,11 +1384,11 @@ namespace dagConstruct {
                     }
 
                     /*filter 2: see if the term does not have many unique edges*/
-                    //TODO: it seems this has been set before;
+
                     currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
                     double uniqueThresh = (1-beta) * currentClusters.getElements(clusterTop).count();
 
-                    if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {//TODO: figure out why this is zero
+                    if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
                         vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, false);
                         for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
                              hidden_it != hiddenClusters.end(); ++hidden_it) {
@@ -1402,11 +1403,12 @@ namespace dagConstruct {
                         continue;
                     }
                     /*note that if a term is deleted, need trace back and recheck some smaller terms*/
-                    cout << "# " << nfilter1 << " clusters failed the late-and-small filter" << endl;
-                    cout << "# " << nfilter2 << " clusters failed the uniqueness filter" << endl;
                     /*pass both filter*/
                     tempNewAndValid.push_back(clusterTop);
                 }
+
+                cout << "# " << nfilter1 << " clusters failed the late-and-small filter" << endl;
+                cout << "# " << nfilter2 << " clusters failed the uniqueness filter" << endl;
 
                 for (vector<unsigned long>::iterator newValidClusterIt = tempNewAndValid.begin();
                      newValidClusterIt != tempNewAndValid.end(); ++newValidClusterIt) {
@@ -1423,6 +1425,7 @@ namespace dagConstruct {
                     // now it is safe to delete the hidden cluster of the valid cluster. see the change in setClusterValid.
                     if (validClusters.back().numElements() > largestCluster) {
                         lastLargestCluster = largestCluster;
+                        lastLargestClusterWeight = clustWeight;
                         largestCluster = validClusters.back().numElements();
                     }
                     currentClusters.setOld(*newValidClusterIt);
