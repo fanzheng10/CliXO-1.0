@@ -534,8 +534,6 @@ public:
                 }
             }
         }
-
-
         return;
     }
 
@@ -1168,9 +1166,9 @@ namespace dagConstruct {
 
                 for (unsigned long j = 0; j < maxClusterID; ++j) {
                     /*I think I should consider all clusters*/
-                    if ((j != i) &&
-                        (!clustersChecked[j]) &&
+                    if ((j != i) &&  (!clustersChecked[j]) &&
                             currentClusters.isActive(j) &&
+                            (currentClusters.numElements(j) != 0) &&
                             (currentClusters.getThresh(j) >= currentClusters.getCurWeight() )) {
                         boost::dynamic_bitset<unsigned long> proposedCombinedCluster(realEdges.numNodes(), 0);
                         if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames, proposedCombinedCluster) && (calculateClusterWeight(proposedCombinedCluster, nodeDistances) - currentClusters.getAlpha() >= currentClusters.getCurWeight() )) {
@@ -1388,7 +1386,7 @@ namespace dagConstruct {
                 for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i ) {
                     if ( !currentClusters.isValid(i) &&
                             !currentClusters.isActive(i) &&
-                            (currentClusters.numElements(i) > 0) ) { // need the last condition to prevent double deletion
+                            (currentClusters.numElements(i) > 0) ) { // need the last condition to prevent double deletion. why there is double deletion?
                         currentClusters.deleteCluster(i, nodeIDsToNames, false);
                     }
                 }
