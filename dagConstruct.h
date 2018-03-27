@@ -652,6 +652,21 @@ public:
         return currentClusters[id].getUniquelyExplainedEdges();
     }
 
+    inline bool checkClusterValidity(unsigned long id) {
+        const vector<unsigned> cluster = currentClusters[id].getElementsVector();
+        for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
+            vector<unsigned>::const_iterator it2 = it1;
+            ++it2;
+            for ( ; it2 != cluster.end(); ++it2) {
+                if (edgesToClusters[*it1][*it2] == 1) {// this edge only appears in one cluster. may use realedges so fewer necessary clusters?
+//                    setNecessary(id);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     inline const boost::dynamic_bitset<unsigned long> & getElements(unsigned long id) {
         return currentClusters[id].getElements();
     }
@@ -858,6 +873,26 @@ namespace dagConstruct {
             return true;
         }
         return false;
+    }
+
+
+
+    inline unsigned performValidityCheck(currentClusterClassBitset & currentClusters,
+                                     nodeDistanceObject & nodeDistances, vector<string> & nodeIDsToNames) {
+        vector<unsigned long> newClustersSorted; // where is this given?
+        currentClusters.prepareForValidityCheck(newClustersSorted);
+        unsigned deleted = 0;
+//        cout << "# Perform validity check for necessary clusters: ";
+        for (vector<unsigned long>::iterator newClusterIt = newClustersSorted.begin();
+             newClusterIt != newClustersSorted.end(); ++newClusterIt) {
+            if (!currentClusters.checkClusterValidity(*newClusterIt)) {
+                currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames,false);
+                ++deleted;
+            }
+        }
+        currentClusters.resetAllUnexplained(); // this only reset per cluster features
+
+        return deleted;
     }
 
     bool isMinNodeDegreeMet(unsigned long cluster1, unsigned long cluster2, currentClusterClassBitset &currentClusters,
@@ -1256,7 +1291,7 @@ namespace dagConstruct {
 
             cout << "# Current distance: " << distanceIt->second << "\t" << "Add until: " << addUntil << "\t" << endl;
             cout << "# Num of real edges added: " << numRealEdgesAdded << endl;
-
+//            cout << "# Use real edges to expand clusters" << endl;
             updateClustersWithRealEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
 
             time(&end);
@@ -1286,21 +1321,25 @@ namespace dagConstruct {
                 if (beta < 1) { // think about chordal later
 
                     cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
+                    unsigned ndeleted = performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
                     bool newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, nodeIDsToNames,
                                                          nodeDistances, realEdges);
 
+                    cout << "# " << ndeleted << " clusters deleted in validity check; Now has  " << currentClusters.numCurrentClusters() << " clusters" << endl;
                     time(&end);
                     dif = difftime(end, start);
                     cout << "# Time elapsed: " << dif << " seconds" << endl;
 
                     while (newEdgesAdded == true) { //recursively merging cliques
                         // delete invalid clusters after merging. remember, if a merged clique is deleted, the two original cliques must be returned
+                        unsigned ndeleted = performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
                         newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, nodeIDsToNames,
                                                         nodeDistances, realEdges);
+                        cout << "# " << ndeleted << " clusters deleted in validity check; Now has  " << currentClusters.numCurrentClusters() << " clusters" << endl;
                     }
                 }
 //                currentClusters.sortNewClusters(newClustersSorted); //sort by size, ascending, not needed, since prepareForValidty check performs sorting
-                currentClusters.prepareForValidityCheck(newClustersSorted); // sort and add edge explaination
+//                currentClusters.prepareForValidityCheck(newClustersSorted); // sort and add edge explaination
 
                 cout << "# Current number of clusters:" << currentClusters.numCurrentClusters() << endl;
                 cout << "# New clusters to evaluate:" << newClustersSorted.size() << endl;
@@ -1310,6 +1349,9 @@ namespace dagConstruct {
 
 
                 vector<unsigned long> tempNewAndValid;
+
+                unsigned nfilter1 = 0;
+                unsigned nfilter2 = 0;
 
                 while ((newClustersSorted.size() > 0) &&
                         (currentClusters.getMaxThresh() >= dt)) {
@@ -1336,6 +1378,7 @@ namespace dagConstruct {
 //                                newClustersSorted.push_back(*hidden_it);
 //                            }
 //                        }
+                        ++nfilter1;
                         continue;
                     }
 
@@ -1349,16 +1392,18 @@ namespace dagConstruct {
                         for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
                              hidden_it != hiddenClusters.end(); ++hidden_it) {
                             if ((currentClusters.isNew(*hidden_it)) &&
-                                    (currentClusters.getMergeToID(*hidden_it).size() == 1)){
+                                    (currentClusters.getMergeToID(*hidden_it).size() == 0)){
                                 //make it active again
                                 currentClusters.activateCluster(*hidden_it, nodeIDsToNames, false);
                                 newClustersSorted.push_back(*hidden_it);
                             }
                         }
+                        ++nfilter2;
                         continue;
                     }
                     /*note that if a term is deleted, need trace back and recheck some smaller terms*/
-
+                    cout << "# " << nfilter1 << " clusters failed the late-and-small filter" << endl;
+                    cout << "# " << nfilter2 << " clusters failed the uniqueness filter" << endl;
                     /*pass both filter*/
                     tempNewAndValid.push_back(clusterTop);
                 }
