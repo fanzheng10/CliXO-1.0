@@ -1338,7 +1338,7 @@ namespace dagConstruct {
                         cout << "# " << ndeleted << " clusters deleted in validity check; Now has  " << currentClusters.numCurrentClusters() << " clusters" << endl;
                     }
                 }
-//                currentClusters.sortNewClusters(newClustersSorted); //sort by size, ascending, not needed, since prepareForValidty check performs sorting
+                currentClusters.sortNewClusters(newClustersSorted); //sort by size, ascending, not needed, since prepareForValidty check performs sorting
 //                currentClusters.prepareForValidityCheck(newClustersSorted); // sort and add edge explaination
 
                 cout << "# Current number of clusters:" << currentClusters.numCurrentClusters() << endl;
