@@ -17,7 +17,7 @@
 //can I have global variable here?
 //unsigned long recursion;
 //unsigned long recursion2;
-bool useChordal = false;
+bool useChordal = true;
 double globalDensity = 1.0;
 
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
