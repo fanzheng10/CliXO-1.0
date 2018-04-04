@@ -35,6 +35,16 @@ bool compPairSecondDescending(const pair< unsigned, unsigned > & i,const pair< u
     return (i.second > j.second);
 }
 
+bool compClustersToCombine(const pair<pair<unsigned long, unsigned long>, double> & i, const pair<pair<unsigned long, unsigned long>, double> & j) {
+    if (i.second == j.second) {
+        if (i.first.first == j.first.first) {
+            return i.first.second < j.first.second;
+        }
+        return i.first.first < j.first.first;
+    }
+    return i.second > j.second;
+}
+
 double calculateClusterWeight(boost::dynamic_bitset<unsigned long> cluster, nodeDistanceObject & nodeDistances) {
 //        vector <double> edgeWeights;
     double sumEdgeWeights = 0;
@@ -423,6 +433,24 @@ public:
         ++clustersAdded;
         ++newClusts;
         resetClusterWeight(newID, nodeDistances);
+
+        //TODO: check other inactivated clusters. If they are subset, add cluster relationships here
+        vector <unsigned long> nonMaximal;
+        nonMaximal.reserve(1000);
+        for (unsigned long i = 0; i < maxClusterID(); ++i) {
+            if ((numElements(i) !=0) && isNew(i) && (!isActive(i))) {
+                if (getElements(i).is_subset_of(getElements(newID))) {
+//                    inactivateCluster(i, nodeIDsToNames);
+                    nonMaximal.push_back(i);
+                }
+            }
+        }
+
+        /* add relationships to the non-maximal clusters*/
+        for (vector<unsigned long>::iterator nonMaximalIt = nonMaximal.begin(); nonMaximalIt < nonMaximal.end(); ++nonMaximalIt ) {
+            addMergedToID(*nonMaximalIt, newID);
+        }
+        setMergedFromID(newID, nonMaximal);
 
         return newID;
     }
@@ -895,27 +923,29 @@ namespace dagConstruct {
         return deleted;
     }
 
-    bool isMinNodeDegreeMet(unsigned long cluster1, unsigned long cluster2, currentClusterClassBitset &currentClusters,
-                            graph_undirected_bitset &clusterGraph, // what to put here is critical, think about whether it is realEdges or plus clusterGraph
-                            double density, vector<string> &nodeIDsToNames,
-                            boost::dynamic_bitset<unsigned long> &proposedCombinedCluster) {
+    bool isMinNodeDegreeMet(unsigned cluster1, unsigned cluster2, currentClusterClassBitset &currentClusters,
+                            graph_undirected_bitset &clusterGraph, double density, vector<string> & nodeIDsToNames) {
+        boost::dynamic_bitset<unsigned long> combination = currentClusters.getElements(cluster1);
 
-        proposedCombinedCluster = currentClusters.getElements(cluster1) | currentClusters.getElements(cluster2);
-        unsigned long numCombined = proposedCombinedCluster.count();
+        combination |= currentClusters.getElements(cluster2);
+        unsigned numCombined = combination.count();
         double denom = numCombined - 1;
         unsigned numChecked = 0;
-        for (unsigned long i = proposedCombinedCluster.find_first();
-             i < proposedCombinedCluster.size(); i = proposedCombinedCluster.find_next(i)) {// how to output genes here
-            boost::dynamic_bitset<unsigned long> interactorsInCombo = proposedCombinedCluster;
+        for (unsigned i = combination.find_first(); i < combination.size(); i = combination.find_next(i)) {// how to output genes here
+            boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
             interactorsInCombo &= clusterGraph.getInteractors(i);
-            unsigned long numInteractorsInCombo = interactorsInCombo.count();
-            if ((numInteractorsInCombo / denom) <= density) {
+            unsigned numInteractorsInCombo = interactorsInCombo.count();
+            if ((numInteractorsInCombo / denom) <= density ) {
                 return false;
             }
             ++numChecked;
+            if (numChecked == numCombined) {
+                return true;
+            }
         }
         return true;
     }
+
 
     /*core clique finding algorithm. Don't know the detail*/
     void updateCliques(graph_undirected_bitset &clusterGraph,
@@ -1042,9 +1072,9 @@ namespace dagConstruct {
 
 
     /**/
-    void updateClustersWithRealEdges(vector<pair<pair<unsigned, unsigned>, double> > &edgesToAdd,
+    void updateClustersWithEdges(vector<pair<unsigned, unsigned> > &edgesToAdd,
                                      currentClusterClassBitset &currentClusters, graph_undirected_bitset &clusterGraph,
-                                     nodeDistanceObject &nodeDistances, vector<string> &nodeIDsToNames) {
+                                     nodeDistanceObject &nodeDistances, vector<string> &nodeIDsToNames, bool withRealEdges = true) {
 
         cout << "# Adding " << edgesToAdd.size() << " edges" << endl;
 
@@ -1052,13 +1082,13 @@ namespace dagConstruct {
         vector<char> affectedNodes(clusterGraph.numNodes(), 0);
         for (unsigned long edgesToAddCounter = 0; edgesToAddCounter != edgesToAdd.size(); ++edgesToAddCounter) {
 
-            if (!clusterGraph.isEdge(edgesToAdd[edgesToAddCounter].first.first,
-                                     edgesToAdd[edgesToAddCounter].first.second)) {
-                clusterGraph.addEdge(edgesToAdd[edgesToAddCounter].first.first,
-                                     edgesToAdd[edgesToAddCounter].first.second);
+            if (!clusterGraph.isEdge(edgesToAdd[edgesToAddCounter].first,
+                                     edgesToAdd[edgesToAddCounter].second)) {
+                clusterGraph.addEdge(edgesToAdd[edgesToAddCounter].first,
+                                     edgesToAdd[edgesToAddCounter].second);
             }
-            affectedNodes[edgesToAdd[edgesToAddCounter].first.first] = 1;
-            affectedNodes[edgesToAdd[edgesToAddCounter].first.second] = 1;
+            affectedNodes[edgesToAdd[edgesToAddCounter].first] = 1;
+            affectedNodes[edgesToAdd[edgesToAddCounter].second] = 1;
         }
 
         unsigned long numAff = 0;
@@ -1094,25 +1124,28 @@ namespace dagConstruct {
         }
         cout << "# Clusters affected = " << numAff << endl;
 
-        unsigned deleted = 0;
+        unsigned inactivated = 0;
 
         // expanding existing clusters, in currentClusters
         for (unsigned i = 0; i < affectedClusters.size(); ++i) {
             if (affectedClusters[i] && currentClusters.isNew(i)) {
                 if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd,
                                        nodeIDsToNames)) {
-                    currentClusters.deleteCluster(i, nodeIDsToNames, false);
-                    ++deleted;
+                    //TODO: change this to cluster inactivation
+                    printCluster(currentClusters.getElements(i), nodeIDsToNames);
+                    currentClusters.inactivateCluster(i, nodeIDsToNames, true); //set true for now for debugging
+//                    currentClusters.deleteCluster(i, nodeIDsToNames, false);
+                    ++inactivated;
                 }
             }
         }
-        cout << "# Num of non-maximal clusters deleted here: " << deleted << endl;
+        cout << "# Num of non-maximal clusters deleted here: " << inactivated << endl;
 
         // adding brand new clusters, using new edges added this round
         for (unsigned long edgesToAddCounter = 0; edgesToAddCounter != edgesToAdd.size(); ++edgesToAddCounter) {
             boost::dynamic_bitset<unsigned long> seedClust(clusterGraph.numNodes());
-            seedClust[edgesToAdd[edgesToAddCounter].first.first] = 1;
-            seedClust[edgesToAdd[edgesToAddCounter].first.second] = 1;
+            seedClust[edgesToAdd[edgesToAddCounter].first] = 1;
+            seedClust[edgesToAdd[edgesToAddCounter].second] = 1;
             if (!findClustsWithSeed(seedClust, clusterGraph, newClustersToAdd,
                                     nodeIDsToNames)) { //seedClust is updated inside the findClustWithSeed function
                 // seedClust is a maximal clique of just two nodes
@@ -1132,57 +1165,94 @@ namespace dagConstruct {
         //done
     }
 
-
+//TODO: change the usage of ClustersToCombine
     bool combineClusters(
-            vector<pair<pair<unsigned long, unsigned long>, boost::dynamic_bitset<unsigned long>>> &clustersToCombine,
+            vector<pair<pair<unsigned long, unsigned long>, double>> &clustersToCombine,
             currentClusterClassBitset &currentClusters,
+            graph_undirected_bitset & clusterGraph,
             vector<string> &nodeIDsToNames,
             nodeDistanceObject &nodeDistances) {
-        /*try avoid updateClusterWithEdges function. Because it uses all these new edges as seed to expand. Directly create ncluster with proper edges. Otherwise, these newly added edges may interfere with other edges outside of this merge and create other spurious cluster*/
-        bool realCombine = false;
-        for (vector<pair<pair<unsigned long, unsigned long>, boost::dynamic_bitset<unsigned long>>>::iterator clustersToCombineIt = clustersToCombine.begin(); // why is this complaining
+        //This statement is not valid anymore: *try avoid updateClusterWithEdges function. Because it uses all these new edges as seed to expand. Directly create ncluster with proper edges. Otherwise, these newly added edges may interfere with other edges outside of this merge and create other spurious cluster*/
+
+        vector<pair<unsigned, unsigned> > edgesToAdd;
+        edgesToAdd.reserve(clusterGraph.numEdges());
+
+        vector<vector<char> > edgeWillBeAdded(nodeDistances.numNodes(), vector<char>(nodeDistances.numNodes(), false));
+        sort(clustersToCombine.begin(), clustersToCombine.end(), compClustersToCombine); //TODO: bring this function back
+
+        for (vector<pair<pair<unsigned long, unsigned long>, double>>::iterator clustersToCombineIt = clustersToCombine.begin(); // why is this complaining
              clustersToCombineIt != clustersToCombine.end(); ++clustersToCombineIt) {
 
-                /* TODO: check non-maximality of the combined cluster, inactivate everything that are rendered non-maximal by this one */
-            vector <unsigned long> nonMaximal;
-            nonMaximal.reserve(1000);
-            for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
-                if ((currentClusters.numElements(i) !=0) && currentClusters.isNew(i) && currentClusters.isActive(i)) {
-                    if (currentClusters.getElements(i).is_subset_of(clustersToCombineIt->second)) {
-                        currentClusters.inactivateCluster(i, nodeIDsToNames);
-                        nonMaximal.push_back(i);
+            boost::dynamic_bitset<unsigned long> onlyIn1 = currentClusters.getElements(
+                    clustersToCombineIt->first.first);
+            boost::dynamic_bitset<unsigned long> onlyIn2 = currentClusters.getElements(
+                    clustersToCombineIt->first.second);
+            onlyIn1 -= currentClusters.getElements(clustersToCombineIt->first.second);
+            onlyIn2 -= currentClusters.getElements(clustersToCombineIt->first.first);
+
+            for (unsigned i = onlyIn1.find_first(); i < onlyIn1.size(); i = onlyIn1.find_next(i)) {
+                boost::dynamic_bitset<unsigned long> newEdgesFrom1To2 = onlyIn2;
+                newEdgesFrom1To2 -= clusterGraph.getInteractors(
+                        i); //excluding old edges (THINK ABOUT IT IS clusterGraph or clusterGraph)
+                for (unsigned j = newEdgesFrom1To2.find_first();
+                     j < newEdgesFrom1To2.size(); j = newEdgesFrom1To2.find_next(j)) {
+                    if (!edgeWillBeAdded[i][j]) { // don't comment out this line
+                        edgesToAdd.push_back(make_pair(i, j)); //here you are adding all edges!
+                        edgeWillBeAdded[i][j] = true;
+                        edgeWillBeAdded[j][i] = true;
                     }
                 }
             }
+        }
+
+        if (edgesToAdd.size() == 0) {
+            return false;
+        }
+
+        updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
+
+        return true;
+//                /* TODO: delete the code below*/
+//            vector <unsigned long> nonMaximal;
+//            nonMaximal.reserve(1000);
+//            for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
+//                if ((currentClusters.numElements(i) !=0) && currentClusters.isNew(i) && currentClusters.isActive(i)) {
+//                    if (currentClusters.getElements(i).is_subset_of(clustersToCombineIt->second)) {
+//                        currentClusters.inactivateCluster(i, nodeIDsToNames);
+//                        nonMaximal.push_back(i);
+//                    }
+//                }
+//            }
 
                 /*add the cluster*/
-            realCombine = true;
-            unsigned long newID = currentClusters.addCluster(clustersToCombineIt->second, nodeDistances, nodeIDsToNames);
-
-                /* still delete is a bad idea. Should set them inactive, so there can be reactivated if needed */
-//                currentClusters.inactivateCluster(clustersToCombineIt->first.first, nodeIDsToNames);
-//                currentClusters.inactivateCluster(clustersToCombineIt->first.second, nodeIDsToNames);
-
-                /* add relationships to the non-maximal clusters*/
-            for (vector<unsigned long>::iterator nonMaximalIt = nonMaximal.begin(); nonMaximalIt < nonMaximal.end(); ++nonMaximalIt ) {
-                currentClusters.addMergedToID(*nonMaximalIt, newID);
-            }
-//                currentClusters.addMergedToID(clustersToCombineIt->first.first, newID);
-//                currentClusters.addMergedToID(clustersToCombineIt->first.second, newID);
-//                currentClusters.addMergedFromID(newID, clustersToCombineIt->first.first);
-            currentClusters.setMergedFromID(newID, nonMaximal);
-        }
-        return realCombine;
+//            realCombine = true;
+//            unsigned long newID = currentClusters.addCluster(clustersToCombineIt->second, nodeDistances, nodeIDsToNames);
+//
+//                /* still delete is a bad idea. Should set them inactive, so there can be reactivated if needed */
+////                currentClusters.inactivateCluster(clustersToCombineIt->first.first, nodeIDsToNames);
+////                currentClusters.inactivateCluster(clustersToCombineIt->first.second, nodeIDsToNames);
+//
+//                /* add relationships to the non-maximal clusters*/
+//            for (vector<unsigned long>::iterator nonMaximalIt = nonMaximal.begin(); nonMaximalIt < nonMaximal.end(); ++nonMaximalIt ) {
+//                currentClusters.addMergedToID(*nonMaximalIt, newID);
+//            }
+////                currentClusters.addMergedToID(clustersToCombineIt->first.first, newID);
+////                currentClusters.addMergedToID(clustersToCombineIt->first.second, newID);
+////                currentClusters.addMergedFromID(newID, clustersToCombineIt->first.first);
+//            currentClusters.setMergedFromID(newID, nonMaximal);
+//        }
+//        return realCombine;
     }
 
     /**/
     bool addMissingEdges(currentClusterClassBitset &currentClusters,
                          double density, double threshold,
+                         graph_undirected_bitset & clusterGraph,
                          vector<string> &nodeIDsToNames,
                          nodeDistanceObject &nodeDistances,
                          graph_undirected_bitset &realEdges) {
 
-        vector<pair<pair<unsigned long, unsigned long>, boost::dynamic_bitset<unsigned long> >> clustersToCombine; //the bitset is the element after combine
+        vector<pair<pair<unsigned long, unsigned long>, double>> clustersToCombine; //the bitset is the element after combine
 
         unsigned long maxClusterID = currentClusters.maxClusterID();
         vector<bool> clustersChecked(maxClusterID, false);
@@ -1204,10 +1274,18 @@ namespace dagConstruct {
                     if ((j != i) &&  (!clustersChecked[j]) &&
                             currentClusters.isActive(j) &&
                             (currentClusters.numElements(j) != 0) &&
-                            (currentClusters.getThresh(j) >= currentClusters.getCurWeight() )) {
-                        boost::dynamic_bitset<unsigned long> proposedCombinedCluster(realEdges.numNodes(), 0);
-                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames, proposedCombinedCluster) && (calculateClusterWeight(proposedCombinedCluster, nodeDistances) - currentClusters.getAlpha() >= currentClusters.getCurWeight() )) {
-                            clustersToCombine.push_back(make_pair(make_pair(i, j), proposedCombinedCluster));
+                            (currentClusters.getThresh(j) >= currentClusters.getCurWeight() ))  {
+//                        boost::dynamic_bitset<unsigned long> proposedCombinedCluster(realEdges.numNodes(), 0);
+                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames)) {
+                            //TODO: delete the proposedCombinedCluster, maybe too inefficient to pre-calculate the weight of cluster                           
+                            double tempWeight;
+                            if (currentClusters.getThresh(j) > currentClusters.getThresh(i)) {
+                                tempWeight = currentClusters.getThresh(i);
+                            }
+                            else {
+				                tempWeight = currentClusters.getThresh(j);
+                            }
+                            clustersToCombine.push_back(make_pair(make_pair(i, j), tempWeight));
                         }
                     }
                 }
@@ -1217,7 +1295,7 @@ namespace dagConstruct {
         cout << "# Considering combining " << clustersToCombine.size() << " pairs of clusters" << endl;
         if (clustersToCombine.size() > 0) {
 //            cout << "# Current Weight is " << curWeight << endl;
-            bool realCombine = combineClusters(clustersToCombine, currentClusters, nodeIDsToNames, nodeDistances);
+            bool realCombine = combineClusters(clustersToCombine, currentClusters, clusterGraph, nodeIDsToNames, nodeDistances);
             return realCombine; // if return true, new cluster are created. Should consider more combine
         }
         return false;
@@ -1243,7 +1321,7 @@ namespace dagConstruct {
 
         // * node (gene) names * //
         vector<string> nodeIDsToNames(nodeNamesToIDs.size(), string(""));
-        for (map<string, unsigned>::iterator it = nodeNamesToIDs.begin(); it != nodeNamesToIDs.end(); ++it) {
+        for (map<string, unsigned>::iterator it = nodeNamesToIDs.begin(); it != nodeNamesToIDs.end(); ++it) {// what is going on here
             nodeIDsToNames[it->second] = it->first;
         }
         unsigned numNodes = nodeDistances.numNodes();
@@ -1270,7 +1348,7 @@ namespace dagConstruct {
 
             unsigned numRealEdgesThisRound = 0;
 
-            vector<pair<pair<unsigned, unsigned>, double> > edgesToAdd;
+            vector<pair<unsigned, unsigned> > edgesToAdd;
             double estimateNumEdges = totalEdges * exp(dt * log(2) + (1 - dt) * log(numNodes)) / numNodes;
             edgesToAdd.reserve((unsigned long) (estimateNumEdges));
 
@@ -1286,7 +1364,7 @@ namespace dagConstruct {
                                       secondNode); // add edges to realEdges; this is the only place that realEdges change
                     ++numRealEdgesAdded;
                     ++numRealEdgesThisRound;
-                    edgesToAdd.push_back(make_pair(make_pair(firstNode, secondNode), distanceIt->second));
+                    edgesToAdd.push_back(make_pair(firstNode, secondNode));
                     ++distanceIt;
                 }
                 last_dt = dt;
@@ -1300,7 +1378,7 @@ namespace dagConstruct {
             cout << "# Current distance: " << distanceIt->second << "\t" << "Add until: " << addUntil << "\t" << endl;
             cout << "# Num of real edges added: " << numRealEdgesAdded << endl;
 //            cout << "# Use real edges to expand clusters" << endl;
-            updateClustersWithRealEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
+            updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
 
             time(&end);
             dif = difftime(end, start);
@@ -1324,8 +1402,7 @@ namespace dagConstruct {
 
                     cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
                     unsigned ndeleted = performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
-                    bool newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, nodeIDsToNames,
-                                                         nodeDistances, realEdges);
+                    bool newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, clusterGraph, nodeIDsToNames, nodeDistances, realEdges);
 
                     cout << "# " << ndeleted << " clusters deleted in validity check; Now has  " << currentClusters.numCurrentClusters() << " clusters" << endl;
                     time(&end);
@@ -1335,8 +1412,7 @@ namespace dagConstruct {
                     while (newEdgesAdded == true) { //recursively merging cliques
                         // delete invalid clusters after merging. remember, if a merged clique is deleted, the two original cliques must be returned
                         unsigned ndeleted = performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
-                        newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, nodeIDsToNames,
-                                                        nodeDistances, realEdges);
+                        newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, clusterGraph, nodeIDsToNames, nodeDistances, realEdges);
                         cout << "# " << ndeleted << " clusters deleted in validity check; Now has  " << currentClusters.numCurrentClusters() << " clusters" << endl;
                     }
                 }
@@ -1357,7 +1433,7 @@ namespace dagConstruct {
 
                 while ((newClustersSorted.size() > 0) &&
                         (currentClusters.getMaxThresh() >= dt)) {
-//                    currentClusters.sortNewClusters(newClustersSorted); //TODO: figure out why this change newClusterSorted size
+//                    currentClusters.sortNewClusters(newClustersSorted);
                     unsigned long clusterTop = newClustersSorted.back(); // think about the order
                     newClustersSorted.pop_back();
                     if (currentClusters.numElements(clusterTop) ==0) {
@@ -1367,6 +1443,7 @@ namespace dagConstruct {
                         continue;
                     }
 
+                    //TODO: this function can go to updateClusterWeight
                     /*filter 1: see if the term is too small for the current weight*/
                     if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster, lastLargestClusterWeight)) {
                         vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, false);

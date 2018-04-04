@@ -1926,7 +1926,6 @@ namespace dagConstruct {
 //        for (unsigned i = 0; i < newClustersToAdd_fake.size(); ++i) {
 //            printCluster(newClustersToAdd_fake[i], nodeIDsToNames);
 //            cout << endl;
-//        }
     }
 
     bool combineClusters(vector<pair<pair<unsigned long, unsigned long>, double> > & clustersToCombine,
