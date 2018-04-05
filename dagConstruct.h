@@ -18,6 +18,8 @@
 #include "nodeDistanceObject.h"
 #include "boost/dynamic_bitset/dynamic_bitset.hpp"
 
+bool debug = false;
+
 // to print the gene names in the cluster
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
     for (unsigned i = 0; i < cluster.size(); ++i) {
@@ -938,7 +940,7 @@ namespace dagConstruct {
         for (vector<unsigned long>::iterator newClusterIt = newClustersSorted.begin();
              newClusterIt != newClustersSorted.end(); ++newClusterIt) {
             if (!currentClusters.checkClusterValidity(*newClusterIt) && (currentClusters.isActive(*newClusterIt))) {
-                currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, true); // don't worry about the non-maximal child clusters. Since they won't pass here
+                currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, debug); // don't worry about the non-maximal child clusters. Since they won't pass here
                 ++deleted;
             }
         }
@@ -1156,7 +1158,7 @@ namespace dagConstruct {
                 if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd,
                                        nodeIDsToNames)) {
                     //TODO: change this to cluster inactivation
-                    currentClusters.inactivateCluster(i, nodeIDsToNames, true); //set true for now for debugging
+                    currentClusters.inactivateCluster(i, nodeIDsToNames, debug); //set true for now for debugging
                     ++inactivated;
                 }
             }
@@ -1309,7 +1311,7 @@ namespace dagConstruct {
         }
         unsigned numNodes = nodeDistances.numNodes();
 
-        // * define graph objects * //
+        // * define graph objects * //clusterGraphlastRoundEdges
         graph_undirected_bitset clusterGraph(numNodes); // all the edges covered by clusters by this time
         graph_undirected_bitset realEdges(numNodes); // all the real edges by this time
 
@@ -1323,12 +1325,13 @@ namespace dagConstruct {
         unsigned totalEdges = numNodes * (numNodes - 1) / 2;
 
         // iterative clique finding
-        while ((clusterGraph.numEdges() != totalEdges) &&
+        while ((realEdges.numEdges() < 0.5 * totalEdges) &&
                (distanceIt != nodeDistances.sortedDistancesEnd()) &&
                (distanceIt->second >= alpha)
                 ) { // termination conditions
 
             unsigned numRealEdgesThisRound = 0;
+            clusterGraph = realEdges; // is this making a copy
 
             vector<pair<unsigned, unsigned> > edgesToAdd;
             double estimateNumEdges = totalEdges * exp(dt * log(2) + (1 - dt) * log(numNodes)) / numNodes;
@@ -1354,9 +1357,9 @@ namespace dagConstruct {
                     dt = addUntil; //dt is already moved to the next level
                 } else {
                     dt = 0;
+                    break;
                 }
             }
-            //Not TODO: let clusterGraph copy realEdges
 
 
             cout << "# Current distance: " << distanceIt->second << "\t" << "Add until: " << addUntil << "\t" << endl;
@@ -1370,174 +1373,169 @@ namespace dagConstruct {
 
             numRealEdgesLastRound = numRealEdgesThisRound;
 
-//            currentClusters.setCurWeight(dt);
-
             currentClusters.setCurWeight(dt);
 
-            if (clusterGraphlastRoundEdges < totalEdges -
-                                             clusterGraph.numEdges()) { // this condition makes sure there are not too many nested cluster close to the top
 
-                unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
-                cout << "# Number of clusters before merging: " << numClustersBeforeDelete << endl;
+            unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
+            cout << "# Number of clusters before merging: " << numClustersBeforeDelete << endl;
 
-                vector<unsigned long> newClustersSorted;
+            vector<unsigned long> newClustersSorted;
 
-                if (beta < 1) { // think about chordal later
+            if (beta < 1) { // think about chordal later
 
-                    cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
-                    //TODO: should only consider active clusters here
-                    unsigned ndeleted = performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
-                    bool newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, clusterGraph, nodeIDsToNames, nodeDistances, realEdges);
+                cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
+                //TODO: should only consider active clusters here
+                unsigned ndeleted = performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
+                bool newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, clusterGraph, nodeIDsToNames, nodeDistances, realEdges);
 
-                    cout << "# " << ndeleted << " clusters deleted in validity check; Now has " << currentClusters.numCurrentClusters() << " clusters" << endl;
-                    time(&end);
-                    dif = difftime(end, start);
-                    cout << "# Time elapsed: " << dif << " seconds" << endl;
-
-                    while (newEdgesAdded == true) { //recursively merging cliques
-                        // delete invalid clusters after merging. remember, if a merged clique is deleted, the two original cliques must be returned
-                        unsigned ndeleted = performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
-                        newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, clusterGraph, nodeIDsToNames, nodeDistances, realEdges);
-                        cout << "# " << ndeleted << " clusters deleted in validity check; Now has  " << currentClusters.numCurrentClusters() << " clusters" << endl;
-                    }
-                }
-                currentClusters.sortNewClusters(newClustersSorted); //sort by size, ascending; this only has new active clusters
-//                currentClusters.prepareForValidityCheck(newClustersSorted); // sort and add edge explaination
-
-                cout << "# Current number of clusters:" << currentClusters.numCurrentClusters() << endl;
-                cout << "# New clusters to evaluate:" << newClustersSorted.size() << endl;
+                cout << "# " << ndeleted << " clusters deleted in validity check; Now has " << currentClusters.numCurrentClusters() << " clusters" << endl;
                 time(&end);
                 dif = difftime(end, start);
                 cout << "# Time elapsed: " << dif << " seconds" << endl;
 
+                while (newEdgesAdded == true) { //recursively merging cliques
+                    // delete invalid clusters after merging. remember, if a merged clique is deleted, the two original cliques must be returned
+                    unsigned ndeleted = performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
+                    newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, clusterGraph, nodeIDsToNames, nodeDistances, realEdges);
+                    cout << "# " << ndeleted << " clusters deleted in validity check; Now has  " << currentClusters.numCurrentClusters() << " clusters" << endl;
+                }
+            }
+            currentClusters.sortNewClusters(newClustersSorted); //sort by size, ascending; this only has new active clusters
+//                currentClusters.prepareForValidityCheck(newClustersSorted); // sort and add edge explaination
 
-                vector<unsigned long> tempNewAndValid;
+            cout << "# Current number of clusters:" << currentClusters.numCurrentClusters() << endl;
+            cout << "# New clusters to evaluate:" << newClustersSorted.size() << endl;
+            time(&end);
+            dif = difftime(end, start);
+            cout << "# Time elapsed: " << dif << " seconds" << endl;
 
-                unsigned weight_filter = 0;
-                unsigned small_filter = 0;
-                unsigned unique_filter = 0;
 
-                while ((newClustersSorted.size() > 0) &&
-                        (currentClusters.getMaxThresh() >= dt)) {
+            vector<unsigned long> tempNewAndValid;
+
+            unsigned weight_filter = 0;
+            unsigned small_filter = 0;
+            unsigned unique_filter = 0;
+
+            unsigned n_pass_filter = 0;
+
+            while (newClustersSorted.size()>0) {
+//                while ((newClustersSorted.size() > 0) &&
+//                        (currentClusters.getMaxThresh() >= dt)) { //TODO: this explains why the first a few iteration is wrong
 //                    currentClusters.sortNewClusters(newClustersSorted);
-                    unsigned long clusterTop = newClustersSorted.back(); // think about the order
-                    newClustersSorted.pop_back();
-                    if (currentClusters.numElements(clusterTop) ==0 ) { //some clusters are "hold-on" this stage.
-                        continue;
-                    }
+                unsigned long clusterTop = newClustersSorted.back(); // think about the order
+                newClustersSorted.pop_back();
+                if (currentClusters.numElements(clusterTop) ==0 ) { //some clusters are "hold-on" this stage.
+                    continue;
+                }
 
-                    // weight filter
-                    if (currentClusters.getThresh(clusterTop) < dt) {
-                        //if weight is not qualified (this happen often when merge happens; also delete and break down
+                //TODO: this function can go to updateClusterWeight (downside: prohitbit merging. left it as is for now)
+                /*filter : see if the term is too small for the current weight*/
+                if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster, lastLargestClusterWeight)) {
+                    vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, false);
+
+                    //don't have to delete hiddenClusters here due to the final step
+                    ++small_filter;
+                    continue;
+                }
+
+                // weight filter
+                if (currentClusters.getThresh(clusterTop) < dt) {
+                    //if weight is not qualified (this happen often when merge happens; also delete and break down
+                    if (debug) {
                         cout << "Weight failed: ";
-
-                        vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, true);
-                        for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
-                             hidden_it != hiddenClusters.end(); ++hidden_it) {
-                            if ((currentClusters.isNew(*hidden_it)) &&
-                                    (currentClusters.getMergeToID(*hidden_it).size() == 0)){
-                                //make it active againi
+                    }
+                    vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+                    for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
+                         hidden_it != hiddenClusters.end(); ++hidden_it) {
+                        if ((currentClusters.isNew(*hidden_it)) &&
+                                (currentClusters.getMergeToID(*hidden_it).size() == 0)){
+                            //make it active again
+                            if (debug) {
                                 cout << "Activate again: ";
-                                currentClusters.activateCluster(*hidden_it, nodeIDsToNames, true);
-                                cout << endl;
-                                newClustersSorted.push_back(*hidden_it);
                             }
+                            currentClusters.activateCluster(*hidden_it, nodeIDsToNames, debug);
+                            newClustersSorted.push_back(*hidden_it);
                         }
-                        ++weight_filter;
-                        continue;
                     }
+                    ++weight_filter;
+                    continue;
+                }
 
-                    //TODO: this function can go to updateClusterWeight
-                    /*filter 1: see if the term is too small for the current weight*/
-                    if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster, lastLargestClusterWeight)) {
-                        //TODO: think about strong deletion and soft deletion
-                        vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, false);
+                /*see if the term does not have many unique edges*/
 
-                        //TODO: also delete the hidden clusters; maybe don't have to due to the final step
-                        // don't need the following because subclusters are smaller
-//                        for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
-//                             hidden_it != hiddenClusters.end(); ++hidden_it) {
-//                            if ( (currentClusters.isNew(*hidden_it)) &&
-//                                    (currentClusters.getMergeToID(*hidden_it).size() == 1) ) { //*the hidden cluster should not be hidden by other merging as well*/
-//                                //make it active again
-//                                currentClusters.activateCluster(*hidden_it, nodeIDsToNames, false);
-//                                newClustersSorted.push_back(*hidden_it);
-//                            }
-//                        }
-                        ++small_filter;
-                        continue;
-                    }
-
-                    /*see if the term does not have many unique edges*/
-
-                    currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
+                currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
 //                    double uniqueThresh = (1-beta) * currentClusters.getElements(clusterTop).count();
-                    double uniqueThresh = 0.05* pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
+                double uniqueThresh = 0.05* pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
-                    if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
+                if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
+                    if (debug) {
                         cout << "Uniqueness failed: ";
-                        cout << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh << "\t" << endl;
-                        vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, true);
-                        for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
-                             hidden_it != hiddenClusters.end(); ++hidden_it) {
-                            if ((currentClusters.isNew(*hidden_it)) &&
-                                    (currentClusters.getMergeToID(*hidden_it).size() == 0)){
-                                //make it active againi
+                        cout << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh
+                             << "\t" << endl;
+                    }
+                    vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+                    for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
+                         hidden_it != hiddenClusters.end(); ++hidden_it) {
+                        if ((currentClusters.isNew(*hidden_it)) &&
+                                (currentClusters.getMergeToID(*hidden_it).size() == 0)){
+                            //make it active again
+                            if (debug) {
                                 cout << "Activate again: ";
-                                currentClusters.activateCluster(*hidden_it, nodeIDsToNames, true);
-                                cout << endl;
-                                newClustersSorted.push_back(*hidden_it);
                             }
+                            currentClusters.activateCluster(*hidden_it, nodeIDsToNames, debug);
+                            newClustersSorted.push_back(*hidden_it);
                         }
-                        ++unique_filter;
-                        continue;
                     }
-                    /*note that if a term is deleted, need trace back and recheck some smaller terms*/
-                    /*pass both filter*/
+                    ++unique_filter;
+                    continue;
+                }
+                /*note that if a term is deleted, need trace back and recheck some smaller terms*/
+                /*pass all filter*/
+                ++n_pass_filter;
 //                    tempNewAndValid.push_back(clusterTop);
+            }
+
+            cout << "# " << weight_filter << " clusters failed the weight filter" << endl;
+            cout << "# " << small_filter << " clusters failed the late-and-small filter" << endl;
+            cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
+
+            //sort again by size
+            currentClusters.sortNewClusters(tempNewAndValid);
+
+            unsigned numNonMaximalDeleted = 0;
+            for (vector<unsigned long>::iterator newValidClusterIt = tempNewAndValid.begin();
+                 newValidClusterIt != tempNewAndValid.end(); ++newValidClusterIt) {
+                double clustWeight = currentClusters.getClusterWeight(*newValidClusterIt);
+
+                validClusters.push_back(
+                        validClusterBitset(currentClusters.getElements(*newValidClusterIt), 0, clustWeight));
+                cout << "# Valid cluster:\t";
+                printCluster(currentClusters.getElements(*newValidClusterIt), nodeIDsToNames);
+                currentClusters.setClusterValid(*newValidClusterIt, realEdges); //successful clusters should be seen as real edges in future (okay because their weights doesn't change)
+                cout << "\t" << clustWeight << "\t"
+                     << currentClusters.getNumUniquelyUnexplainedEdges(*newValidClusterIt) << "\t" << last_dt
+                     << endl;
+                // now it is safe to delete the hidden cluster of the valid cluster. see the change in setClusterValid.
+                if (validClusters.back().numElements() > largestCluster) {
+                    lastLargestCluster = largestCluster;
+                    lastLargestClusterWeight = clustWeight;
+                    largestCluster = validClusters.back().numElements();
                 }
+                currentClusters.setOld(*newValidClusterIt);
 
-                cout << "# " << weight_filter << " clusters failed the weight filter" << endl;
-                cout << "# " << small_filter << " clusters failed the late-and-small filter" << endl;
-                cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
-
-                //sort again by size
-                currentClusters.sortNewClusters(tempNewAndValid);
-
-                unsigned numNonMaximalDeleted = 0;
-                for (vector<unsigned long>::iterator newValidClusterIt = tempNewAndValid.begin();
-                     newValidClusterIt != tempNewAndValid.end(); ++newValidClusterIt) {
-                    double clustWeight = currentClusters.getClusterWeight(*newValidClusterIt);
-
-                    validClusters.push_back(
-                            validClusterBitset(currentClusters.getElements(*newValidClusterIt), 0, clustWeight));
-                    cout << "# Valid cluster:\t";
-                    printCluster(currentClusters.getElements(*newValidClusterIt), nodeIDsToNames);
-                    currentClusters.setClusterValid(*newValidClusterIt, realEdges); //successful clusters should be seen as real edges in future (okay because their weights doesn't change)
-                    cout << "\t" << clustWeight << "\t"
-                         << currentClusters.getNumUniquelyUnexplainedEdges(*newValidClusterIt) << "\t" << last_dt
-                         << endl;
-                    // now it is safe to delete the hidden cluster of the valid cluster. see the change in setClusterValid.
-                    if (validClusters.back().numElements() > largestCluster) {
-                        lastLargestCluster = largestCluster;
-                        lastLargestClusterWeight = clustWeight;
-                        largestCluster = validClusters.back().numElements();
+                vector<unsigned long> nonMaximals = currentClusters.getMergeFromID(*newValidClusterIt);
+                for (vector<unsigned long>::iterator nonMaximalIt = nonMaximals.begin();
+                 nonMaximalIt != nonMaximals.end(); ++nonMaximalIt) {
+                    if ( !currentClusters.isValid(*nonMaximalIt) ) {
+                        currentClusters.deleteCluster(*nonMaximalIt, nodeIDsToNames, debug);
                     }
-                    currentClusters.setOld(*newValidClusterIt);
-
-                    vector<unsigned long> nonMaximals = currentClusters.getMergeFromID(*newValidClusterIt);
-                    for (vector<unsigned long>::iterator nonMaximalIt = nonMaximals.begin();
-                     nonMaximalIt != nonMaximals.end(); ++nonMaximalIt) {
-                        if ( !currentClusters.isValid(*nonMaximalIt) ) {
-                            currentClusters.deleteCluster(*nonMaximalIt, nodeIDsToNames, true);
-                        }
-                        ++numNonMaximalDeleted;
-                    }
-
+                    ++numNonMaximalDeleted;
                 }
-                cout << "Non-maximal finally deleted: " << numNonMaximalDeleted << endl;
 
             }
+            cout << "# Non-maximal finally deleted: " << numNonMaximalDeleted << endl;
+
+
             cout << "# dt: " << last_dt << endl;
             cout << "# Next dt: " << dt << endl;
 //            cout << "# Num current clusters before delete: " << numClustersBeforeDelete << endl;
@@ -1545,7 +1543,8 @@ namespace dagConstruct {
             cout << "# Num valid clusters: " << validClusters.size() << endl;
             cout << "# Largest cluster: " << largestCluster << endl;
             cout << "# Num edges in clusterGraph: " << clusterGraph.numEdges() << endl;
-            cout << "# Num real edges: " << numRealEdgesAdded << endl;
+            cout << "# Num real edges added: " << numRealEdgesAdded << endl;
+            cout << "# Num edges covered by valid clusters" << realEdges.numEdges() << endl;
 //                cout << "# Num edges inferred: " << clusterGraph.numEdges() - clusterGraph.numEdges() << endl;
             time(&end);
             dif = difftime(end, start);
