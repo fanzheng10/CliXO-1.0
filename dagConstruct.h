@@ -498,6 +498,11 @@ public:
             removeClusterFromExplanation(clusterToInactivate);
         }
         currentClusters[clusterToInactivate].setInactive();
+        if (printClusterInfo) {
+            cout << "Inactivate: ";
+           printCluster(currentClusters[clusterToInactivate].getElements(), nodeIDsToNames);
+           cout << endl;
+        }
     }
 
     inline void activateCluster(const unsigned long & clusterToActivate, vector<string> & nodeIDsToNames, bool printClusterInfo = false) {
@@ -505,12 +510,24 @@ public:
             addClusterToExplanation(currentClusters[clusterToActivate].getElementsVector(), clusterToActivate);
         }
         currentClusters[clusterToActivate].setActive();
+        if (printClusterInfo) {
+            cout << "Activate: ";
+            printCluster(currentClusters[clusterToActivate].getElements(), nodeIDsToNames);
+            cout << endl;
+        }
     }
 
     inline vector<unsigned long> deleteCluster(const unsigned long & clusterToDelete, vector<string> & nodeIDsToNames, bool printClusterInfo = true) {
 
         /*re-activate hidden cliques*/
+        if (printClusterInfo) {
+            cout << "Delete: ";
+            printCluster(currentClusters[clusterToDelete].getElements(), nodeIDsToNames);
+            cout << endl;
+        }
+
         vector<unsigned long> hiddenClusters = currentClusters[clusterToDelete].getMergedFromID();
+        vector<unsigned long> upperClusters = currentClusters[clusterToDelete].getMergedToID();
 
         if (currentClusters[clusterToDelete].isAddedToExplain()) {
             removeClusterFromExplanation(clusterToDelete);
@@ -535,6 +552,12 @@ public:
         for (vector<unsigned long>::iterator hiddenIt = hiddenClusters.begin(); hiddenIt !=  hiddenClusters.end(); ++hiddenIt) {
             currentClusters[*hiddenIt].removeMergedToID(clusterToDelete);
         }
+
+        for (vector<unsigned long>::iterator upperIt = upperClusters.begin(); upperIt !=  upperClusters.end(); ++upperIt) {
+            currentClusters[*upperIt].removeMergedFromID(clusterToDelete);
+        }
+
+        //TODO: think about delete edges from clusterGraph
         return hiddenClusters;
     }
 
@@ -602,7 +625,7 @@ public:
         unsigned numFound = 0;
         for (vector<ClusterBitset>::reverse_iterator clustIt = currentClusters.rbegin();
              clustIt != currentClusters.rend(); ++clustIt) {
-            if (clustIt->numElements() != 0) {
+            if ((clustIt->numElements() != 0) && (clustIt->isActive()) && (clustIt->isNew())) {
                 newClustersAndCounts.push_back(make_pair(clustIt->getID(), clustIt->numElements()));
                 ++numFound;
             }
@@ -629,7 +652,7 @@ public:
     inline void addClustersToExplanations(vector<unsigned long> & sortedNewClusters) {
         for (vector<unsigned long>::iterator newClustIt = sortedNewClusters.begin();
              newClustIt != sortedNewClusters.end(); ++newClustIt) {
-            if (!currentClusters[*newClustIt].isAddedToExplain()) {
+            if (currentClusters[*newClustIt].isActive() && !currentClusters[*newClustIt].isAddedToExplain()) {
                 addClusterToExplanation(currentClusters[*newClustIt].getElementsVector(), *newClustIt);
             }
         }
@@ -910,11 +933,11 @@ namespace dagConstruct {
         vector<unsigned long> newClustersSorted; // where is this given?
         currentClusters.prepareForValidityCheck(newClustersSorted);
         unsigned deleted = 0;
-//        cout << "# Perform validity check for necessary clusters: ";
+
         for (vector<unsigned long>::iterator newClusterIt = newClustersSorted.begin();
              newClusterIt != newClustersSorted.end(); ++newClusterIt) {
-            if (!currentClusters.checkClusterValidity(*newClusterIt)) {
-                currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames,false);
+            if (!currentClusters.checkClusterValidity(*newClusterIt) && (currentClusters.isActive(*newClusterIt))) {
+                currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, true); // don't worry about the non-maximal child clusters. Since they won't pass here
                 ++deleted;
             }
         }
@@ -1128,18 +1151,16 @@ namespace dagConstruct {
 
         // expanding existing clusters, in currentClusters
         for (unsigned i = 0; i < affectedClusters.size(); ++i) {
-            if (affectedClusters[i] && currentClusters.isNew(i)) {
+            if (affectedClusters[i] && currentClusters.isNew(i) && currentClusters.isActive(i)) {
                 if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd,
                                        nodeIDsToNames)) {
                     //TODO: change this to cluster inactivation
-                    printCluster(currentClusters.getElements(i), nodeIDsToNames);
                     currentClusters.inactivateCluster(i, nodeIDsToNames, true); //set true for now for debugging
-//                    currentClusters.deleteCluster(i, nodeIDsToNames, false);
                     ++inactivated;
                 }
             }
         }
-        cout << "# Num of non-maximal clusters deleted here: " << inactivated << endl;
+        cout << "# Num of non-maximal clusters inactivated here: " << inactivated << endl;
 
         // adding brand new clusters, using new edges added this round
         for (unsigned long edgesToAddCounter = 0; edgesToAddCounter != edgesToAdd.size(); ++edgesToAddCounter) {
@@ -1165,20 +1186,18 @@ namespace dagConstruct {
         //done
     }
 
-//TODO: change the usage of ClustersToCombine
     bool combineClusters(
             vector<pair<pair<unsigned long, unsigned long>, double>> &clustersToCombine,
             currentClusterClassBitset &currentClusters,
             graph_undirected_bitset & clusterGraph,
             vector<string> &nodeIDsToNames,
             nodeDistanceObject &nodeDistances) {
-        //This statement is not valid anymore: *try avoid updateClusterWithEdges function. Because it uses all these new edges as seed to expand. Directly create ncluster with proper edges. Otherwise, these newly added edges may interfere with other edges outside of this merge and create other spurious cluster*/
 
         vector<pair<unsigned, unsigned> > edgesToAdd;
         edgesToAdd.reserve(clusterGraph.numEdges());
 
         vector<vector<char> > edgeWillBeAdded(nodeDistances.numNodes(), vector<char>(nodeDistances.numNodes(), false));
-        sort(clustersToCombine.begin(), clustersToCombine.end(), compClustersToCombine); //TODO: bring this function back
+        sort(clustersToCombine.begin(), clustersToCombine.end(), compClustersToCombine); // not sure whether this sort is helpful
 
         for (vector<pair<pair<unsigned long, unsigned long>, double>>::iterator clustersToCombineIt = clustersToCombine.begin(); // why is this complaining
              clustersToCombineIt != clustersToCombine.end(); ++clustersToCombineIt) {
@@ -1212,36 +1231,6 @@ namespace dagConstruct {
         updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
 
         return true;
-//                /* TODO: delete the code below*/
-//            vector <unsigned long> nonMaximal;
-//            nonMaximal.reserve(1000);
-//            for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
-//                if ((currentClusters.numElements(i) !=0) && currentClusters.isNew(i) && currentClusters.isActive(i)) {
-//                    if (currentClusters.getElements(i).is_subset_of(clustersToCombineIt->second)) {
-//                        currentClusters.inactivateCluster(i, nodeIDsToNames);
-//                        nonMaximal.push_back(i);
-//                    }
-//                }
-//            }
-
-                /*add the cluster*/
-//            realCombine = true;
-//            unsigned long newID = currentClusters.addCluster(clustersToCombineIt->second, nodeDistances, nodeIDsToNames);
-//
-//                /* still delete is a bad idea. Should set them inactive, so there can be reactivated if needed */
-////                currentClusters.inactivateCluster(clustersToCombineIt->first.first, nodeIDsToNames);
-////                currentClusters.inactivateCluster(clustersToCombineIt->first.second, nodeIDsToNames);
-//
-//                /* add relationships to the non-maximal clusters*/
-//            for (vector<unsigned long>::iterator nonMaximalIt = nonMaximal.begin(); nonMaximalIt < nonMaximal.end(); ++nonMaximalIt ) {
-//                currentClusters.addMergedToID(*nonMaximalIt, newID);
-//            }
-////                currentClusters.addMergedToID(clustersToCombineIt->first.first, newID);
-////                currentClusters.addMergedToID(clustersToCombineIt->first.second, newID);
-////                currentClusters.addMergedFromID(newID, clustersToCombineIt->first.first);
-//            currentClusters.setMergedFromID(newID, nonMaximal);
-//        }
-//        return realCombine;
     }
 
     /**/
@@ -1262,12 +1251,6 @@ namespace dagConstruct {
                     currentClusters.isActive(i) &&
                     (currentClusters.numElements(i) !=0) && //don't exactly why I need this,  seems to be duplicated to 1,2
                     (currentClusters.getThresh(i) >= currentClusters.getCurWeight()))  {
-//            if ((currentClusters.numElements(i) != 0) &&
-//                    currentClusters.isNew(i) &&
-//                    (currentClusters.getThresh(i) >= currentClusters.getCurWeight())) {
-                /* why do I need the first condition too? empty cluster is impossible
-                 * why do I need the third condition. Such low weight cluster should not exist
-                 * */
 
                 for (unsigned long j = 0; j < maxClusterID; ++j) {
                     /*I think I should consider all clusters*/
@@ -1276,8 +1259,7 @@ namespace dagConstruct {
                             (currentClusters.numElements(j) != 0) &&
                             (currentClusters.getThresh(j) >= currentClusters.getCurWeight() ))  {
 //                        boost::dynamic_bitset<unsigned long> proposedCombinedCluster(realEdges.numNodes(), 0);
-                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames)) {
-                            //TODO: delete the proposedCombinedCluster, maybe too inefficient to pre-calculate the weight of cluster                           
+                        if (isMinNodeDegreeMet(i, j, currentClusters, clusterGraph, density, nodeIDsToNames)) {// try clusterGraph in this new version
                             double tempWeight;
                             if (currentClusters.getThresh(j) > currentClusters.getThresh(i)) {
                                 tempWeight = currentClusters.getThresh(i);
@@ -1329,7 +1311,6 @@ namespace dagConstruct {
         // * define graph objects * //
         graph_undirected_bitset clusterGraph(numNodes); // all the edges covered by clusters by this time
         graph_undirected_bitset realEdges(numNodes); // all the real edges by this time
-//        graph_undirected_bitset clusterGraphPlusReal(numNodes);
 
         //
         double dt = nodeDistances.sortedDistancesBegin()->second; // Current threshold, starting with the maximum similarity
@@ -1350,7 +1331,7 @@ namespace dagConstruct {
 
             vector<pair<unsigned, unsigned> > edgesToAdd;
             double estimateNumEdges = totalEdges * exp(dt * log(2) + (1 - dt) * log(numNodes)) / numNodes;
-            edgesToAdd.reserve((unsigned long) (estimateNumEdges));
+            edgesToAdd.reserve((unsigned long) (estimateNumEdges)); //don't know if this is helpful
 
             double addUntil = dt;
             while (numRealEdgesThisRound <= numRealEdgesLastRound) {
@@ -1374,6 +1355,8 @@ namespace dagConstruct {
                     dt = 0;
                 }
             }
+            //TODO: let clusterGraph copy realEdges
+
 
             cout << "# Current distance: " << distanceIt->second << "\t" << "Add until: " << addUntil << "\t" << endl;
             cout << "# Num of real edges added: " << numRealEdgesAdded << endl;
@@ -1401,10 +1384,11 @@ namespace dagConstruct {
                 if (beta < 1) { // think about chordal later
 
                     cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
+                    //TODO: should only consider active clusters here
                     unsigned ndeleted = performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
                     bool newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, clusterGraph, nodeIDsToNames, nodeDistances, realEdges);
 
-                    cout << "# " << ndeleted << " clusters deleted in validity check; Now has  " << currentClusters.numCurrentClusters() << " clusters" << endl;
+                    cout << "# " << ndeleted << " clusters deleted in validity check; Now has " << currentClusters.numCurrentClusters() << " clusters" << endl;
                     time(&end);
                     dif = difftime(end, start);
                     cout << "# Time elapsed: " << dif << " seconds" << endl;
@@ -1416,7 +1400,7 @@ namespace dagConstruct {
                         cout << "# " << ndeleted << " clusters deleted in validity check; Now has  " << currentClusters.numCurrentClusters() << " clusters" << endl;
                     }
                 }
-                currentClusters.sortNewClusters(newClustersSorted); //sort by size, ascending, not needed, since prepareForValidty check performs sorting
+                currentClusters.sortNewClusters(newClustersSorted); //sort by size, ascending; this only has new active clusters
 //                currentClusters.prepareForValidityCheck(newClustersSorted); // sort and add edge explaination
 
                 cout << "# Current number of clusters:" << currentClusters.numCurrentClusters() << endl;
@@ -1436,17 +1420,17 @@ namespace dagConstruct {
 //                    currentClusters.sortNewClusters(newClustersSorted);
                     unsigned long clusterTop = newClustersSorted.back(); // think about the order
                     newClustersSorted.pop_back();
-                    if (currentClusters.numElements(clusterTop) ==0) {
-                        continue;
-                    }
-                    if (currentClusters.getThresh(clusterTop) < dt) {
+                    if ((currentClusters.numElements(clusterTop) ==0) || (currentClusters.getThresh(clusterTop) < dt) ) { //some clusters are "hold-on" this stage.
                         continue;
                     }
 
                     //TODO: this function can go to updateClusterWeight
                     /*filter 1: see if the term is too small for the current weight*/
                     if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster, lastLargestClusterWeight)) {
+                        //TODO: think about strong deletion and soft deletion
                         vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, false);
+
+                        //TODO: also delete the hidden clusters; maybe don't have to due to the final step
                         // don't need the following because subclusters are smaller
 //                        for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
 //                             hidden_it != hiddenClusters.end(); ++hidden_it) {
@@ -1464,16 +1448,21 @@ namespace dagConstruct {
                     /*filter 2: see if the term does not have many unique edges*/
 
                     currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
-                    double uniqueThresh = (1-beta) * currentClusters.getElements(clusterTop).count();
+//                    double uniqueThresh = (1-beta) * currentClusters.getElements(clusterTop).count();
+                    double uniqueThresh = 0.1 * (1- beta) * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
                     if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
-                        vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, false);
+                        cout << "Failed: ";
+                        cout << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh << "\t" << endl;
+                        vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, true);
                         for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
                              hidden_it != hiddenClusters.end(); ++hidden_it) {
                             if ((currentClusters.isNew(*hidden_it)) &&
                                     (currentClusters.getMergeToID(*hidden_it).size() == 0)){
-                                //make it active again
-                                currentClusters.activateCluster(*hidden_it, nodeIDsToNames, false);
+                                //make it active againi
+                                cout << "Activate again: ";
+                                currentClusters.activateCluster(*hidden_it, nodeIDsToNames, true);
+                                cout << endl;
                                 newClustersSorted.push_back(*hidden_it);
                             }
                         }
@@ -1488,6 +1477,7 @@ namespace dagConstruct {
                 cout << "# " << nfilter1 << " clusters failed the late-and-small filter" << endl;
                 cout << "# " << nfilter2 << " clusters failed the uniqueness filter" << endl;
 
+                unsigned numNonMaximalDeleted = 0;
                 for (vector<unsigned long>::iterator newValidClusterIt = tempNewAndValid.begin();
                      newValidClusterIt != tempNewAndValid.end(); ++newValidClusterIt) {
                     double clustWeight = currentClusters.getClusterWeight(*newValidClusterIt);
@@ -1496,7 +1486,7 @@ namespace dagConstruct {
                             validClusterBitset(currentClusters.getElements(*newValidClusterIt), 0, clustWeight));
                     cout << "# Valid cluster:\t";
                     printCluster(currentClusters.getElements(*newValidClusterIt), nodeIDsToNames);
-                    currentClusters.setClusterValid(*newValidClusterIt, clusterGraph);
+                    currentClusters.setClusterValid(*newValidClusterIt, realEdges); //successful clusters should be seen as real edges in future (okay because their weights doesn't change)
                     cout << "\t" << clustWeight << "\t"
                          << currentClusters.getNumUniquelyUnexplainedEdges(*newValidClusterIt) << "\t" << last_dt
                          << endl;
@@ -1507,16 +1497,18 @@ namespace dagConstruct {
                         largestCluster = validClusters.back().numElements();
                     }
                     currentClusters.setOld(*newValidClusterIt);
-                }
 
-                for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i ) {
-                    if ( !currentClusters.isValid(i) &&
-                            !currentClusters.isActive(i) &&
-                            (currentClusters.numElements(i) > 0) ) { // need the last condition to prevent double deletion. why there is double deletion?
-                        currentClusters.deleteCluster(i, nodeIDsToNames, false);
+                    vector<unsigned long> nonMaximals = currentClusters.getMergeFromID(*newValidClusterIt);
+                    for (vector<unsigned long>::iterator nonMaximalIt = nonMaximals.begin();
+                     nonMaximalIt != nonMaximals.end(); ++nonMaximalIt) {
+                        if ( !currentClusters.isValid(*nonMaximalIt) ) {
+                            currentClusters.deleteCluster(*nonMaximalIt, nodeIDsToNames, true);
+                        }
+                        ++numNonMaximalDeleted;
                     }
-                }
 
+                }
+                cout << "Non-maximal finally deleted: " << numNonMaximalDeleted << endl;
 
             }
             cout << "# dt: " << last_dt << endl;
@@ -1614,10 +1606,10 @@ namespace dagConstruct {
                 //cout << nodeIt->getID() << " " << nodeIt->getName() << " is top level" << endl;
                 ++numTopLevel;
                 //cout << numTopLevel << endl;
-                if (firstTopLevelFound == false) {
+                if (!firstTopLevelFound) {
                     firstTopLevelFound = true;
                     firstTopLevelNode = nodeIt->getID();
-                } else if (secondTopLevelFound == false) {
+                } else if (!secondTopLevelFound) {
                     secondTopLevelFound = true;
                     unsigned curItPos = nodeIt->getID();
 
