@@ -518,6 +518,7 @@ public:
     }
 
     inline vector<unsigned long> deleteCluster(const unsigned long & clusterToDelete, vector<string> & nodeIDsToNames, bool printClusterInfo = true) {
+        //TODO: should also delete edge from clusterGraph if this is the only cluster explaining that edge
 
         /*re-activate hidden cliques*/
         if (printClusterInfo) {
@@ -630,7 +631,7 @@ public:
                 ++numFound;
             }
         }//is this only new clusters?
-        sort(newClustersAndCounts.begin(), newClustersAndCounts.end(), compPairSecondDescending);
+        sort(newClustersAndCounts.begin(), newClustersAndCounts.end(), compPairSecondAscending);
 
         sortedNewClusters.reserve(numCurrentClusters());
         for (vector<pair<unsigned long, unsigned> >::iterator it = newClustersAndCounts.begin();
@@ -1355,7 +1356,7 @@ namespace dagConstruct {
                     dt = 0;
                 }
             }
-            //TODO: let clusterGraph copy realEdges
+            //Not TODO: let clusterGraph copy realEdges
 
 
             cout << "# Current distance: " << distanceIt->second << "\t" << "Add until: " << addUntil << "\t" << endl;
@@ -1412,15 +1413,37 @@ namespace dagConstruct {
 
                 vector<unsigned long> tempNewAndValid;
 
-                unsigned nfilter1 = 0;
-                unsigned nfilter2 = 0;
+                unsigned weight_filter = 0;
+                unsigned small_filter = 0;
+                unsigned unique_filter = 0;
 
                 while ((newClustersSorted.size() > 0) &&
                         (currentClusters.getMaxThresh() >= dt)) {
 //                    currentClusters.sortNewClusters(newClustersSorted);
                     unsigned long clusterTop = newClustersSorted.back(); // think about the order
                     newClustersSorted.pop_back();
-                    if ((currentClusters.numElements(clusterTop) ==0) || (currentClusters.getThresh(clusterTop) < dt) ) { //some clusters are "hold-on" this stage.
+                    if (currentClusters.numElements(clusterTop) ==0 ) { //some clusters are "hold-on" this stage.
+                        continue;
+                    }
+
+                    // weight filter
+                    if (currentClusters.getThresh(clusterTop) < dt) {
+                        //if weight is not qualified (this happen often when merge happens; also delete and break down
+                        cout << "Weight failed: ";
+
+                        vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, true);
+                        for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
+                             hidden_it != hiddenClusters.end(); ++hidden_it) {
+                            if ((currentClusters.isNew(*hidden_it)) &&
+                                    (currentClusters.getMergeToID(*hidden_it).size() == 0)){
+                                //make it active againi
+                                cout << "Activate again: ";
+                                currentClusters.activateCluster(*hidden_it, nodeIDsToNames, true);
+                                cout << endl;
+                                newClustersSorted.push_back(*hidden_it);
+                            }
+                        }
+                        ++weight_filter;
                         continue;
                     }
 
@@ -1441,18 +1464,18 @@ namespace dagConstruct {
 //                                newClustersSorted.push_back(*hidden_it);
 //                            }
 //                        }
-                        ++nfilter1;
+                        ++small_filter;
                         continue;
                     }
 
-                    /*filter 2: see if the term does not have many unique edges*/
+                    /*see if the term does not have many unique edges*/
 
                     currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
 //                    double uniqueThresh = (1-beta) * currentClusters.getElements(clusterTop).count();
-                    double uniqueThresh = 0.1 * (1- beta) * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
+                    double uniqueThresh = 0.05* pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
                     if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
-                        cout << "Failed: ";
+                        cout << "Uniqueness failed: ";
                         cout << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh << "\t" << endl;
                         vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, true);
                         for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
@@ -1466,16 +1489,20 @@ namespace dagConstruct {
                                 newClustersSorted.push_back(*hidden_it);
                             }
                         }
-                        ++nfilter2;
+                        ++unique_filter;
                         continue;
                     }
                     /*note that if a term is deleted, need trace back and recheck some smaller terms*/
                     /*pass both filter*/
-                    tempNewAndValid.push_back(clusterTop);
+//                    tempNewAndValid.push_back(clusterTop);
                 }
 
-                cout << "# " << nfilter1 << " clusters failed the late-and-small filter" << endl;
-                cout << "# " << nfilter2 << " clusters failed the uniqueness filter" << endl;
+                cout << "# " << weight_filter << " clusters failed the weight filter" << endl;
+                cout << "# " << small_filter << " clusters failed the late-and-small filter" << endl;
+                cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
+
+                //sort again by size
+                currentClusters.sortNewClusters(tempNewAndValid);
 
                 unsigned numNonMaximalDeleted = 0;
                 for (vector<unsigned long>::iterator newValidClusterIt = tempNewAndValid.begin();
