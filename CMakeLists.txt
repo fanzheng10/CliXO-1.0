@@ -1,9 +1,60 @@
-cmake_minimum_required(VERSION 3.7)
-project(clixo_0_3)
+cmake_minimum_required(VERSION 3.10)
+project(CliXO)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES
+include_directories(.)
+include_directories(boost)
+include_directories(boost/config)
+include_directories(boost/config/abi)
+include_directories(boost/config/compiler)
+include_directories(boost/config/no_tr1)
+include_directories(boost/config/platform)
+include_directories(boost/config/stdlib)
+include_directories(boost/detail)
+include_directories(boost/dynamic_bitset)
+include_directories(boost/mpl)
+include_directories(boost/mpl/aux_)
+include_directories(boost/mpl/aux_/config)
+include_directories(boost/mpl/aux_/preprocessor)
+include_directories(boost/mpl/limits)
+include_directories(boost/pending)
+include_directories(boost/preprocessor)
+include_directories(boost/preprocessor/arithmetic)
+include_directories(boost/preprocessor/array)
+include_directories(boost/preprocessor/config)
+include_directories(boost/preprocessor/control)
+include_directories(boost/preprocessor/control/detail)
+include_directories(boost/preprocessor/control/detail/dmc)
+include_directories(boost/preprocessor/control/detail/edg)
+include_directories(boost/preprocessor/control/detail/msvc)
+include_directories(boost/preprocessor/debug)
+include_directories(boost/preprocessor/detail)
+include_directories(boost/preprocessor/detail/dmc)
+include_directories(boost/preprocessor/facilities)
+include_directories(boost/preprocessor/iteration)
+include_directories(boost/preprocessor/iteration/detail)
+include_directories(boost/preprocessor/iteration/detail/bounds)
+include_directories(boost/preprocessor/iteration/detail/iter)
+include_directories(boost/preprocessor/list)
+include_directories(boost/preprocessor/list/detail)
+include_directories(boost/preprocessor/list/detail/dmc)
+include_directories(boost/preprocessor/list/detail/edg)
+include_directories(boost/preprocessor/logical)
+include_directories(boost/preprocessor/punctuation)
+include_directories(boost/preprocessor/repetition)
+include_directories(boost/preprocessor/repetition/detail)
+include_directories(boost/preprocessor/repetition/detail/dmc)
+include_directories(boost/preprocessor/repetition/detail/edg)
+include_directories(boost/preprocessor/repetition/detail/msvc)
+include_directories(boost/preprocessor/slot)
+include_directories(boost/preprocessor/slot/detail)
+include_directories(boost/preprocessor/tuple)
+include_directories(boost/type_traits)
+include_directories(boost/type_traits/detail)
+include_directories(boost/type_traits/msvc)
+
+add_executable(CliXO
         boost/config/abi/borland_prefix.hpp
         boost/config/abi/borland_suffix.hpp
         boost/config/abi/msvc_prefix.hpp
@@ -295,10 +346,9 @@ set(SOURCE_FILES
         clixo.cpp
         clustersToDAG.cpp
         dag.h
+        dagConstruct.h
+        dagConstruct_old.h
         graph_undirected.h
         graph_undirected_bitset.h
         nodeDistanceObject.h
-        util.h
-	dagConstruct.h)
-
-add_executable(clixo_0_3 ${SOURCE_FILES})
+        util.h)

@@ -1,2 +1,2 @@
-# Empty dependencies file for clixo_0_3.
+# Empty dependencies file for CliXO.
 # This may be replaced when dependencies are built.
