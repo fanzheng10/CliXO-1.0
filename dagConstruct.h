@@ -18,7 +18,7 @@
 #include "nodeDistanceObject.h"
 #include "boost/dynamic_bitset/dynamic_bitset.hpp"
 
-bool debug = true;
+bool debug = false;
 
 // to print the gene names in the cluster
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
@@ -285,7 +285,7 @@ public:
     }
 
     inline vector <unsigned long> getMergedFromID() {
-        return mergedFromID; /*TODO: this would better to be a pair*/
+        return mergedFromID;
     }
 
     inline void setMergeToID(vector <unsigned long> & ids) {
@@ -350,7 +350,19 @@ public:
 
         edgesToClusters = vector<vector<unsigned> >(numNodes, vector<unsigned>(numNodes, 0));
         isEdgeExplained = vector<vector<char> >(numNodes, vector<char>(numNodes, 0));
+
+        maxClusterSizePerNodes = vector<unsigned long>(numNodes, 0);
+
     };
+
+    inline void setLargestCluster(unsigned long size) {
+        largestCluster = size;
+    }
+
+    inline unsigned long getLargestCluster() {
+        return largestCluster;
+    }
+
     inline double getAlpha() {
         return alpha;
     }
@@ -436,7 +448,7 @@ public:
         ++newClusts;
         resetClusterWeight(newID, nodeDistances);
 
-        //TODO: check other inactivated clusters. If they are subset, add cluster relationships here
+        //check other inactivated clusters. If they are subset, add cluster relationships here
         vector <unsigned long> nonMaximal;
         nonMaximal.reserve(1000);
         for (unsigned long i = 0; i < maxClusterID(); ++i) {
@@ -560,7 +572,6 @@ public:
             currentClusters[*upperIt].removeMergedFromID(clusterToDelete);
         }
 
-        //TODO: think about delete edges from clusterGraph
         return hiddenClusters;
     }
 
@@ -707,12 +718,12 @@ public:
 
     inline bool checkClusterValidity(unsigned long id) {
         const vector<unsigned> cluster = currentClusters[id].getElementsVector();
-        cout << id << ": ";
+        //cout << id << ": ";
         for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
             vector<unsigned>::const_iterator it2 = it1;
             ++it2;
             for ( ; it2 != cluster.end(); ++it2) {
-                cout << edgesToClusters[*it1][*it2] << " " ;
+                //cout << edgesToClusters[*it1][*it2] << " " ;
                 if (edgesToClusters[*it1][*it2] == 1) {// this edge only appears in one cluster. may use realedges so fewer necessary clusters?
 //                    setNecessary(id);
                     return true;
@@ -821,6 +832,7 @@ public:
         return coveredEdges.numEdges();
     }
 
+    //TODO: this function is not good in some cases. Consider hide it
     bool isTooSmallForCurWeight(unsigned long id, unsigned lastLargestCluster, double lastLargestClusterWeight) {
         unsigned size = currentClusters[id].getElements().count();
         double latesmallThres_abs = ( log(numNodes) - log(size) ) /  log(numNodes) ;
@@ -831,6 +843,38 @@ public:
         }
         else {
             return false;
+        }
+    }
+
+    unsigned long getMaxClusterSizeForNode(unsigned long nodeID) {
+        return maxClusterSizePerNodes[nodeID];
+    }
+
+    void updateMaxClusterSizeForNode(unsigned long nodeID, unsigned long size) {
+        maxClusterSizePerNodes[nodeID] = size;
+    }
+
+    bool clusterSizeTooSmall(unsigned long id) {
+        boost::dynamic_bitset<unsigned long> clust = currentClusters[id].getElements();
+        unsigned long clustSize = clust.count();
+        if (clustSize >= double(largestCluster) / 2) {
+            return false; //don't need to look one by one
+        }
+        for (unsigned long i = clust.find_first(); i < clust.size(); i = clust.find_next(i)) {
+            if (clustSize < double(getMaxClusterSizeForNode(i)) / 2) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void setLargestClusterForNodes(unsigned long id) {
+        boost::dynamic_bitset<unsigned long> clust = currentClusters[id].getElements();
+        unsigned long clustSize = clust.count();
+        for (unsigned long i = clust.find_first(); i < clust.size(); i = clust.find_next(i)) {
+            if (clustSize > getMaxClusterSizeForNode(i)) {
+                updateMaxClusterSizeForNode(i, clustSize);
+            }
         }
     }
 
@@ -894,6 +938,8 @@ private:
     double maxNewWeight;
     double nextThreshold;
 
+    // new feature: maximum cluster size per gene
+    vector<unsigned long> maxClusterSizePerNodes;
 };
 
 
@@ -1430,11 +1476,13 @@ namespace dagConstruct {
 
                 //TODO: this function can go to updateClusterWeight (downside: prohitbit merging. left it as is for now)
                 /*filter : see if the term is too small for the current weight*/
-                if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster, lastLargestClusterWeight)) {
+
+//                if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster, lastLargestClusterWeight)) {
+                if (currentClusters.clusterSizeTooSmall(clusterTop)) {
                     if (debug) {
-                        cout << "Size too small for this weight: ";
+                        cout << "Size too small: ";
                     }
-                    vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
 
                     //don't have to delete hiddenClusters here due to the final step
                     ++small_filter;
@@ -1523,8 +1571,10 @@ namespace dagConstruct {
                     lastLargestCluster = largestCluster;
                     lastLargestClusterWeight = clustWeight;
                     largestCluster = validClusters.back().numElements();
+                    currentClusters.setLargestCluster(largestCluster);
                 }
                 currentClusters.setOld(*newValidClusterIt);
+                currentClusters.setLargestClusterForNodes(*newValidClusterIt);
 
                 vector<unsigned long> nonMaximals = currentClusters.getMergeFromID(*newValidClusterIt);
                 for (vector<unsigned long>::iterator nonMaximalIt = nonMaximals.begin();
