@@ -18,7 +18,7 @@
 #include "nodeDistanceObject.h"
 #include "boost/dynamic_bitset/dynamic_bitset.hpp"
 
-bool debug = false;
+bool debug = true;
 
 // to print the gene names in the cluster
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
@@ -635,7 +635,6 @@ public:
         }//is this only new clusters?
         sort(newClustersAndCounts.begin(), newClustersAndCounts.end(), compPairSecondAscending);
 
-        sortedNewClusters.reserve(numCurrentClusters());
         for (vector<pair<unsigned long, unsigned> >::iterator it = newClustersAndCounts.begin();
              it != newClustersAndCounts.end(); ++it) {
             sortedNewClusters.push_back(it->first);
@@ -708,10 +707,12 @@ public:
 
     inline bool checkClusterValidity(unsigned long id) {
         const vector<unsigned> cluster = currentClusters[id].getElementsVector();
+        cout << id << ": ";
         for (vector<unsigned>::const_iterator it1 = cluster.begin(); it1 != cluster.end(); ++it1) {
             vector<unsigned>::const_iterator it2 = it1;
             ++it2;
             for ( ; it2 != cluster.end(); ++it2) {
+                cout << edgesToClusters[*it1][*it2] << " " ;
                 if (edgesToClusters[*it1][*it2] == 1) {// this edge only appears in one cluster. may use realedges so fewer necessary clusters?
 //                    setNecessary(id);
                     return true;
@@ -822,10 +823,10 @@ public:
 
     bool isTooSmallForCurWeight(unsigned long id, unsigned lastLargestCluster, double lastLargestClusterWeight) {
         unsigned size = currentClusters[id].getElements().count();
-        double latesmallThres_abs = ( log(numNodes) - log(size) ) / ( log(numNodes) - log(2));
+        double latesmallThres_abs = ( log(numNodes) - log(size) ) /  log(numNodes) ;
         double latesmallThres_rel = lastLargestClusterWeight * ( log(numNodes) - log(size) ) / ( log(numNodes) - log(lastLargestCluster) ) ;
         double latesmallThres = min(latesmallThres_abs, latesmallThres_rel);
-        if (curWeight - alpha < latesmallThres - 0.1) {
+        if (curWeight < latesmallThres - 0.1) {
             return true;
         }
         else {
@@ -1300,7 +1301,6 @@ namespace dagConstruct {
         // track
         unsigned numRealEdgesAdded = 0;
         unsigned numRealEdgesLastRound = 0;
-        unsigned clusterGraphlastRoundEdges = 0;
         unsigned largestCluster = 0;
         unsigned lastLargestCluster = 0;
 
@@ -1431,7 +1431,10 @@ namespace dagConstruct {
                 //TODO: this function can go to updateClusterWeight (downside: prohitbit merging. left it as is for now)
                 /*filter : see if the term is too small for the current weight*/
                 if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster, lastLargestClusterWeight)) {
-                    vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, false);
+                    if (debug) {
+                        cout << "Size too small for this weight: ";
+                    }
+                    vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
 
                     //don't have to delete hiddenClusters here due to the final step
                     ++small_filter;
@@ -1498,7 +1501,7 @@ namespace dagConstruct {
             cout << "# " << weight_filter << " clusters failed the weight filter" << endl;
             cout << "# " << small_filter << " clusters failed the late-and-small filter" << endl;
             cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
-
+            cout << "# " << n_pass_filter << " clusters are valid" << endl;
             //sort again by size
             currentClusters.sortNewClusters(tempNewAndValid);
 
@@ -1544,7 +1547,7 @@ namespace dagConstruct {
             cout << "# Largest cluster: " << largestCluster << endl;
             cout << "# Num edges in clusterGraph: " << clusterGraph.numEdges() << endl;
             cout << "# Num real edges added: " << numRealEdgesAdded << endl;
-            cout << "# Num edges covered by valid clusters" << realEdges.numEdges() << endl;
+            cout << "# Num edges covered by valid clusters: " << realEdges.numEdges() << endl;
 //                cout << "# Num edges inferred: " << clusterGraph.numEdges() - clusterGraph.numEdges() << endl;
             time(&end);
             dif = difftime(end, start);
