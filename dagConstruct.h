@@ -1004,6 +1004,7 @@ namespace dagConstruct {
         unsigned numCombined = combination.count();
         double denom = numCombined - 1;
         unsigned numChecked = 0;
+        //TODO: this would be faster if start with the smaller cluster
         for (unsigned i = combination.find_first(); i < combination.size(); i = combination.find_next(i)) {// how to output genes here
             boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
             interactorsInCombo &= clusterGraph.getInteractors(i);
