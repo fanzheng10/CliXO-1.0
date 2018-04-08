@@ -61,6 +61,8 @@ double calculateClusterWeight(boost::dynamic_bitset<unsigned long> cluster, node
     return edgeWeightsMean;
 }
 
+
+
 class validClusterBitset {
 public:
     validClusterBitset(const boost::dynamic_bitset<unsigned long> & cluster, unsigned clustID, double thisWeight) {
@@ -133,6 +135,7 @@ private:
 
 class ClusterBitset {
 public:
+
     ClusterBitset(const boost::dynamic_bitset<unsigned long> & cluster, unsigned long & clustID, double thisClusterWeight = 0) {
         elements = cluster;
         isClusterNew = true;
@@ -144,6 +147,22 @@ public:
         valid = false;
         uniquelyExplainedEdges = 0;
         active = true;
+        elementSizes = vector<unsigned long> (numElementsHere, 1); //new; declare element size as all 1;
+    }
+
+    //* new declaration method, add an array representing node size
+    ClusterBitset(const boost::dynamic_bitset<unsigned long> & cluster, vector<unsigned long> & thisElementSizes, unsigned long & clustID, double thisClusterWeight = 0) {
+        elements = cluster;
+        isClusterNew = true;
+        isClusterAddedToExplain = false; // comment things that may be uncessary later
+        isClusterUnexplainedCounted = false;
+        ID = clustID;
+        numElementsHere = cluster.count();
+        clusterWeight = thisClusterWeight;
+        valid = false;
+        uniquelyExplainedEdges = 0;
+        active = true;
+        elementSizes = thisElementSizes; //new; declare element size as all 1
     }
 
     ClusterBitset() {
@@ -328,6 +347,8 @@ private:
     bool active;
     vector<unsigned long> mergedFromID; // a cluster can make other clusters non-maximal. but this cluster can be delete for some reason. When this happen, those other clusters should be reactivated.
     vector<unsigned long> mergedToID;
+
+    vector<unsigned long> elementSizes;
 };
 
 
@@ -351,7 +372,10 @@ public:
         edgesToClusters = vector<vector<unsigned> >(numNodes, vector<unsigned>(numNodes, 0));
         isEdgeExplained = vector<vector<char> >(numNodes, vector<char>(numNodes, 0));
 
+        /*new*/
         maxClusterSizePerNodes = vector<unsigned long>(numNodes, 0);
+
+        numElementsPerNodes = vector<unsigned long>(numNodes, 1);
 
     };
 
@@ -372,6 +396,10 @@ public:
             minWeightAdded = weight;
         }
         curWeight = weight;
+    }
+
+    inline void setNumElementsForNodes(unsigned long nodeID, unsigned long numElem) {
+        numElementsPerNodes[nodeID] = numElem;
     }
 
     inline void setEdgeExplained(const unsigned & i, const unsigned & j) {
@@ -833,18 +861,18 @@ public:
     }
 
     //TODO: this function is not good in some cases. Consider hide it
-    bool isTooSmallForCurWeight(unsigned long id, unsigned lastLargestCluster, double lastLargestClusterWeight) {
-        unsigned size = currentClusters[id].getElements().count();
-        double latesmallThres_abs = ( log(numNodes) - log(size) ) /  log(numNodes) ;
-        double latesmallThres_rel = lastLargestClusterWeight * ( log(numNodes) - log(size) ) / ( log(numNodes) - log(lastLargestCluster) ) ;
-        double latesmallThres = min(latesmallThres_abs, latesmallThres_rel);
-        if (curWeight < latesmallThres - 0.1) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
+//    bool isTooSmallForCurWeight(unsigned long id, unsigned lastLargestCluster, double lastLargestClusterWeight) {
+//        unsigned size = currentClusters[id].getElements().count();
+//        double latesmallThres_abs = ( log(numNodes) - log(size) ) /  log(numNodes) ;
+//        double latesmallThres_rel = lastLargestClusterWeight * ( log(numNodes) - log(size) ) / ( log(numNodes) - log(lastLargestCluster) ) ;
+//        double latesmallThres = min(latesmallThres_abs, latesmallThres_rel);
+//        if (curWeight < latesmallThres - 0.1) {
+//            return true;
+//        }
+//        else {
+//            return false;
+//        }
+//    }
 
     unsigned long getMaxClusterSizeForNode(unsigned long nodeID) {
         return maxClusterSizePerNodes[nodeID];
@@ -913,6 +941,15 @@ public:
     unsigned clustersAdded;
     unsigned clustersDeleted;
 
+    /*Trago functions; totally new*/
+    void collapseCluster(unsigned long id) {
+
+    }
+
+    bool clusterShouldbeCollapsed(unsigned long id, double collapseThreshold) {
+        return getClusterWeight(id) - curWeight > collapseThreshold;
+    }
+
 private:
     vector<ClusterBitset> currentClusters;
     vector<unsigned long> openIDs;
@@ -940,6 +977,9 @@ private:
 
     // new feature: maximum cluster size per gene
     vector<unsigned long> maxClusterSizePerNodes;
+
+    // new feature
+    vector<unsigned long> numElementsPerNodes;
 };
 
 
@@ -1145,7 +1185,7 @@ namespace dagConstruct {
     }
 
 
-    /**/
+    /*TODO: seems to have no effect*/
     void updateClustersWithEdges(vector<pair<unsigned, unsigned> > &edgesToAdd,
                                      currentClusterClassBitset &currentClusters, graph_undirected_bitset &clusterGraph,
                                      nodeDistanceObject &nodeDistances, vector<string> &nodeIDsToNames, bool withRealEdges = true) {
@@ -1205,7 +1245,6 @@ namespace dagConstruct {
             if (affectedClusters[i] && currentClusters.isNew(i) && currentClusters.isActive(i)) {
                 if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd,
                                        nodeIDsToNames)) {
-                    //TODO: change this to cluster inactivation
                     currentClusters.inactivateCluster(i, nodeIDsToNames, debug); //set true for now for debugging
                     ++inactivated;
                 }
@@ -1334,6 +1373,141 @@ namespace dagConstruct {
         return false;
     }
 
+    void collapseStrongClusters(currentClusterClassBitset &currentClusters,
+                                graph_undirected_bitset & clusterGraph,
+                                nodeDistanceObject &nodeDistances,
+                                map<string, unsigned> & nodeNamesToIDs,
+                                map<unsigned, string> & nodeIDsToNames,
+                                double collapseThreshold) {
+
+        // iterate over all VALID clusters, see if their weight are strong enough to collapse
+        vector<pair<unsigned long, boost::dynamic_bitset<unsigned long>>> clustersToCollapse;
+
+        // the first time this function is called, only genes will disappear. However, in the future iteration, terms can disappear too
+        boost::dynamic_bitset<unsigned long> itemsToDisappear(clusterGraph.numNodes(), 0);
+        boost::dynamic_bitset<unsigned long> itemsToKeep(clusterGraph.numNodes(), 1);
+        vector<unsigned> itemsToKeepVector;
+
+        for (unsigned long i = 0; i < currentClusters.numCurrentClusters(); ++i) {
+            if (currentClusters.isValid(i) && (currentClusters.getClusterWeight(i) - currentClusters.getCurWeight() > collapseThreshold)) {
+                boost::dynamic_bitset<unsigned long> clustElements = currentClusters.getElements(i);
+                clustersToCollapse.push_back(make_pair(i, clustElements));
+                for (unsigned long it = clustElements.find_first(); it < clustElements.size(); it = clustElements.find_next(it)) {
+                    itemsToDisappear[it] = 1;
+                    itemsToKeep[it] = 0;
+                }
+                //TODO: should I delete this cluster (so a cluster that is collapsed will not show up again)?
+                //probably not. Since deleting cluster affect numExplainedEdges.
+            }
+        }
+
+        for (unsigned long i = itemsToKeep.find_first(); i < itemsToKeep.size(); i = itemsToKeep.find_next(i)) {
+            itemsToKeepVector.push_back(i);//TODO: maybe delete
+        }
+
+        // the items in these clusters to collapse will disappear
+        // determine the new number of items
+        unsigned long numNewItems = clusterGraph.numNodes() - itemsToDisappear.count() + clustersToCollapse.size();
+
+
+        // for items to Keep, it is same
+        map<string, unsigned> newNodeNamesToIDs;
+        map<unsigned, string> newNodeIDsToNames;
+
+
+        for (map<string, unsigned>::iterator mapIt = nodeNamesToIDs.begin(); mapIt != nodeNamesToIDs.end(); ++mapIt) {
+            if (itemsToKeep[mapIt->second]) {
+                newNodeNamesToIDs[mapIt->first] = mapIt->second;
+                newNodeIDsToNames[mapIt->second] = mapIt->first;
+            }
+        }
+
+        vector<unsigned long> openNodeIdVec;
+        unsigned long openNodeID = itemsToDisappear.find_first();
+        for (vector<pair<unsigned long, boost::dynamic_bitset<unsigned long>>>::iterator ccIt = clustersToCollapse.begin(); ccIt < clustersToCollapse.end(); ++ccIt) {
+            // figure out the name of this collapsed cluster
+            boost::dynamic_bitset<unsigned long> clustElement = currentClusters.getElements(ccIt->first);
+            // find the first open ID
+            vector<string> clustNameVec;
+            for (unsigned long i = clustElement.find_first(); i < clustElement.size(); i = clustElement.find_next(i)) {
+                clustNameVec.push_back(nodeIDsToNames[i]);
+            }
+            string clustName = "";
+            for (unsigned i = 0; i < clustNameVec.size(); ++i) {
+                clustName += ',';
+                clustName += clustNameVec[i];
+            }
+            newNodeNamesToIDs[clustName] = openNodeID;
+            newNodeIDsToNames[openNodeID] = clustName;
+            openNodeIdVec.push_back(openNodeID);
+            if (openNodeID < itemsToDisappear.size()) {
+                openNodeID = itemsToDisappear.find_next(openNodeID);
+                if (openNodeID >= itemsToDisappear.size()) {
+                    openNodeID = itemsToDisappear.size();
+                }
+            }
+            else {
+                ++openNodeID;
+            }
+        }
+
+        // hack nodeToDistances
+        nodeDistanceObject newNodeDistances(numNewItems);
+        graph_undirected_bitset newClusterGraph(numNewItems); // hack clusterGraph
+
+        //singleton vs. singleton (just copy)
+        for (unsigned i = 0; i < itemsToKeep.size()-1; ++i) {
+            for (unsigned j = i+1; j < itemsToKeep.size(); ++j) {
+                if (itemsToKeep[i] == itemsToKeep[j]) {
+                    double dist = nodeDistances.getDistance(i, j);
+                    newNodeDistances.setDistance(i, j, dist);
+                    if (clusterGraph.isEdge(i, j)) {
+                        newClusterGraph.addEdge(i, j);
+                    }
+                }
+            }
+        }
+
+        //group vs group
+        for (unsigned i = 0; i < openNodeIdVec.size()-1; ++i) {
+            for (unsigned j = i+1; j < openNodeIdVec.size(); ++j) {
+                boost::dynamic_bitset<unsigned long> eleIn1 = clustersToCollapse[i].second;
+                boost::dynamic_bitset<unsigned long> eleIn2 = clustersToCollapse[j].second;
+                double dist = calculateClusterDistances(eleIn1, eleIn2, nodeDistances); //TODO: write this function
+                unsigned node1 = openNodeIdVec[i];
+                unsigned node2 = openNodeIdVec[j];
+                newNodeDistances.setDistance(node1, node2, dist);
+                if (dist > currentClusters.getCurWeight()) {
+                    // TODO: whether involves alpha
+                    newClusterGraph.addEdge(node1, node2);
+                }
+            }
+        }
+
+        // group vs. singleton
+        for (unsigned i = 0; i < openNodeIdVec.size(); ++i) {
+            unsigned id = openNodeIdVec[i];
+            boost::dynamic_bitset ele = clustersToCollapse[i].second;
+            for (unsigned j = 0; j < itemsToKeep.size(); ++j) {
+                if (itemsToKeep[j]) {
+                    double dist = calculateClusterDistances(ele, j, nodeDistances);
+                    unsigned node1 = openNodeIdVec[i];
+                    newNodeDistances.setDistance(node1, j, dist);
+                    if (dist > currentClusters.getCurWeight()) {
+                        newClusterGraph.addEdge(node1, j);
+                    }
+                }
+            }
+        }
+
+
+        //update everything
+        nodeIDsToNames = newNodeIDsToNames;
+        nodeNamesToIDs = newNodeNamesToIDs;
+        nodeDistances = newNodeDistances;
+        clusterGraph = newClusterGraph;
+    }
+
 
     // ** Main function ** //
     unsigned getFuzzyClustersBitsetThreshold(nodeDistanceObject &nodeDistances, map<string, unsigned> &nodeNamesToIDs,
@@ -1350,6 +1524,8 @@ namespace dagConstruct {
         unsigned numRealEdgesLastRound = 0;
         unsigned largestCluster = 0;
         unsigned lastLargestCluster = 0;
+
+        double collapseThreshold = 0.2; /*new parameter ( think about making this fractional later ) */
 
         // * node (gene) names * //
         vector<string> nodeIDsToNames(nodeNamesToIDs.size(), string(""));
@@ -1378,7 +1554,17 @@ namespace dagConstruct {
                 ) { // termination conditions
 
             unsigned numRealEdgesThisRound = 0;
-            clusterGraph = realEdges; // is this making a copy
+            clusterGraph = realEdges;
+
+            /*new collapse some clusters*/
+
+            //TODO: happens when the curWeight is smaller than 1-collapseThreshold
+            if () {
+                collapseStrongClusters(currentClusters, clusterGraph, nodeDistances, nodeNamesToIDs, nodeIDsToNames, collapseThreshold); //TODO: change the function input
+
+                //update distanceIt
+
+            }
 
             vector<pair<unsigned, unsigned> > edgesToAdd;
             double estimateNumEdges = totalEdges * exp(dt * log(2) + (1 - dt) * log(numNodes)) / numNodes;
@@ -1392,6 +1578,7 @@ namespace dagConstruct {
                        (distanceIt->second >= addUntil)) {
                     unsigned firstNode = distanceIt->first.first;
                     unsigned secondNode = distanceIt->first.second;
+                    //TODO: what should I do with realEdges
                     realEdges.addEdge(firstNode,
                                       secondNode); // add edges to realEdges; this is the only place that realEdges change
                     ++numRealEdgesAdded;
