@@ -998,23 +998,84 @@ namespace dagConstruct {
 
     bool isMinNodeDegreeMet(unsigned cluster1, unsigned cluster2, currentClusterClassBitset &currentClusters,
                             graph_undirected_bitset &clusterGraph, double density, vector<string> & nodeIDsToNames) {
+
+        boost::dynamic_bitset<unsigned long> elements1 = currentClusters.getElements(cluster1);
+        boost::dynamic_bitset<unsigned long> elements2 = currentClusters.getElements(cluster2);
         boost::dynamic_bitset<unsigned long> combination = currentClusters.getElements(cluster1);
 
-        combination |= currentClusters.getElements(cluster2);
+        combination |= elements2;
         unsigned numCombined = combination.count();
         double denom = numCombined - 1;
         unsigned numChecked = 0;
-        //TODO: this would be faster if start with the smaller cluster
-        for (unsigned i = combination.find_first(); i < combination.size(); i = combination.find_next(i)) {// how to output genes here
-            boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-            interactorsInCombo &= clusterGraph.getInteractors(i);
-            unsigned numInteractorsInCombo = interactorsInCombo.count();
-            if ((numInteractorsInCombo / denom) <= density ) {
-                return false;
+
+        // boundary condition can make this faster
+
+        unsigned n1 = elements1.count();
+        unsigned n2 = elements2.count();
+
+        if ( (n1-1)/denom > density) {
+            if (n1 >= n2) { // only test n2; otherwise, this means the above condition also applies for n2
+                for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i) ) {
+                    boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+                    interactorsInCombo &= clusterGraph.getInteractors(i);
+                    unsigned numInteractorsInCombo = interactorsInCombo.count();
+                    if ((numInteractorsInCombo / denom) <= density ) {
+                        return false;
+                    }
+                }
             }
-            ++numChecked;
-            if (numChecked == numCombined) {
-                return true;
+        }
+        else {
+            if ( (n2-1)/denom > density) {
+                //only test n1
+                for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i) ) {
+                    boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+                    interactorsInCombo &= clusterGraph.getInteractors(i);
+                    unsigned numInteractorsInCombo = interactorsInCombo.count();
+                    if ((numInteractorsInCombo / denom) <= density ) {
+                        return false;
+                    }
+                }
+            }
+            else {//test both
+                if (n1<=n2) {//test the smaller one first
+                    for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
+                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+                        interactorsInCombo &= clusterGraph.getInteractors(i);
+                        unsigned numInteractorsInCombo = interactorsInCombo.count();
+                        if ((numInteractorsInCombo / denom) <= density ) {
+                            return false;
+                        }
+                    }
+                    for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i)) {
+                        if (elements1[i]) { continue;}
+                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+                        interactorsInCombo &= clusterGraph.getInteractors(i);
+                        unsigned numInteractorsInCombo = interactorsInCombo.count();
+                        if ((numInteractorsInCombo / denom) <= density ) {
+                            return false;
+                        }
+                    }
+                }
+                else {
+                    for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i)) {
+                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+                        interactorsInCombo &= clusterGraph.getInteractors(i);
+                        unsigned numInteractorsInCombo = interactorsInCombo.count();
+                        if ((numInteractorsInCombo / denom) <= density ) {
+                            return false;
+                        }
+                    }
+                    for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
+                        if (elements2[i]) { continue;}
+                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+                        interactorsInCombo &= clusterGraph.getInteractors(i);
+                        unsigned numInteractorsInCombo = interactorsInCombo.count();
+                        if ((numInteractorsInCombo / denom) <= density ) {
+                            return false;
+                        }
+                    }
+                }
             }
         }
         return true;
@@ -1373,9 +1434,7 @@ namespace dagConstruct {
 
         // iterative clique finding
         while ((realEdges.numEdges() < 0.5 * totalEdges) &&
-               (distanceIt != nodeDistances.sortedDistancesEnd()) &&
-               (distanceIt->second >= alpha)
-                ) { // termination conditions
+               (distanceIt != nodeDistances.sortedDistancesEnd() { // termination conditions
 
             unsigned numRealEdgesThisRound = 0;
             clusterGraph = realEdges; // is this making a copy
@@ -1388,7 +1447,6 @@ namespace dagConstruct {
             while (numRealEdgesThisRound <= numRealEdgesLastRound) {
                 addUntil = dt - alpha; // addUntil can cross multiple alpha if there is a region with low edge density
                 while ((distanceIt != nodeDistances.sortedDistancesEnd()) &&
-                       (distanceIt->second >= alpha) &&
                        (distanceIt->second >= addUntil)) {
                     unsigned firstNode = distanceIt->first.first;
                     unsigned secondNode = distanceIt->first.second;
