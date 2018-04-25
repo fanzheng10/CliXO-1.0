@@ -1434,7 +1434,7 @@ namespace dagConstruct {
 
         // iterative clique finding
         while ((realEdges.numEdges() < 0.5 * totalEdges) &&
-               (distanceIt != nodeDistances.sortedDistancesEnd() { // termination conditions
+               (distanceIt != nodeDistances.sortedDistancesEnd())) { // termination conditions
 
             unsigned numRealEdgesThisRound = 0;
             clusterGraph = realEdges; // is this making a copy
