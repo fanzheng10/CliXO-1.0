@@ -594,9 +594,9 @@ public:
         for (unsigned i = 0; i < clusterElems.size()-1;  ++i) {
             for (unsigned j = i+1; j < clusterElems.size(); ++j) {
                 setEdgeExplained(clusterElems[i], clusterElems[j]);
-                if (!clusterGraph.isEdge(clusterElems[i], clusterElems[j])) {//add edges to clusterGraph
-                   clusterGraph.addEdge(clusterElems[i], clusterElems[j]);
-                }
+//                if (!clusterGraph.isEdge(clusterElems[i], clusterElems[j])) {//add edges to clusterGraph
+//                   clusterGraph.addEdge(clusterElems[i], clusterElems[j]);
+//                }
             }
         }
         return;
@@ -1361,17 +1361,17 @@ namespace dagConstruct {
         for (unsigned long i = 0; i < maxClusterID; ++i) {
             if (currentClusters.isNew(i) &&
                     currentClusters.isActive(i) &&
-                    (currentClusters.numElements(i) !=0) && //don't exactly why I need this,  seems to be duplicated to 1,2
-                    (currentClusters.getThresh(i) >= currentClusters.getCurWeight()))  {
+                    (currentClusters.numElements(i) !=0) ){//&& //don't exactly why I need this,  seems to be duplicated to 1,2
+//                    (currentClusters.getThresh(i) >= currentClusters.getCurWeight()))  {
 
                 for (unsigned long j = 0; j < maxClusterID; ++j) {
                     /*I think I should consider all clusters*/
                     if ((j != i) &&  (!clustersChecked[j]) &&
                             currentClusters.isActive(j) &&
-                            (currentClusters.numElements(j) != 0) &&
-                            (currentClusters.getThresh(j) >= currentClusters.getCurWeight() ))  {
+                            (currentClusters.numElements(j) != 0) ){//&&
+//                            (currentClusters.getThresh(j) >= currentClusters.getCurWeight() ))  {
 //                        boost::dynamic_bitset<unsigned long> proposedCombinedCluster(realEdges.numNodes(), 0);
-                        if (isMinNodeDegreeMet(i, j, currentClusters, clusterGraph, density, nodeIDsToNames)) {// try clusterGraph in this new version
+                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames)) {// try clusterGraph in this new version
                             double tempWeight;
                             if (currentClusters.getThresh(j) > currentClusters.getThresh(i)) {
                                 tempWeight = currentClusters.getThresh(i);
@@ -1437,34 +1437,34 @@ namespace dagConstruct {
                (distanceIt != nodeDistances.sortedDistancesEnd())) { // termination conditions
 
             unsigned numRealEdgesThisRound = 0;
-            clusterGraph = realEdges; // is this making a copy
+//            clusterGraph = realEdges; // is this making a copy
 
             vector<pair<unsigned, unsigned> > edgesToAdd;
             double estimateNumEdges = totalEdges * exp(dt * log(2) + (1 - dt) * log(numNodes)) / numNodes;
             edgesToAdd.reserve((unsigned long) (estimateNumEdges)); //don't know if this is helpful
 
             double addUntil = dt;
-            while (numRealEdgesThisRound <= numRealEdgesLastRound) {
-                addUntil = dt - alpha; // addUntil can cross multiple alpha if there is a region with low edge density
-                while ((distanceIt != nodeDistances.sortedDistancesEnd()) &&
-                       (distanceIt->second >= addUntil)) {
-                    unsigned firstNode = distanceIt->first.first;
-                    unsigned secondNode = distanceIt->first.second;
-                    realEdges.addEdge(firstNode,
-                                      secondNode); // add edges to realEdges; this is the only place that realEdges change
-                    ++numRealEdgesAdded;
-                    ++numRealEdgesThisRound;
-                    edgesToAdd.push_back(make_pair(firstNode, secondNode));
-                    ++distanceIt;
-                }
-                last_dt = dt;
-                if (distanceIt != nodeDistances.sortedDistancesEnd()) {
-                    dt = addUntil; //dt is already moved to the next level
-                } else {
-                    dt = 0;
-                    break;
-                }
+//            while (numRealEdgesThisRound <= numRealEdgesLastRound) {
+            addUntil = dt - alpha; // addUntil can cross multiple alpha if there is a region with low edge density
+            while ((distanceIt != nodeDistances.sortedDistancesEnd()) &&
+                   (distanceIt->second >= addUntil)) {
+                unsigned firstNode = distanceIt->first.first;
+                unsigned secondNode = distanceIt->first.second;
+                realEdges.addEdge(firstNode,
+                                  secondNode); // add edges to realEdges; this is the only place that realEdges change
+                ++numRealEdgesAdded;
+                ++numRealEdgesThisRound;
+                edgesToAdd.push_back(make_pair(firstNode, secondNode));
+                ++distanceIt;
             }
+            last_dt = dt;
+            if (distanceIt != nodeDistances.sortedDistancesEnd()) {
+                dt = addUntil; //dt is already moved to the next level
+            } else {
+                dt = 0;
+                break;
+            }
+//            }
 
 
             cout << "# Current distance: " << distanceIt->second << "\t" << "Add until: " << addUntil << "\t" << endl;
@@ -1549,27 +1549,27 @@ namespace dagConstruct {
                 }
 
                 // weight filter
-                if (currentClusters.getThresh(clusterTop) < dt) {
-                    //if weight is not qualified (this happen often when merge happens; also delete and break down
-                    if (debug) {
-                        cout << "Weight failed: ";
-                    }
-                    vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-                    for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
-                         hidden_it != hiddenClusters.end(); ++hidden_it) {
-                        if ((currentClusters.isNew(*hidden_it)) &&
-                                (currentClusters.getMergeToID(*hidden_it).size() == 0)){
-                            //make it active again
-                            if (debug) {
-                                cout << "Activate again: ";
-                            }
-                            currentClusters.activateCluster(*hidden_it, nodeIDsToNames, debug);
-                            newClustersSorted.push_back(*hidden_it);
-                        }
-                    }
-                    ++weight_filter;
-                    continue;
-                }
+//                if (currentClusters.getThresh(clusterTop) < dt) {
+//                    //if weight is not qualified (this happen often when merge happens; also delete and break down
+//                    if (debug) {
+//                        cout << "Weight failed: ";
+//                    }
+//                    vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+//                    for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
+//                         hidden_it != hiddenClusters.end(); ++hidden_it) {
+//                        if ((currentClusters.isNew(*hidden_it)) &&
+//                                (currentClusters.getMergeToID(*hidden_it).size() == 0)){
+//                            //make it active again
+//                            if (debug) {
+//                                cout << "Activate again: ";
+//                            }
+//                            currentClusters.activateCluster(*hidden_it, nodeIDsToNames, debug);
+//                            newClustersSorted.push_back(*hidden_it);
+//                        }
+//                    }
+//                    ++weight_filter;
+//                    continue;
+//                }
 
                 /*see if the term does not have many unique edges*/
 
