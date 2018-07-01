@@ -1,3 +1,0 @@
-/cellar/users/f6zheng/tools/beta_clixo_0.5/CliXO/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/cellar/users/f6zheng/tools/beta_clixo_0.5/CliXO/cmake-build-debug/CMakeFiles/edit_cache.dir
-/cellar/users/f6zheng/tools/beta_clixo_0.5/CliXO/cmake-build-debug/CMakeFiles/CliXO.dir

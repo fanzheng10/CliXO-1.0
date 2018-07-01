@@ -1,3 +1,2 @@
 Options: 
-
-Options:
+CMake: 3.7.1@/Applications/CLion.app/Contents/bin/cmake/bin/cmake

@@ -1,4 +1,6 @@
-/cellar/users/f6zheng/Desktop/clion-2018.1/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /cellar/users/f6zheng/tools/beta_clixo_0.5/CliXO
--- Configuring done
--- Generating done
--- Build files have been written to: /cellar/users/f6zheng/tools/beta_clixo_0.5/CliXO/cmake-build-debug
+/Applications/CLion.app/Contents/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" "/Users/fanzheng/Desktop/UCSD Research/2018_quarter3/CliXO"
+CMake Error at CMakeLists.txt:1 (cmake_minimum_required):
+  CMake 3.10 or higher is required.  You are running version 3.7.1
+
+
+-- Configuring incomplete, errors occurred!

@@ -1440,8 +1440,7 @@ namespace dagConstruct {
 //            clusterGraph = realEdges; // is this making a copy
 
             vector<pair<unsigned, unsigned> > edgesToAdd;
-            double estimateNumEdges = totalEdges * exp(dt * log(2) + (1 - dt) * log(numNodes)) / numNodes;
-            edgesToAdd.reserve((unsigned long) (estimateNumEdges)); //don't know if this is helpful
+            edgesToAdd.reserve(20000); //don't know if this is helpful
 
             double addUntil = dt;
 //            while (numRealEdgesThisRound <= numRealEdgesLastRound) {

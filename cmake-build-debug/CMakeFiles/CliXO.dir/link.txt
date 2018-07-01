@@ -1,1 +1,0 @@
-/usr/bin/c++  -g   CMakeFiles/CliXO.dir/clixo.cpp.o CMakeFiles/CliXO.dir/clustersToDAG.cpp.o  -o CliXO 
