@@ -18,7 +18,7 @@
 #include "nodeDistanceObject.h"
 #include "boost/dynamic_bitset/dynamic_bitset.hpp"
 
-bool debug = false;
+bool debug = true;
 
 // to print the gene names in the cluster
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
@@ -644,7 +644,7 @@ public:
                 ++numFound;
             }
         }//is this only new clusters?
-        sort(newClustersAndCounts.begin(), newClustersAndCounts.end(), compPairSecondAscending);
+        sort(newClustersAndCounts.begin(), newClustersAndCounts.end(), compPairSecondDescending);
 
         for (vector<pair<unsigned long, unsigned> >::iterator it = newClustersAndCounts.begin();
              it != newClustersAndCounts.end(); ++it) {
@@ -1006,13 +1006,12 @@ namespace dagConstruct {
         combination |= elements2;
         unsigned numCombined = combination.count();
         double denom = numCombined - 1;
-        unsigned numChecked = 0;
 
         // boundary condition can make this faster
 
         unsigned n1 = elements1.count();
         unsigned n2 = elements2.count();
-
+        cout << n1 << "\t" << n2 << "\t" << denom << endl;
         if ( (n1-1)/denom > density) {
             if (n1 >= n2) { // only test n2; otherwise, this means the above condition also applies for n2
                 for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i) ) {
@@ -1020,8 +1019,10 @@ namespace dagConstruct {
                     interactorsInCombo &= clusterGraph.getInteractors(i);
                     unsigned numInteractorsInCombo = interactorsInCombo.count();
                     if ((numInteractorsInCombo / denom) <= density ) {
+                        if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
                         return false;
                     }
+                    else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
                 }
             }
         }
@@ -1033,8 +1034,10 @@ namespace dagConstruct {
                     interactorsInCombo &= clusterGraph.getInteractors(i);
                     unsigned numInteractorsInCombo = interactorsInCombo.count();
                     if ((numInteractorsInCombo / denom) <= density ) {
+                        if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
                         return false;
                     }
+                    else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
                 }
             }
             else {//test both
@@ -1044,8 +1047,10 @@ namespace dagConstruct {
                         interactorsInCombo &= clusterGraph.getInteractors(i);
                         unsigned numInteractorsInCombo = interactorsInCombo.count();
                         if ((numInteractorsInCombo / denom) <= density ) {
+                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
                             return false;
                         }
+                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
                     }
                     for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i)) {
                         if (elements1[i]) { continue;}
@@ -1053,8 +1058,10 @@ namespace dagConstruct {
                         interactorsInCombo &= clusterGraph.getInteractors(i);
                         unsigned numInteractorsInCombo = interactorsInCombo.count();
                         if ((numInteractorsInCombo / denom) <= density ) {
+                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
                             return false;
                         }
+                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
                     }
                 }
                 else {
@@ -1063,8 +1070,12 @@ namespace dagConstruct {
                         interactorsInCombo &= clusterGraph.getInteractors(i);
                         unsigned numInteractorsInCombo = interactorsInCombo.count();
                         if ((numInteractorsInCombo / denom) <= density ) {
+                            if (debug) {
+                                cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
+                            }
                             return false;
                         }
+                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
                     }
                     for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
                         if (elements2[i]) { continue;}
@@ -1072,8 +1083,10 @@ namespace dagConstruct {
                         interactorsInCombo &= clusterGraph.getInteractors(i);
                         unsigned numInteractorsInCombo = interactorsInCombo.count();
                         if ((numInteractorsInCombo / denom) <= density ) {
+                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
                             return false;
                         }
+                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
                     }
                 }
             }
@@ -1358,34 +1371,56 @@ namespace dagConstruct {
         unsigned long maxClusterID = currentClusters.maxClusterID();
         vector<bool> clustersChecked(maxClusterID, false);
 
+//        int nvalidCluster = 0;
+//        cout << "debug here" << endl;
+//        cout << currentClusters.numCurrentClusters() << endl;
+//        cout << maxClusterID << endl;
         for (unsigned long i = 0; i < maxClusterID; ++i) {
             if (currentClusters.isNew(i) &&
                     currentClusters.isActive(i) &&
                     (currentClusters.numElements(i) !=0) ){//&& //don't exactly why I need this,  seems to be duplicated to 1,2
 //                    (currentClusters.getThresh(i) >= currentClusters.getCurWeight()))  {
-
+                clustersChecked[i] = true;
                 for (unsigned long j = 0; j < maxClusterID; ++j) {
                     /*I think I should consider all clusters*/
-                    if ((j != i) &&  (!clustersChecked[j]) &&
-                            currentClusters.isActive(j) &&
-                            (currentClusters.numElements(j) != 0) ){//&&
+                    if ((j != i) && (!clustersChecked[j]) &&
+                        currentClusters.isActive(j) &&
+                        (currentClusters.numElements(j) != 0)) {//&&
 //                            (currentClusters.getThresh(j) >= currentClusters.getCurWeight() ))  {
+//                        if (currentClusters.isValid(i) || currentClusters.isValid(j)) {
+//                            nvalidCluster = nvalidCluster + 1;
+//                        }
 //                        boost::dynamic_bitset<unsigned long> proposedCombinedCluster(realEdges.numNodes(), 0);
-                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density, nodeIDsToNames)) {// try clusterGraph in this new version
+                        if (debug) {
+                            cout << "# Merging attempt" << i << " " << j << endl;
+                            printCluster(currentClusters.getElements(i), nodeIDsToNames);
+                            cout << "\t";
+                            printCluster(currentClusters.getElements(j), nodeIDsToNames);
+                            cout << endl;
+
+                        }
+                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density,
+                                               nodeIDsToNames)) {// try clusterGraph in this new version
                             double tempWeight;
+                            if (debug) {
+//                                printCluster(currentClusters.getElements(i), nodeIDsToNames);
+//                                cout << "\t";
+//                                printCluster(currentClusters.getElements(j), nodeIDsToNames);
+//                                cout << endl;
+                                cout << "# Successful merging" << endl;
+                            }
                             if (currentClusters.getThresh(j) > currentClusters.getThresh(i)) {
                                 tempWeight = currentClusters.getThresh(i);
-                            }
-                            else {
-				                tempWeight = currentClusters.getThresh(j);
+                            } else {
+                                tempWeight = currentClusters.getThresh(j);
                             }
                             clustersToCombine.push_back(make_pair(make_pair(i, j), tempWeight));
                         }
                     }
                 }
             }
-            clustersChecked[i] = true;
         }
+//        if (debug && (nvalidCluster > 1)) {cout << "# valid cluster is considered" << endl;}
         cout << "# Considering combining " << clustersToCombine.size() << " pairs of clusters" << endl;
         if (clustersToCombine.size() > 0) {
 //            cout << "# Current Weight is " << curWeight << endl;
@@ -1516,7 +1551,7 @@ namespace dagConstruct {
 
             vector<unsigned long> tempNewAndValid;
 
-            unsigned weight_filter = 0;
+//            unsigned weight_filter = 0;
             unsigned small_filter = 0;
             unsigned unique_filter = 0;
 
@@ -1579,22 +1614,22 @@ namespace dagConstruct {
                 if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
                     if (debug) {
                         cout << "Uniqueness failed: ";
-                        cout << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh
+                        cout << currentClusters.getElements(clusterTop).count() << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh
                              << "\t" << endl;
                     }
                     vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-                    for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
-                         hidden_it != hiddenClusters.end(); ++hidden_it) {
-                        if ((currentClusters.isNew(*hidden_it)) &&
-                                (currentClusters.getMergeToID(*hidden_it).size() == 0)){
-                            //make it active again
-                            if (debug) {
-                                cout << "Activate again: ";
-                            }
-                            currentClusters.activateCluster(*hidden_it, nodeIDsToNames, debug);
-                            newClustersSorted.push_back(*hidden_it);
-                        }
-                    }
+//                    for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
+//                         hidden_it != hiddenClusters.end(); ++hidden_it) {
+//                        if ((currentClusters.isNew(*hidden_it)) &&
+//                                (currentClusters.getMergeToID(*hidden_it).size() == 0)){
+//                            //make it active again
+//                            if (debug) {
+//                                cout << "Activate again: ";
+//                            }
+//                            currentClusters.activateCluster(*hidden_it, nodeIDsToNames, debug);
+//                            newClustersSorted.push_back(*hidden_it);
+//                        }
+//                    }
                     ++unique_filter;
                     continue;
                 }
@@ -1604,7 +1639,7 @@ namespace dagConstruct {
 //                    tempNewAndValid.push_back(clusterTop);
             }
 
-            cout << "# " << weight_filter << " clusters failed the weight filter" << endl;
+//            cout << "# " << weight_filter << " clusters failed the weight filter" << endl;
             cout << "# " << small_filter << " clusters failed the late-and-small filter" << endl;
             cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
             cout << "# " << n_pass_filter << " clusters are valid" << endl;
