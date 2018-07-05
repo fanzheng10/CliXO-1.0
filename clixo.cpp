@@ -10,7 +10,8 @@ int main(int argc, char* argv[]) {
     cout << "File should be 3 tab separated columns with 1 undirected edge per line of the format node1, node2, edgeWeight (similarity between node1 and node2)" << endl;
     cout << "2) threshold between clusters (alpha parameter)" << endl;
     cout << "3) merge density for overlapping clusters (beta parameter. Optional with default = 0.5)" << endl;
-    cout << "4) name for terminal node (i.e. gene, patient, etc.). Optional with default = gene" << endl;
+    cout << "4) if given entering debug mode, print more information" << endl;
+//    cout << "5) name for terminal node (i.e. gene, patient, etc.). Optional with default = gene" << endl;
     return 0;
   }
 
@@ -25,13 +26,15 @@ int main(int argc, char* argv[]) {
   string netFile = argv[1];
   double threshold = stod(argv[2]);
   double density = 0.5;
+  bool debug = false;
+
   if (argc >= 4) {
     density = stod(argv[3]);
   }
-  string terminalName = "gene";
   if (argc >= 5) {
-    terminalName = string(argv[4]);
+    debug = true;
   }
+  string terminalName = "gene";
   time_t start, end;
   time(&start);
   cout << "# Loading input network graph" << endl;
@@ -47,7 +50,7 @@ int main(int argc, char* argv[]) {
   nodeDistanceObject nodeDistances;
 
   time (&start);
-  dagConstruct::constructDAG(inputNetwork, ontology, nodeDistances, threshold, density);
+  dagConstruct::constructDAG(inputNetwork, ontology, nodeDistances, threshold, density, debug);
   time (&end);
   dif = difftime(end,start);
   cout << "# Ontology construction took " << dif << " seconds" << endl;

@@ -18,7 +18,7 @@
 #include "nodeDistanceObject.h"
 #include "boost/dynamic_bitset/dynamic_bitset.hpp"
 
-bool debug = true;
+bool debug = false;
 
 // to print the gene names in the cluster
 void printCluster(const boost::dynamic_bitset<unsigned long> & cluster, vector<string> & nodeIDsToNames) {
@@ -861,7 +861,7 @@ public:
             return false; //don't need to look one by one
         }
         for (unsigned long i = clust.find_first(); i < clust.size(); i = clust.find_next(i)) {
-            if (clustSize < double(getMaxClusterSizeForNode(i)) / 2) {
+            if (clustSize < double(getMaxClusterSizeForNode(i)) - 2) {
                 return true;
             }
         }
@@ -1002,95 +1002,166 @@ namespace dagConstruct {
         boost::dynamic_bitset<unsigned long> elements1 = currentClusters.getElements(cluster1);
         boost::dynamic_bitset<unsigned long> elements2 = currentClusters.getElements(cluster2);
         boost::dynamic_bitset<unsigned long> combination = currentClusters.getElements(cluster1);
+        boost::dynamic_bitset<unsigned long> joint = currentClusters.getElements(cluster1);
 
         combination |= elements2;
+        joint &= elements2;
         unsigned numCombined = combination.count();
+        double numJoint = joint.count();
         double denom = numCombined - 1;
+        double denom2 = numJoint - 1;
 
         // boundary condition can make this faster
 
         unsigned n1 = elements1.count();
         unsigned n2 = elements2.count();
-        cout << n1 << "\t" << n2 << "\t" << denom << endl;
-        if ( (n1-1)/denom > density) {
-            if (n1 >= n2) { // only test n2; otherwise, this means the above condition also applies for n2
-                for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i) ) {
-                    boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-                    interactorsInCombo &= clusterGraph.getInteractors(i);
-                    unsigned numInteractorsInCombo = interactorsInCombo.count();
-                    if ((numInteractorsInCombo / denom) <= density ) {
-                        if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-                        return false;
-                    }
-                    else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+        if (numJoint < 2) { return false;}
+
+        //combine 1
+//        for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
+//            boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+//            interactorsInCombo &= clusterGraph.getInteractors(i);
+//            unsigned numInteractorsInCombo = interactorsInCombo.count();
+//            if ((numInteractorsInCombo / denom) <= density) {
+//                if (debug) { cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl; }
+//                return false;
+//            } else if (debug) { cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl; }
+//        }
+//        for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i)) {
+//            if (elements1[i]) { continue; }
+//            boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+//            interactorsInCombo &= clusterGraph.getInteractors(i);
+//            unsigned numInteractorsInCombo = interactorsInCombo.count();
+//            if ((numInteractorsInCombo / denom) <= density) {
+//                if (debug) { cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl; }
+//                return false;
+//            } else if (debug) { cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl; }
+//        }
+
+        //combine 2
+        if ((numJoint > 1) && (numJoint/numCombined > density)) { // this faciliate merge of highly overlapped ones
+            for (unsigned i = joint.find_first(); i < joint.size(); i = joint.find_next(i)) {
+                boost::dynamic_bitset<unsigned long> interactorsInJoint = joint;
+                interactorsInJoint &= clusterGraph.getInteractors(i);
+                unsigned numInteractorsInJoint = interactorsInJoint.count();
+                if ((numInteractorsInJoint / denom2) <= density ) {
+                    if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInJoint / denom << endl;}
+                    return false;
                 }
+                else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInJoint / denom << endl;}
+            }
+        }
+        else if (n1 >= n2) {
+            for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i) ) {
+                if (joint[i]) { continue;}
+                boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+                interactorsInCombo &= clusterGraph.getInteractors(i);
+                unsigned numInteractorsInCombo = interactorsInCombo.count();
+                if ((numInteractorsInCombo / denom) <= density ) {
+                    if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+                    return false;
+                }
+                else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
             }
         }
         else {
-            if ( (n2-1)/denom > density) {
-                //only test n1
-                for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i) ) {
-                    boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-                    interactorsInCombo &= clusterGraph.getInteractors(i);
-                    unsigned numInteractorsInCombo = interactorsInCombo.count();
-                    if ((numInteractorsInCombo / denom) <= density ) {
-                        if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-                        return false;
-                    }
-                    else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+            for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i) ) {
+                if (joint[i]) { continue;}
+                boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+                interactorsInCombo &= clusterGraph.getInteractors(i);
+                unsigned numInteractorsInCombo = interactorsInCombo.count();
+                if ((numInteractorsInCombo / denom) <= density ) {
+                    if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+                    return false;
                 }
-            }
-            else {//test both
-                if (n1<=n2) {//test the smaller one first
-                    for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
-                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-                        interactorsInCombo &= clusterGraph.getInteractors(i);
-                        unsigned numInteractorsInCombo = interactorsInCombo.count();
-                        if ((numInteractorsInCombo / denom) <= density ) {
-                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-                            return false;
-                        }
-                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-                    }
-                    for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i)) {
-                        if (elements1[i]) { continue;}
-                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-                        interactorsInCombo &= clusterGraph.getInteractors(i);
-                        unsigned numInteractorsInCombo = interactorsInCombo.count();
-                        if ((numInteractorsInCombo / denom) <= density ) {
-                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-                            return false;
-                        }
-                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-                    }
-                }
-                else {
-                    for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i)) {
-                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-                        interactorsInCombo &= clusterGraph.getInteractors(i);
-                        unsigned numInteractorsInCombo = interactorsInCombo.count();
-                        if ((numInteractorsInCombo / denom) <= density ) {
-                            if (debug) {
-                                cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
-                            }
-                            return false;
-                        }
-                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-                    }
-                    for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
-                        if (elements2[i]) { continue;}
-                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-                        interactorsInCombo &= clusterGraph.getInteractors(i);
-                        unsigned numInteractorsInCombo = interactorsInCombo.count();
-                        if ((numInteractorsInCombo / denom) <= density ) {
-                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-                            return false;
-                        }
-                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-                    }
-                }
+                else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
             }
         }
+
+        //combine 3
+
+
+//        if (debug) {cout << n1 << "\t" << n2 << "\t" << denom << endl;}
+//        if ( (n1-1)/denom > density) {
+//            if (n1 >= n2) { // only test n2; otherwise, this means the above condition also applies for n2
+//                for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i) ) {
+//                    boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+//                    interactorsInCombo &= clusterGraph.getInteractors(i);
+//                    unsigned numInteractorsInCombo = interactorsInCombo.count();
+//                    if ((numInteractorsInCombo / denom) <= density ) {
+//                        if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                        return false;
+//                    }
+//                    else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                }
+//            }
+//        }
+//        else {
+//            if ( (n2-1)/denom > density) {
+//                //only test n1
+//                for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i) ) {
+//                    boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+//                    interactorsInCombo &= clusterGraph.getInteractors(i);
+//                    unsigned numInteractorsInCombo = interactorsInCombo.count();
+//                    if ((numInteractorsInCombo / denom) <= density ) {
+//                        if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                        return false;
+//                    }
+//                    else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                }
+//            }
+//            else {//test both
+//                if (n1<=n2) {//test the smaller one first
+//                    for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
+//                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+//                        interactorsInCombo &= clusterGraph.getInteractors(i);
+//                        unsigned numInteractorsInCombo = interactorsInCombo.count();
+//                        if ((numInteractorsInCombo / denom) <= density ) {
+//                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                            return false;
+//                        }
+//                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                    }
+//                    for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i)) {
+//                        if (elements1[i]) { continue;}
+//                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+//                        interactorsInCombo &= clusterGraph.getInteractors(i);
+//                        unsigned numInteractorsInCombo = interactorsInCombo.count();
+//                        if ((numInteractorsInCombo / denom) <= density ) {
+//                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                            return false;
+//                        }
+//                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                    }
+//                }
+//                else {
+//                    for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i)) {
+//                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+//                        interactorsInCombo &= clusterGraph.getInteractors(i);
+//                        unsigned numInteractorsInCombo = interactorsInCombo.count();
+//                        if ((numInteractorsInCombo / denom) <= density ) {
+//                            if (debug) {
+//                                cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
+//                            }
+//                            return false;
+//                        }
+//                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                    }
+//                    for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
+//                        if (elements2[i]) { continue;}
+//                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
+//                        interactorsInCombo &= clusterGraph.getInteractors(i);
+//                        unsigned numInteractorsInCombo = interactorsInCombo.count();
+//                        if ((numInteractorsInCombo / denom) <= density ) {
+//                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                            return false;
+//                        }
+//                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                    }
+//                }
+//            }
+//      }
+
         return true;
     }
 
@@ -1609,7 +1680,7 @@ namespace dagConstruct {
 
                 currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
 //                    double uniqueThresh = (1-beta) * currentClusters.getElements(clusterTop).count();
-                double uniqueThresh = 0.05* pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
+                double uniqueThresh =  0.5 * (currentClusters.getElements(clusterTop).count() - 1) + 0.05* pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
                 if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
                     if (debug) {
@@ -1650,6 +1721,13 @@ namespace dagConstruct {
             for (vector<unsigned long>::iterator newValidClusterIt = tempNewAndValid.begin();
                  newValidClusterIt != tempNewAndValid.end(); ++newValidClusterIt) {
                 double clustWeight = currentClusters.getClusterWeight(*newValidClusterIt);
+
+                //treat 2 and 3 genes terms differently
+                if (currentClusters.getElements(*newValidClusterIt).count() < 4) {
+                    if (clustWeight < dt + alpha) {
+                        continue;
+                    }
+                }
 
                 validClusters.push_back(
                         validClusterBitset(currentClusters.getElements(*newValidClusterIt), 0, clustWeight));
@@ -1804,9 +1882,13 @@ namespace dagConstruct {
     }
 
     // Main clustering function - cluster input graph into Ontology
-    void constructDAG(graph_undirected & input_graph, DAGraph & ontology, nodeDistanceObject & nodeDistances, double threshold, double density) {
+    void constructDAG(graph_undirected & input_graph, DAGraph & ontology, nodeDistanceObject & nodeDistances, double threshold, double density, bool debugging) {
         //ontology = DAGraph();
         map<string,unsigned> geneNamesToIDs;
+
+        if (debugging) {
+            debug = true;
+        }
 
         // Add all nodes in the input network to the ontology as genes
         for (vector<Node>::iterator nodesIt = input_graph.nodesBegin(); nodesIt != input_graph.nodesEnd(); ++nodesIt) {
@@ -1817,7 +1899,7 @@ namespace dagConstruct {
         nodeDistances = nodeDistanceObject(input_graph);
 
         vector<validClusterBitset> validClusters;
-        dagConstruct::getFuzzyClustersBitsetThreshold(nodeDistances, geneNamesToIDs, validClusters, threshold, density); //Fan: all important stuff in here
+        dagConstruct::getFuzzyClustersBitsetThreshold(nodeDistances, geneNamesToIDs, validClusters, threshold, density); //all important stuff in here
 
         // Got the clusters - build ontology assuming any clusters wholly contained in others are descendents
         cout << "# Num clusters: " << validClusters.size() << endl;
