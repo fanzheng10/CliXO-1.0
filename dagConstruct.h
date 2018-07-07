@@ -61,6 +61,7 @@ double calculateClusterWeight(boost::dynamic_bitset<unsigned long> cluster, node
     return edgeWeightsMean;
 }
 
+
 class validClusterBitset {
 public:
     validClusterBitset(const boost::dynamic_bitset<unsigned long> & cluster, unsigned clustID, double thisWeight) {
@@ -311,6 +312,8 @@ public:
     inline void removeMergedToID(unsigned long id) {
         mergedToID.erase(remove(mergedToID.begin(), mergedToID.end(), id), mergedToID.end());
     }
+
+
 
 
 private:
@@ -832,19 +835,18 @@ public:
         return coveredEdges.numEdges();
     }
 
-    //TODO: this function is not good in some cases. Consider hide it
-    bool isTooSmallForCurWeight(unsigned long id, unsigned lastLargestCluster, double lastLargestClusterWeight) {
-        unsigned size = currentClusters[id].getElements().count();
-        double latesmallThres_abs = ( log(numNodes) - log(size) ) /  log(numNodes) ;
-        double latesmallThres_rel = lastLargestClusterWeight * ( log(numNodes) - log(size) ) / ( log(numNodes) - log(lastLargestCluster) ) ;
-        double latesmallThres = min(latesmallThres_abs, latesmallThres_rel);
-        if (curWeight < latesmallThres - 0.1) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
+//    bool isTooSmallForCurWeight(unsigned long id, unsigned lastLargestCluster, double lastLargestClusterWeight) {
+//        unsigned size = currentClusters[id].getElements().count();
+//        double latesmallThres_abs = ( log(numNodes) - log(size) ) /  log(numNodes) ;
+//        double latesmallThres_rel = lastLargestClusterWeight * ( log(numNodes) - log(size) ) / ( log(numNodes) - log(lastLargestCluster) ) ;
+//        double latesmallThres = min(latesmallThres_abs, latesmallThres_rel);
+//        if (curWeight < latesmallThres - 0.1) {
+//            return true;
+//        }
+//        else {
+//            return false;
+//        }
+//    }
 
     unsigned long getMaxClusterSizeForNode(unsigned long nodeID) {
         return maxClusterSizePerNodes[nodeID];
@@ -908,6 +910,28 @@ public:
 
     void removeMergedToID(unsigned long id, unsigned long mergeID) {
         currentClusters[id].removeMergedToID(mergeID);
+    }
+
+    double getNewmanModularityScore(unsigned long id, graph_undirected_bitset & clusterGraph) {
+
+        boost::dynamic_bitset<unsigned long> elements = getElements(id);
+
+        unsigned long actualEdges = 0;
+        double expectEdges= 0;
+
+        for (unsigned long i = elements.find_first(); i < elements.size()-1; i = elements.find_next(i)) {
+            boost::dynamic_bitset<unsigned long> interactors1 = clusterGraph.getInteractors(i);
+            for (unsigned long j = elements.find_next(i); j < elements.size(); j = elements.find_next(j)) {
+                boost::dynamic_bitset<unsigned long> interactors2 = clusterGraph.getInteractors(j);
+                expectEdges += interactors1.count() * interactors2.count();
+                if (clusterGraph.isEdge(i, j)) {
+                    actualEdges = actualEdges + 1;
+                }
+            }
+        }
+        expectEdges = expectEdges / (2 * clusterGraph.numEdges());
+
+        return (actualEdges - expectEdges) / (2 * clusterGraph.numEdges());
     }
 
     unsigned clustersAdded;
@@ -995,6 +1019,7 @@ namespace dagConstruct {
 
         return deleted;
     }
+
 
     bool isMinNodeDegreeMet(unsigned cluster1, unsigned cluster2, currentClusterClassBitset &currentClusters,
                             graph_undirected_bitset &clusterGraph, double density, vector<string> & nodeIDsToNames) {
@@ -1722,19 +1747,20 @@ namespace dagConstruct {
                  newValidClusterIt != tempNewAndValid.end(); ++newValidClusterIt) {
                 double clustWeight = currentClusters.getClusterWeight(*newValidClusterIt);
 
-                //treat 2 and 3 genes terms differently
-                if (currentClusters.getElements(*newValidClusterIt).count() < 4) {
-                    if (clustWeight < dt + alpha) {
-                        continue;
-                    }
-                }
+//                //treat 2 and 3 genes terms differently
+//                if (currentClusters.getElements(*newValidClusterIt).count() < 4) {
+//                    if (clustWeight < dt + alpha) {
+//                        continue;
+//                    }
+//                }
+                double clustModularity = currentClusters.getNewmanModularityScore(*newValidClusterIt, realEdges);
 
                 validClusters.push_back(
                         validClusterBitset(currentClusters.getElements(*newValidClusterIt), 0, clustWeight));
                 cout << "# Valid cluster:\t";
                 printCluster(currentClusters.getElements(*newValidClusterIt), nodeIDsToNames);
                 currentClusters.setClusterValid(*newValidClusterIt, realEdges); //successful clusters should be seen as real edges in future (okay because their weights doesn't change)
-                cout << "\t" << clustWeight << "\t"
+                cout << "\t" << clustWeight << "\t" << clustModularity << "\t"
                      << currentClusters.getNumUniquelyUnexplainedEdges(*newValidClusterIt) << "\t" << last_dt
                      << endl;
                 // now it is safe to delete the hidden cluster of the valid cluster. see the change in setClusterValid.
