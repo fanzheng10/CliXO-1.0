@@ -912,9 +912,7 @@ public:
         currentClusters[id].removeMergedToID(mergeID);
     }
 
-    double getNewmanModularityScore(unsigned long id, graph_undirected_bitset & clusterGraph) {
-
-        boost::dynamic_bitset<unsigned long> elements = getElements(id);
+    double getNewmanModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph) {
 
         unsigned long actualEdges = 0;
         double expectEdges= 0;
@@ -925,13 +923,14 @@ public:
                 boost::dynamic_bitset<unsigned long> interactors2 = clusterGraph.getInteractors(j);
                 expectEdges += interactors1.count() * interactors2.count();
                 if (clusterGraph.isEdge(i, j)) {
-                    actualEdges = actualEdges + 1;
+                    actualEdges += 1;
                 }
             }
         }
         expectEdges = expectEdges / (2 * clusterGraph.numEdges());
 
         return (actualEdges - expectEdges) / (2 * clusterGraph.numEdges());
+//        return (actualEdges - expectEdges) / (2 * elements.count() * (elements.count()-1));
     }
 
     unsigned clustersAdded;
@@ -1029,6 +1028,7 @@ namespace dagConstruct {
         boost::dynamic_bitset<unsigned long> combination = currentClusters.getElements(cluster1);
         boost::dynamic_bitset<unsigned long> joint = currentClusters.getElements(cluster1);
 
+
         combination |= elements2;
         joint &= elements2;
         unsigned numCombined = combination.count();
@@ -1042,6 +1042,9 @@ namespace dagConstruct {
         unsigned n2 = elements2.count();
         if (numJoint < 2) { return false;}
 
+//        double mod1 = currentClusters.getNewmanModularityScore(elements1, clusterGraph);
+//        double mod2 = currentClusters.getNewmanModularityScore(elements2, clusterGraph);
+//        double modcom = currentClusters.getNewmanModularityScore(combination, clusterGraph);
         //combine 1
 //        for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
 //            boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
@@ -1070,10 +1073,15 @@ namespace dagConstruct {
                 interactorsInJoint &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInJoint = interactorsInJoint.count();
                 if ((numInteractorsInJoint / denom2) <= density ) {
-                    if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInJoint / denom << endl;}
+//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
+                    if (debug) {
+//                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInJoint / denom << endl;
+                    }
                     return false;
                 }
-                else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInJoint / denom << endl;}
+                else if (debug) {
+//                    cout << nodeIDsToNames[i] << ' ' << numInteractorsInJoint / denom << endl;
+                }
             }
         }
         else if (n1 >= n2) {
@@ -1083,10 +1091,15 @@ namespace dagConstruct {
                 interactorsInCombo &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInCombo = interactorsInCombo.count();
                 if ((numInteractorsInCombo / denom) <= density ) {
-                    if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
+                    if (debug) {
+//                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
+                    }
                     return false;
                 }
-                else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+                else if (debug) {
+                    cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
+                }
             }
         }
         else {
@@ -1096,7 +1109,10 @@ namespace dagConstruct {
                 interactorsInCombo &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInCombo = interactorsInCombo.count();
                 if ((numInteractorsInCombo / denom) <= density ) {
-                    if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
+//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
+                    if (debug) {
+//                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
+                    }
                     return false;
                 }
                 else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
@@ -1186,7 +1202,7 @@ namespace dagConstruct {
 //                }
 //            }
 //      }
-
+//        cout << "merging passes: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
         return true;
     }
 
@@ -1659,24 +1675,22 @@ namespace dagConstruct {
 //                    currentClusters.sortNewClusters(newClustersSorted);
                 unsigned long clusterTop = newClustersSorted.back(); // think about the order
                 newClustersSorted.pop_back();
-                if (currentClusters.numElements(clusterTop) ==0 ) { //some clusters are "hold-on" this stage.
+                if (currentClusters.numElements(clusterTop) == 0 ) { //some clusters are "hold-on" this stage.
                     continue;
                 }
 
-                //TODO: this function can go to updateClusterWeight (downside: prohitbit merging. left it as is for now)
-                /*filter : see if the term is too small for the current weight*/
-
-//                if (currentClusters.isTooSmallForCurWeight(clusterTop, lastLargestCluster, lastLargestClusterWeight)) {
-                if (currentClusters.clusterSizeTooSmall(clusterTop)) {
-                    if (debug) {
-                        cout << "Size too small: ";
-                    }
-                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-
-                    //don't have to delete hiddenClusters here due to the final step
-                    ++small_filter;
-                    continue;
-                }
+//                if (currentClusters.clusterSizeTooSmall(clusterTop)) {
+//                    if (debug) {
+//                        cout << "Size too small: ";
+//                    }
+//                    double clustModularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(clusterTop), realEdges);
+//                    cout << "modularity:" << clustModularity <<  endl;
+//                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+//
+//                    //don't have to delete hiddenClusters here due to the final step
+//                    ++small_filter;
+//                    continue;
+//                }
 
                 // weight filter
 //                if (currentClusters.getThresh(clusterTop) < dt) {
@@ -1713,19 +1727,8 @@ namespace dagConstruct {
                         cout << currentClusters.getElements(clusterTop).count() << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh
                              << "\t" << endl;
                     }
+
                     vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-//                    for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
-//                         hidden_it != hiddenClusters.end(); ++hidden_it) {
-//                        if ((currentClusters.isNew(*hidden_it)) &&
-//                                (currentClusters.getMergeToID(*hidden_it).size() == 0)){
-//                            //make it active again
-//                            if (debug) {
-//                                cout << "Activate again: ";
-//                            }
-//                            currentClusters.activateCluster(*hidden_it, nodeIDsToNames, debug);
-//                            newClustersSorted.push_back(*hidden_it);
-//                        }
-//                    }
                     ++unique_filter;
                     continue;
                 }
@@ -1746,6 +1749,7 @@ namespace dagConstruct {
             for (vector<unsigned long>::iterator newValidClusterIt = tempNewAndValid.begin();
                  newValidClusterIt != tempNewAndValid.end(); ++newValidClusterIt) {
                 double clustWeight = currentClusters.getClusterWeight(*newValidClusterIt);
+                double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(*newValidClusterIt), realEdges);
 
 //                //treat 2 and 3 genes terms differently
 //                if (currentClusters.getElements(*newValidClusterIt).count() < 4) {
@@ -1753,14 +1757,13 @@ namespace dagConstruct {
 //                        continue;
 //                    }
 //                }
-                double clustModularity = currentClusters.getNewmanModularityScore(*newValidClusterIt, realEdges);
 
                 validClusters.push_back(
                         validClusterBitset(currentClusters.getElements(*newValidClusterIt), 0, clustWeight));
                 cout << "# Valid cluster:\t";
                 printCluster(currentClusters.getElements(*newValidClusterIt), nodeIDsToNames);
                 currentClusters.setClusterValid(*newValidClusterIt, realEdges); //successful clusters should be seen as real edges in future (okay because their weights doesn't change)
-                cout << "\t" << clustWeight << "\t" << clustModularity << "\t"
+                cout << "\t" << clustWeight << "\t" << modularity
                      << currentClusters.getNumUniquelyUnexplainedEdges(*newValidClusterIt) << "\t" << last_dt
                      << endl;
                 // now it is safe to delete the hidden cluster of the valid cluster. see the change in setClusterValid.
