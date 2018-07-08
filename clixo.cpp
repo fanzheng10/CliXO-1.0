@@ -10,8 +10,8 @@ int main(int argc, char* argv[]) {
     cout << "File should be 3 tab separated columns with 1 undirected edge per line of the format node1, node2, edgeWeight (similarity between node1 and node2)" << endl;
     cout << "2) threshold between clusters (alpha parameter)" << endl;
     cout << "3) merge density for overlapping clusters (beta parameter. Optional with default = 0.5)" << endl;
-    cout << "4) if given entering debug mode, print more information" << endl;
-//    cout << "5) name for terminal node (i.e. gene, patient, etc.). Optional with default = gene" << endl;
+    cout << "4) parameter regarding Newman's modularity. Optional with default = 0.002)" << endl;
+    cout << "5) if given entering debug mode, print more information" << endl;
     return 0;
   }
 
@@ -26,12 +26,18 @@ int main(int argc, char* argv[]) {
   string netFile = argv[1];
   double threshold = stod(argv[2]);
   double density = 0.5;
+  double modular = 0.002;
   bool debug = false;
 
   if (argc >= 4) {
     density = stod(argv[3]);
   }
+
   if (argc >= 5) {
+    modular = stod(argv[4]);
+  }
+
+  if (argc >= 6) {
     debug = true;
   }
   string terminalName = "gene";
@@ -50,18 +56,10 @@ int main(int argc, char* argv[]) {
   nodeDistanceObject nodeDistances;
 
   time (&start);
-  dagConstruct::constructDAG(inputNetwork, ontology, nodeDistances, threshold, density, debug);
+  dagConstruct::constructDAG(inputNetwork, ontology, nodeDistances, threshold, density, modular, debug);
   time (&end);
   dif = difftime(end,start);
   cout << "# Ontology construction took " << dif << " seconds" << endl;
   cout << "# Ontology is: " << endl;
 
-  for(map< pair<unsigned,unsigned>, string >::iterator edgesIt = ontology.edgesBegin(); edgesIt != ontology.edgesEnd(); ++edgesIt) {
-    // THIS VERSION GIVES THE DISTANCE BETWEEN POINTS
-    //cout << ontology.getName(edgesIt->first.first) << "\t" << ontology.getName(edgesIt->first.second) << "\t" << edgesIt->second << "\t" << (ontology.getWeight(edgesIt->first.second) - ontology.getWeight(edgesIt->first.first)) / 2.0 << endl;
-
-    // THIS VERSION JUST TELLS THE WEIGHT ON THE PARENT TERM
-    cout << ontology.getName(edgesIt->first.first) << "\t" << ontology.getName(edgesIt->first.second) << "\t" << edgesIt->second << "\t" << ontology.getWeight(edgesIt->first.first) << endl;
-  }
-  return 1;
 }

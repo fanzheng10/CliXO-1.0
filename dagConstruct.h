@@ -1119,90 +1119,6 @@ namespace dagConstruct {
             }
         }
 
-        //combine 3
-
-
-//        if (debug) {cout << n1 << "\t" << n2 << "\t" << denom << endl;}
-//        if ( (n1-1)/denom > density) {
-//            if (n1 >= n2) { // only test n2; otherwise, this means the above condition also applies for n2
-//                for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i) ) {
-//                    boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-//                    interactorsInCombo &= clusterGraph.getInteractors(i);
-//                    unsigned numInteractorsInCombo = interactorsInCombo.count();
-//                    if ((numInteractorsInCombo / denom) <= density ) {
-//                        if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-//                        return false;
-//                    }
-//                    else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-//                }
-//            }
-//        }
-//        else {
-//            if ( (n2-1)/denom > density) {
-//                //only test n1
-//                for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i) ) {
-//                    boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-//                    interactorsInCombo &= clusterGraph.getInteractors(i);
-//                    unsigned numInteractorsInCombo = interactorsInCombo.count();
-//                    if ((numInteractorsInCombo / denom) <= density ) {
-//                        if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-//                        return false;
-//                    }
-//                    else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-//                }
-//            }
-//            else {//test both
-//                if (n1<=n2) {//test the smaller one first
-//                    for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
-//                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-//                        interactorsInCombo &= clusterGraph.getInteractors(i);
-//                        unsigned numInteractorsInCombo = interactorsInCombo.count();
-//                        if ((numInteractorsInCombo / denom) <= density ) {
-//                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-//                            return false;
-//                        }
-//                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-//                    }
-//                    for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i)) {
-//                        if (elements1[i]) { continue;}
-//                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-//                        interactorsInCombo &= clusterGraph.getInteractors(i);
-//                        unsigned numInteractorsInCombo = interactorsInCombo.count();
-//                        if ((numInteractorsInCombo / denom) <= density ) {
-//                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-//                            return false;
-//                        }
-//                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-//                    }
-//                }
-//                else {
-//                    for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i)) {
-//                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-//                        interactorsInCombo &= clusterGraph.getInteractors(i);
-//                        unsigned numInteractorsInCombo = interactorsInCombo.count();
-//                        if ((numInteractorsInCombo / denom) <= density ) {
-//                            if (debug) {
-//                                cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
-//                            }
-//                            return false;
-//                        }
-//                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-//                    }
-//                    for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
-//                        if (elements2[i]) { continue;}
-//                        boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-//                        interactorsInCombo &= clusterGraph.getInteractors(i);
-//                        unsigned numInteractorsInCombo = interactorsInCombo.count();
-//                        if ((numInteractorsInCombo / denom) <= density ) {
-//                            if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-//                            return false;
-//                        }
-//                        else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
-//                    }
-//                }
-//            }
-//      }
-//        cout << "merging passes: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
         return true;
     }
 
@@ -1502,7 +1418,7 @@ namespace dagConstruct {
 //                        if (currentClusters.isValid(i) || currentClusters.isValid(j)) {
 //                            nvalidCluster = nvalidCluster + 1;
 //                        }
-//                        boost::dynamic_bitset<unsigned long> proposedCombinedCluster(realEdges.numNodes(), 0);
+
                         if (debug) {
                             cout << "# Merging attempt" << i << " " << j << endl;
                             printCluster(currentClusters.getElements(i), nodeIDsToNames);
@@ -1546,7 +1462,7 @@ namespace dagConstruct {
     // ** Main function ** //
     unsigned getFuzzyClustersBitsetThreshold(nodeDistanceObject &nodeDistances, map<string, unsigned> &nodeNamesToIDs,
                                              vector<validClusterBitset> & validClusters, double alpha = 0,
-                                             double beta = 1) {
+                                             double beta = 1, double modular = 0.002) {
 
         // * profiling * //
         time_t start, end;
@@ -1652,7 +1568,6 @@ namespace dagConstruct {
                 }
             }
             currentClusters.sortNewClusters(newClustersSorted); //sort by size, ascending; this only has new active clusters
-//                currentClusters.prepareForValidityCheck(newClustersSorted); // sort and add edge explaination
 
             cout << "# Current number of clusters:" << currentClusters.numCurrentClusters() << endl;
             cout << "# New clusters to evaluate:" << newClustersSorted.size() << endl;
@@ -1663,63 +1578,30 @@ namespace dagConstruct {
 
             vector<unsigned long> tempNewAndValid;
 
-//            unsigned weight_filter = 0;
-            unsigned small_filter = 0;
             unsigned unique_filter = 0;
-
+            unsigned modular_filter = 0;
             unsigned n_pass_filter = 0;
 
             while (newClustersSorted.size()>0) {
-//                while ((newClustersSorted.size() > 0) &&
-//                        (currentClusters.getMaxThresh() >= dt)) { //TODO: this explains why the first a few iteration is wrong
-//                    currentClusters.sortNewClusters(newClustersSorted);
                 unsigned long clusterTop = newClustersSorted.back(); // think about the order
                 newClustersSorted.pop_back();
-                if (currentClusters.numElements(clusterTop) == 0 ) { //some clusters are "hold-on" this stage.
+                if (currentClusters.numElements(clusterTop) == 0) { //some clusters are "hold-on" this stage.
+                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
                     continue;
                 }
 
-//                if (currentClusters.clusterSizeTooSmall(clusterTop)) {
-//                    if (debug) {
-//                        cout << "Size too small: ";
-//                    }
-//                    double clustModularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(clusterTop), realEdges);
-//                    cout << "modularity:" << clustModularity <<  endl;
-//                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-//
-//                    //don't have to delete hiddenClusters here due to the final step
-//                    ++small_filter;
-//                    continue;
-//                }
-
-                // weight filter
-//                if (currentClusters.getThresh(clusterTop) < dt) {
-//                    //if weight is not qualified (this happen often when merge happens; also delete and break down
-//                    if (debug) {
-//                        cout << "Weight failed: ";
-//                    }
-//                    vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-//                    for (vector<unsigned long>::iterator hidden_it = hiddenClusters.begin();
-//                         hidden_it != hiddenClusters.end(); ++hidden_it) {
-//                        if ((currentClusters.isNew(*hidden_it)) &&
-//                                (currentClusters.getMergeToID(*hidden_it).size() == 0)){
-//                            //make it active again
-//                            if (debug) {
-//                                cout << "Activate again: ";
-//                            }
-//                            currentClusters.activateCluster(*hidden_it, nodeIDsToNames, debug);
-//                            newClustersSorted.push_back(*hidden_it);
-//                        }
-//                    }
-//                    ++weight_filter;
-//                    continue;
-//                }
+                /*modularity filter*/
+                double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(clusterTop), realEdges);
+                if (modularity < modular) {
+                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+                    ++modular_filter;
+                    continue;
+                }
 
                 /*see if the term does not have many unique edges*/
 
                 currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
-//                    double uniqueThresh = (1-beta) * currentClusters.getElements(clusterTop).count();
-                double uniqueThresh =  0.5 * (currentClusters.getElements(clusterTop).count() - 1) + 0.05* pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
+                double uniqueThresh =  0.5 * (currentClusters.getElements(clusterTop).count() - 1) + 0.05 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
                 if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
                     if (debug) {
@@ -1728,18 +1610,15 @@ namespace dagConstruct {
                              << "\t" << endl;
                     }
 
-                    vector<unsigned long> hiddenClusters = currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
                     ++unique_filter;
                     continue;
                 }
-                /*note that if a term is deleted, need trace back and recheck some smaller terms*/
                 /*pass all filter*/
                 ++n_pass_filter;
-//                    tempNewAndValid.push_back(clusterTop);
             }
 
-//            cout << "# " << weight_filter << " clusters failed the weight filter" << endl;
-            cout << "# " << small_filter << " clusters failed the late-and-small filter" << endl;
+            cout << "# " << modular_filter << " clusters failed the modularity filter" << endl;
             cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
             cout << "# " << n_pass_filter << " clusters are valid" << endl;
             //sort again by size
@@ -1751,19 +1630,12 @@ namespace dagConstruct {
                 double clustWeight = currentClusters.getClusterWeight(*newValidClusterIt);
                 double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(*newValidClusterIt), realEdges);
 
-//                //treat 2 and 3 genes terms differently
-//                if (currentClusters.getElements(*newValidClusterIt).count() < 4) {
-//                    if (clustWeight < dt + alpha) {
-//                        continue;
-//                    }
-//                }
-
                 validClusters.push_back(
                         validClusterBitset(currentClusters.getElements(*newValidClusterIt), 0, clustWeight));
                 cout << "# Valid cluster:\t";
                 printCluster(currentClusters.getElements(*newValidClusterIt), nodeIDsToNames);
                 currentClusters.setClusterValid(*newValidClusterIt, realEdges); //successful clusters should be seen as real edges in future (okay because their weights doesn't change)
-                cout << "\t" << clustWeight << "\t" << modularity
+                cout << "\t" << clustWeight << "\t" << modularity << "\t"
                      << currentClusters.getNumUniquelyUnexplainedEdges(*newValidClusterIt) << "\t" << last_dt
                      << endl;
                 // now it is safe to delete the hidden cluster of the valid cluster. see the change in setClusterValid.
@@ -1787,18 +1659,14 @@ namespace dagConstruct {
 
             }
             cout << "# Non-maximal finally deleted: " << numNonMaximalDeleted << endl;
-
-
             cout << "# dt: " << last_dt << endl;
             cout << "# Next dt: " << dt << endl;
-//            cout << "# Num current clusters before delete: " << numClustersBeforeDelete << endl;
             cout << "# Num current clusters: " << currentClusters.numCurrentClusters() << endl;
             cout << "# Num valid clusters: " << validClusters.size() << endl;
             cout << "# Largest cluster: " << largestCluster << endl;
             cout << "# Num edges in clusterGraph: " << clusterGraph.numEdges() << endl;
             cout << "# Num real edges added: " << numRealEdgesAdded << endl;
             cout << "# Num edges covered by valid clusters: " << realEdges.numEdges() << endl;
-//                cout << "# Num edges inferred: " << clusterGraph.numEdges() - clusterGraph.numEdges() << endl;
             time(&end);
             dif = difftime(end, start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
@@ -1911,7 +1779,7 @@ namespace dagConstruct {
     }
 
     // Main clustering function - cluster input graph into Ontology
-    void constructDAG(graph_undirected & input_graph, DAGraph & ontology, nodeDistanceObject & nodeDistances, double threshold, double density, bool debugging) {
+    void constructDAG(graph_undirected & input_graph, DAGraph & ontology, nodeDistanceObject & nodeDistances, double threshold, double density, double modular, bool debugging) {
         //ontology = DAGraph();
         map<string,unsigned> geneNamesToIDs;
 
@@ -1928,7 +1796,7 @@ namespace dagConstruct {
         nodeDistances = nodeDistanceObject(input_graph);
 
         vector<validClusterBitset> validClusters;
-        dagConstruct::getFuzzyClustersBitsetThreshold(nodeDistances, geneNamesToIDs, validClusters, threshold, density); //all important stuff in here
+        dagConstruct::getFuzzyClustersBitsetThreshold(nodeDistances, geneNamesToIDs, validClusters, threshold, density, modular); //all important stuff in here
 
         // Got the clusters - build ontology assuming any clusters wholly contained in others are descendents
         cout << "# Num clusters: " << validClusters.size() << endl;
