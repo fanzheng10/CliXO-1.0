@@ -917,6 +917,12 @@ public:
         unsigned long actualEdges = 0;
         double expectEdges= 0;
 
+//        unsigned long outdegree = 0;
+//        for (unsigned long i = elements.find_first(); i < elements.size(); i = elements.find_next(i)) {
+//            boost::dynamic_bitset<unsigned long> interactors = clusterGraph.getInteractors(i);
+//            outdegree += interactors.count();
+//        }
+
         for (unsigned long i = elements.find_first(); i < elements.size()-1; i = elements.find_next(i)) {
             boost::dynamic_bitset<unsigned long> interactors1 = clusterGraph.getInteractors(i);
             for (unsigned long j = elements.find_next(i); j < elements.size(); j = elements.find_next(j)) {
@@ -927,10 +933,14 @@ public:
                 }
             }
         }
-        expectEdges = expectEdges / (2 * clusterGraph.numEdges());
+//        outdegree -= actualEdges;
 
+        expectEdges = expectEdges / (2 * clusterGraph.numEdges());
         return (actualEdges - expectEdges) / (2 * clusterGraph.numEdges());
-//        return (actualEdges - expectEdges) / (2 * elements.count() * (elements.count()-1));
+
+//        expectEdges /= (2* outdegree);
+//        return (actualEdges - expectEdges) / (2 * outdegree);
+
     }
 
     unsigned clustersAdded;
@@ -1042,9 +1052,6 @@ namespace dagConstruct {
         unsigned n2 = elements2.count();
         if (numJoint < 2) { return false;}
 
-//        double mod1 = currentClusters.getNewmanModularityScore(elements1, clusterGraph);
-//        double mod2 = currentClusters.getNewmanModularityScore(elements2, clusterGraph);
-//        double modcom = currentClusters.getNewmanModularityScore(combination, clusterGraph);
         //combine 1
 //        for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
 //            boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
@@ -1471,9 +1478,7 @@ namespace dagConstruct {
 
         // track
         unsigned numRealEdgesAdded = 0;
-        unsigned numRealEdgesLastRound = 0;
         unsigned largestCluster = 0;
-        unsigned lastLargestCluster = 0;
 
         // * node (gene) names * //
         vector<string> nodeIDsToNames(nodeNamesToIDs.size(), string(""));
@@ -1489,7 +1494,6 @@ namespace dagConstruct {
         //
         double dt = nodeDistances.sortedDistancesBegin()->second; // Current threshold, starting with the maximum similarity
         double last_dt = dt;
-        double lastLargestClusterWeight = dt;
         currentClusterClassBitset currentClusters(numNodes, dt, alpha);
 
         sortedDistanceStruct::iterator distanceIt = nodeDistances.sortedDistancesBegin();
@@ -1526,19 +1530,15 @@ namespace dagConstruct {
                 dt = 0;
                 break;
             }
-//            }
 
 
             cout << "# Current distance: " << distanceIt->second << "\t" << "Add until: " << addUntil << "\t" << endl;
             cout << "# Num of real edges added: " << numRealEdgesAdded << endl;
-//            cout << "# Use real edges to expand clusters" << endl;
             updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
 
             time(&end);
             dif = difftime(end, start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
-
-            numRealEdgesLastRound = numRealEdgesThisRound;
 
             currentClusters.setCurWeight(dt);
 
@@ -1551,7 +1551,6 @@ namespace dagConstruct {
             if (beta < 1) { // think about chordal later
 
                 cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
-                //TODO: should only consider active clusters here
                 unsigned ndeleted = performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
                 bool newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, clusterGraph, nodeIDsToNames, nodeDistances, realEdges);
 
@@ -1603,6 +1602,7 @@ namespace dagConstruct {
                 currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
                 double uniqueThresh =  0.5 * (currentClusters.getElements(clusterTop).count() - 1) + 0.05 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
+
                 if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
                     if (debug) {
                         cout << "Uniqueness failed: ";
@@ -1640,8 +1640,6 @@ namespace dagConstruct {
                      << endl;
                 // now it is safe to delete the hidden cluster of the valid cluster. see the change in setClusterValid.
                 if (validClusters.back().numElements() > largestCluster) {
-                    lastLargestCluster = largestCluster;
-                    lastLargestClusterWeight = clustWeight;
                     largestCluster = validClusters.back().numElements();
                     currentClusters.setLargestCluster(largestCluster);
                 }

@@ -62,4 +62,12 @@ int main(int argc, char* argv[]) {
   cout << "# Ontology construction took " << dif << " seconds" << endl;
   cout << "# Ontology is: " << endl;
 
+  for(map< pair<unsigned,unsigned>, string >::iterator edgesIt = ontology.edgesBegin(); edgesIt != ontology.edgesEnd();++edgesIt) {
+    // THIS VERSION GIVES THE DISTANCE BETWEEN POINTS
+    //cout << ontology.getName(edgesIt->first.first) << "\t" << ontology.getName(edgesIt->first.second) << "\t" << edgesIt->second << "\t" << (ontology.getWeight(edgesIt->first.second) - ontology.getWeight(edgesIt->first.first)) / 2.0 << endl;
+
+    // THIS VERSION JUST TELLS THE WEIGHT ON THE PARENT TERM
+    cout << ontology.getName(edgesIt->first.first) << "\t" << ontology.getName(edgesIt->first.second) << "\t" << edgesIt->second << "\t" << ontology.getWeight(edgesIt->first.first) << endl;
+  }
+  return 1;
 }
