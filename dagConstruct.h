@@ -917,11 +917,11 @@ public:
         unsigned long actualEdges = 0;
         double expectEdges= 0;
 
-//        unsigned long outdegree = 0;
-//        for (unsigned long i = elements.find_first(); i < elements.size(); i = elements.find_next(i)) {
-//            boost::dynamic_bitset<unsigned long> interactors = clusterGraph.getInteractors(i);
-//            outdegree += interactors.count();
-//        }
+        unsigned long outdegree = 0;
+        for (unsigned long i = elements.find_first(); i < elements.size(); i = elements.find_next(i)) {
+            boost::dynamic_bitset<unsigned long> interactors = clusterGraph.getInteractors(i);
+            outdegree += interactors.count();
+        }
 
         for (unsigned long i = elements.find_first(); i < elements.size()-1; i = elements.find_next(i)) {
             boost::dynamic_bitset<unsigned long> interactors1 = clusterGraph.getInteractors(i);
@@ -934,10 +934,10 @@ public:
             }
         }
 //        outdegree -= actualEdges;
-
-        expectEdges = expectEdges / (2 * clusterGraph.numEdges());
-        return (actualEdges - expectEdges) / (2 * clusterGraph.numEdges());
-
+        expectEdges = expectEdges / (2 * outdegree);
+//        expectEdges = expectEdges / (2 * clusterGraph.numEdges());
+//        return (actualEdges - expectEdges) / (2 * clusterGraph.numEdges());
+        return (actualEdges - expectEdges) / actualEdges;
 //        expectEdges /= (2* outdegree);
 //        return (actualEdges - expectEdges) / (2 * outdegree);
 
@@ -1580,7 +1580,7 @@ namespace dagConstruct {
             unsigned unique_filter = 0;
             unsigned modular_filter = 0;
             unsigned n_pass_filter = 0;
-
+            
             while (newClustersSorted.size()>0) {
                 unsigned long clusterTop = newClustersSorted.back(); // think about the order
                 newClustersSorted.pop_back();
