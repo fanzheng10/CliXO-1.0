@@ -643,6 +643,7 @@ public:
         for (vector<ClusterBitset>::reverse_iterator clustIt = currentClusters.rbegin();
              clustIt != currentClusters.rend(); ++clustIt) {
             if ((clustIt->numElements() != 0) && (clustIt->isActive()) && (clustIt->isNew())) {
+//            if ((clustIt->numElements() != 0)  && (clustIt->isNew())) {
                 newClustersAndCounts.push_back(make_pair(clustIt->getID(), clustIt->numElements()));
                 ++numFound;
             }
@@ -768,6 +769,10 @@ public:
 
     inline bool isValid(unsigned long id) {
         return currentClusters[id].isValid();
+    }
+
+    inline void setInvalid(unsigned long id) {
+        return currentClusters[id].setInvalid();
     }
 
     inline double getClusterWeight(unsigned long id) {
@@ -912,17 +917,12 @@ public:
         currentClusters[id].removeMergedToID(mergeID);
     }
 
-    double getNewmanModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph) {
+    double getNewmanModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph, bool local = false) {
 
         unsigned long actualEdges = 0;
         double expectEdges= 0;
 
         unsigned long outdegree = 0;
-        for (unsigned long i = elements.find_first(); i < elements.size(); i = elements.find_next(i)) {
-            boost::dynamic_bitset<unsigned long> interactors = clusterGraph.getInteractors(i);
-            outdegree += interactors.count();
-        }
-
         for (unsigned long i = elements.find_first(); i < elements.size()-1; i = elements.find_next(i)) {
             boost::dynamic_bitset<unsigned long> interactors1 = clusterGraph.getInteractors(i);
             for (unsigned long j = elements.find_next(i); j < elements.size(); j = elements.find_next(j)) {
@@ -934,12 +934,20 @@ public:
             }
         }
 //        outdegree -= actualEdges;
-        expectEdges = expectEdges / (2 * outdegree);
-//        expectEdges = expectEdges / (2 * clusterGraph.numEdges());
-//        return (actualEdges - expectEdges) / (2 * clusterGraph.numEdges());
-        return (actualEdges - expectEdges) / actualEdges;
-//        expectEdges /= (2* outdegree);
-//        return (actualEdges - expectEdges) / (2 * outdegree);
+
+        if (local) {
+            for (unsigned long i = elements.find_first(); i < elements.size(); i = elements.find_next(i)) {
+                boost::dynamic_bitset<unsigned long> interactors = clusterGraph.getInteractors(i);
+                outdegree += interactors.count();
+            }
+            actualEdges = elements.count() * (elements.count()-1) /2;
+            expectEdges = expectEdges / (2 * outdegree);
+            return (actualEdges - expectEdges) / (actualEdges+1);
+        }
+        else {
+            expectEdges = expectEdges / (2 * clusterGraph.numEdges());
+            return (actualEdges - expectEdges) / (2 * clusterGraph.numEdges());
+        }
 
     }
 
@@ -1590,12 +1598,12 @@ namespace dagConstruct {
                 }
 
                 /*modularity filter*/
-                double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(clusterTop), realEdges);
-                if (modularity < modular) {
-                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-                    ++modular_filter;
-                    continue;
-                }
+//                double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(clusterTop), realEdges);
+//                if (modularity <= modular) {
+//                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+//                    ++modular_filter;
+//                    continue;
+//                }
 
                 /*see if the term does not have many unique edges*/
 
@@ -1627,35 +1635,60 @@ namespace dagConstruct {
             unsigned numNonMaximalDeleted = 0;
             for (vector<unsigned long>::iterator newValidClusterIt = tempNewAndValid.begin();
                  newValidClusterIt != tempNewAndValid.end(); ++newValidClusterIt) {
-                double clustWeight = currentClusters.getClusterWeight(*newValidClusterIt);
-                double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(*newValidClusterIt), realEdges);
+//                double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(*newValidClusterIt), realEdges);
 
-                validClusters.push_back(
-                        validClusterBitset(currentClusters.getElements(*newValidClusterIt), 0, clustWeight));
-                cout << "# Valid cluster:\t";
-                printCluster(currentClusters.getElements(*newValidClusterIt), nodeIDsToNames);
-                currentClusters.setClusterValid(*newValidClusterIt, realEdges); //successful clusters should be seen as real edges in future (okay because their weights doesn't change)
-                cout << "\t" << clustWeight << "\t" << modularity << "\t"
-                     << currentClusters.getNumUniquelyUnexplainedEdges(*newValidClusterIt) << "\t" << last_dt
-                     << endl;
-                // now it is safe to delete the hidden cluster of the valid cluster. see the change in setClusterValid.
-                if (validClusters.back().numElements() > largestCluster) {
-                    largestCluster = validClusters.back().numElements();
-                    currentClusters.setLargestCluster(largestCluster);
-                }
-                currentClusters.setOld(*newValidClusterIt);
-                currentClusters.setLargestClusterForNodes(*newValidClusterIt);
 
+//                validClusters.push_back(
+//                        validClusterBitset(currentClusters.getElements(*newValidClusterIt), 0, clustWeight));
+//                cout << "# Valid cluster:\t";
+//                printCluster(currentClusters.getElements(*newValidClusterIt), nodeIDsToNames);
+                currentClusters.setClusterValid(*newValidClusterIt, realEdges);
                 vector<unsigned long> nonMaximals = currentClusters.getMergeFromID(*newValidClusterIt);
                 for (vector<unsigned long>::iterator nonMaximalIt = nonMaximals.begin();
-                 nonMaximalIt != nonMaximals.end(); ++nonMaximalIt) {
+                     nonMaximalIt != nonMaximals.end(); ++nonMaximalIt) {
                     if ( !currentClusters.isValid(*nonMaximalIt) ) {
                         currentClusters.deleteCluster(*nonMaximalIt, nodeIDsToNames, debug);
                     }
                     ++numNonMaximalDeleted;
                 }
-
             }
+
+            for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
+                if ((currentClusters.numElements(i) !=0) && currentClusters.isValid(i) && (!currentClusters.isNew(i))) {
+                    double clustWeight = currentClusters.getClusterWeight(i);
+                    double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(i), realEdges, true);
+                    if (modularity > modular) {
+                        validClusters.push_back(
+                                validClusterBitset(currentClusters.getElements(i), 0, clustWeight));
+                        cout << "# Valid cluster:\t";
+                        if (validClusters.back().numElements() > largestCluster) {
+                            largestCluster = validClusters.back().numElements();
+                            currentClusters.setLargestCluster(largestCluster);
+                        }
+                        printCluster(currentClusters.getElements(i), nodeIDsToNames);
+                        cout << "\t" << clustWeight << "\t" << modularity << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(i) << "\t" << last_dt << endl;
+                    }
+                    currentClusters.setInvalid(i);
+                }
+                else if (currentClusters.isNew(i)) {
+                    currentClusters.setOld(i);
+                }
+            }
+
+            //successful clusters should be seen as real edges in future (okay because their weights doesn't change)
+//                cout << "\t" << clustWeight << "\t" << modularity << "\t"
+//                     << currentClusters.getNumUniquelyUnexplainedEdges(*newValidClusterIt) << "\t" << last_dt
+//                     << endl;
+                // now it is safe to delete the hidden cluster of the valid cluster. see the change in setClusterValid.
+//                if (validClusters.back().numElements() > largestCluster) {
+//                    largestCluster = validClusters.back().numElements();
+//                    currentClusters.setLargestCluster(largestCluster);
+//                }
+//                currentClusters.setOld(*newValidClusterIt);
+
+
+
+
             cout << "# Non-maximal finally deleted: " << numNonMaximalDeleted << endl;
             cout << "# dt: " << last_dt << endl;
             cout << "# Next dt: " << dt << endl;
