@@ -31,10 +31,10 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="408">
-              <caret line="1667" column="38" lean-forward="true" selection-start-line="1667" selection-start-column="38" selection-end-line="1667" selection-end-column="38" />
+            <state relative-caret-position="-589">
+              <caret line="925" column="22" lean-forward="true" selection-start-line="925" selection-start-column="22" selection-end-line="925" selection-end-column="22" />
               <folding>
-                <marker date="1531205446134" expanded="true" signature="69135:69352" ph="..." />
+                <marker date="1531443532770" expanded="true" signature="69582:69799" ph="..." />
               </folding>
             </state>
           </provider>
@@ -43,7 +43,7 @@
       <file leaf-file-name="clixo.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/clixo.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="173">
+            <state relative-caret-position="311">
               <caret line="29" column="21" lean-forward="true" selection-start-line="29" selection-start-column="21" selection-end-line="29" selection-end-column="21" />
               <folding />
             </state>
@@ -143,7 +143,6 @@
       <find>get</find>
       <find>isMin</find>
       <find>perform</find>
-      <find>getNe</find>
       <find>inactivat</find>
       <find>getNew</find>
       <find>isNew</find>
@@ -154,6 +153,7 @@
       <find>setIn</find>
       <find>setInValid</find>
       <find>setInvalid</find>
+      <find>getNe</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -179,10 +179,10 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="1727" />
-    <option name="y" value="75" />
-    <option name="width" value="1402" />
-    <option name="height" value="827" />
+    <option name="x" value="180" />
+    <option name="y" value="30" />
+    <option name="width" value="1080" />
+    <option name="height" value="705" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="2" id="Add" />
@@ -481,7 +481,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="355953000" />
+    <option name="totallyTimeSpent" value="359394000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -493,10 +493,9 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1727" y="75" width="1402" height="827" extended-state="0" />
-    <editor active="true" />
+    <frame x="180" y="30" width="1080" height="705" extended-state="0" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.10271041" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13333334" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2783019" sideWeight="0.49166667" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39030954" sideWeight="0.50277776" order="7" side_tool="true" content_ui="tabs" />
@@ -575,7 +574,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1531205446134" expanded="true" signature="69135:69352" ph="..." />
+            <marker date="1531443532770" expanded="true" signature="69582:69799" ph="..." />
           </folding>
         </state>
       </provider>
@@ -616,7 +615,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1531205446134" expanded="true" signature="69135:69352" ph="..." />
+            <marker date="1531443532770" expanded="true" signature="69582:69799" ph="..." />
           </folding>
         </state>
       </provider>
@@ -695,7 +694,7 @@
         <state relative-caret-position="31722">
           <caret line="1866" column="8" lean-forward="false" selection-start-line="1866" selection-start-column="8" selection-end-line="1866" selection-end-column="8" />
           <folding>
-            <marker date="1531205446134" expanded="true" signature="69135:69352" ph="..." />
+            <marker date="1531443532770" expanded="true" signature="69582:69799" ph="..." />
           </folding>
         </state>
       </provider>
@@ -743,7 +742,7 @@
         <state relative-caret-position="31433">
           <caret line="1849" column="45" lean-forward="true" selection-start-line="1849" selection-start-column="45" selection-end-line="1849" selection-end-column="45" />
           <folding>
-            <marker date="1531205446134" expanded="true" signature="69135:69352" ph="..." />
+            <marker date="1531443532770" expanded="true" signature="69582:69799" ph="..." />
           </folding>
         </state>
       </provider>
@@ -791,7 +790,7 @@
         <state relative-caret-position="18564">
           <caret line="1092" column="14" lean-forward="false" selection-start-line="1092" selection-start-column="14" selection-end-line="1092" selection-end-column="14" />
           <folding>
-            <marker date="1531205446134" expanded="true" signature="69135:69352" ph="..." />
+            <marker date="1531443532770" expanded="true" signature="69582:69799" ph="..." />
           </folding>
         </state>
       </provider>
@@ -839,7 +838,7 @@
         <state relative-caret-position="45628">
           <caret line="2684" column="5" lean-forward="false" selection-start-line="2684" selection-start-column="5" selection-end-line="2684" selection-end-column="5" />
           <folding>
-            <marker date="1531205446134" expanded="true" signature="69135:69352" ph="..." />
+            <marker date="1531443532770" expanded="true" signature="69582:69799" ph="..." />
           </folding>
         </state>
       </provider>
@@ -928,7 +927,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/clixo.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="173">
+        <state relative-caret-position="311">
           <caret line="29" column="21" lean-forward="true" selection-start-line="29" selection-start-column="21" selection-end-line="29" selection-end-column="21" />
           <folding />
         </state>
@@ -936,10 +935,10 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="408">
-          <caret line="1667" column="38" lean-forward="true" selection-start-line="1667" selection-start-column="38" selection-end-line="1667" selection-end-column="38" />
+        <state relative-caret-position="-589">
+          <caret line="925" column="22" lean-forward="true" selection-start-line="925" selection-start-column="22" selection-end-line="925" selection-end-column="22" />
           <folding>
-            <marker date="1531205446134" expanded="true" signature="69135:69352" ph="..." />
+            <marker date="1531443532770" expanded="true" signature="69582:69799" ph="..." />
           </folding>
         </state>
       </provider>

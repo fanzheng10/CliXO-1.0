@@ -940,7 +940,7 @@ public:
                 boost::dynamic_bitset<unsigned long> interactors = clusterGraph.getInteractors(i);
                 outdegree += interactors.count();
             }
-            actualEdges = elements.count() * (elements.count()-1) /2;
+//            actualEdges = elements.count() * (elements.count()-1) /2;
             expectEdges = expectEdges / (2 * outdegree);
             return (actualEdges - expectEdges) / (actualEdges+1);
         }
@@ -1626,9 +1626,9 @@ namespace dagConstruct {
                 ++n_pass_filter;
             }
 
-            cout << "# " << modular_filter << " clusters failed the modularity filter" << endl;
+//            cout << "# " << modular_filter << " clusters failed the modularity filter" << endl;
             cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
-            cout << "# " << n_pass_filter << " clusters are valid" << endl;
+//            cout << "# " << n_pass_filter << " clusters are valid" << endl;
             //sort again by size
             currentClusters.sortNewClusters(tempNewAndValid);
 
@@ -1668,12 +1668,19 @@ namespace dagConstruct {
                         printCluster(currentClusters.getElements(i), nodeIDsToNames);
                         cout << "\t" << clustWeight << "\t" << modularity << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(i) << "\t" << last_dt << endl;
                     }
+                    else {
+                        ++modular_filter;
+//                        printCluster(currentClusters.getElements(i), nodeIDsToNames);
+//                        cout << "\t" << clustWeight << "\t" << modularity << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(i) << "\t" << last_dt << endl;
+                    }
                     currentClusters.setInvalid(i);
                 }
                 else if (currentClusters.isNew(i)) {
                     currentClusters.setOld(i);
                 }
             }
+            cout << "# " << modular_filter << " clusters failed the modularity filter" << endl;
+
 
             //successful clusters should be seen as real edges in future (okay because their weights doesn't change)
 //                cout << "\t" << clustWeight << "\t" << modularity << "\t"
