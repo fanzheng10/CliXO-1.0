@@ -1065,26 +1065,9 @@ namespace dagConstruct {
         double mod1 = currentClusters.getNewmanModularityScore(elements1, clusterGraph, true);
         double mod2 = currentClusters.getNewmanModularityScore(elements2, clusterGraph, true);
         double modcom = currentClusters.getNewmanModularityScore(combination, clusterGraph, true);
-        //combine 1
-//        for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
-//            boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-//            interactorsInCombo &= clusterGraph.getInteractors(i);
-//            unsigned numInteractorsInCombo = interactorsInCombo.count();
-//            if ((numInteractorsInCombo / denom) <= density) {
-//                if (debug) { cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl; }
-//                return false;
-//            } else if (debug) { cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl; }
-//        }
-//        for (unsigned i = elements2.find_first(); i < elements2.size(); i = elements2.find_next(i)) {
-//            if (elements1[i]) { continue; }
-//            boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
-//            interactorsInCombo &= clusterGraph.getInteractors(i);
-//            unsigned numInteractorsInCombo = interactorsInCombo.count();
-//            if ((numInteractorsInCombo / denom) <= density) {
-//                if (debug) { cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl; }
-//                return false;
-//            } else if (debug) { cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl; }
-//        }
+
+        //directly return gap
+//        modcom - std::max(mod1, mod2)
 
         //combine 2
         if ((numJoint > 1) && (numJoint/numCombined > density)) { // this faciliate merge of highly overlapped ones
@@ -1616,17 +1599,17 @@ namespace dagConstruct {
                 double uniqueThresh =  0.5 * (currentClusters.getElements(clusterTop).count() - 1) + 0.05 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
 
-                if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
-                    if (debug) {
-                        cout << "Uniqueness failed: ";
-                        cout << currentClusters.getElements(clusterTop).count() << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh
-                             << "\t" << endl;
-                    }
-
-                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-                    ++unique_filter;
-                    continue;
-                }
+//                if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
+//                    if (debug) {
+//                        cout << "Uniqueness failed: ";
+//                        cout << currentClusters.getElements(clusterTop).count() << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh
+//                             << "\t" << endl;
+//                    }
+//
+//                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+//                    ++unique_filter;
+//                    continue;
+//                }
                 /*pass all filter*/
                 ++n_pass_filter;
             }
@@ -1661,7 +1644,7 @@ namespace dagConstruct {
             for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
                 if ((currentClusters.numElements(i) !=0) && currentClusters.isValid(i) && (!currentClusters.isNew(i))) {
                     double clustWeight = currentClusters.getClusterWeight(i);
-                    double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(i), realEdges, true);
+                    double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(i), realEdges, true);//this is the modularity after 1 round
                     if (modularity > modular) {
                         validClusters.push_back(
                                 validClusterBitset(currentClusters.getElements(i), 0, clustWeight));
