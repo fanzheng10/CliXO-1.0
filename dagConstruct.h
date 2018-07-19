@@ -917,9 +917,9 @@ public:
         currentClusters[id].removeMergedToID(mergeID);
     }
 
-    double getNewmanModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph, bool local = false) {
+    double getNewmanModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph, bool zscore = false) {
 
-        unsigned long actualEdges = 0;
+        double actualEdges = 0;
         double expectEdges= 0;
 
         unsigned long outdegree = 0;
@@ -935,18 +935,14 @@ public:
         }
 //        outdegree -= actualEdges;
 
-        if (local) {
-            for (unsigned long i = elements.find_first(); i < elements.size(); i = elements.find_next(i)) {
-                boost::dynamic_bitset<unsigned long> interactors = clusterGraph.getInteractors(i);
-                outdegree += interactors.count();
-            }
-//            actualEdges = elements.count() * (elements.count()-1) /2;
-            expectEdges = expectEdges / (2 * outdegree);
-            return (actualEdges - expectEdges) / (actualEdges+1);
+        actualEdges /= clusterGraph.numEdges();
+        expectEdges /= pow(2 * clusterGraph.numEdges(), 2.0);
+        if (zscore) {
+            double normalizer = pow(expectEdges * (1-expectEdges), 0.5);
+            return (actualEdges - expectEdges) / normalizer;
         }
         else {
-            expectEdges = expectEdges / (2 * clusterGraph.numEdges());
-            return (actualEdges - expectEdges) / (2 * clusterGraph.numEdges());
+            return actualEdges - expectEdges;
         }
 
     }
@@ -1059,7 +1055,16 @@ namespace dagConstruct {
         unsigned n1 = elements1.count();
         unsigned n2 = elements2.count();
         if (numJoint < 2) { return false;}
+        if (elements1.is_subset_of(elements2) || elements2.is_subset_of(elements1)) {return false;}
 
+        printCluster(elements1, nodeIDsToNames);
+        cout << endl;
+        printCluster(elements2, nodeIDsToNames);
+        cout << endl;
+
+        double mod1 = currentClusters.getNewmanModularityScore(elements1, clusterGraph, true);
+        double mod2 = currentClusters.getNewmanModularityScore(elements2, clusterGraph, true);
+        double modcom = currentClusters.getNewmanModularityScore(combination, clusterGraph, true);
         //combine 1
 //        for (unsigned i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
 //            boost::dynamic_bitset<unsigned long> interactorsInCombo = combination;
@@ -1088,7 +1093,7 @@ namespace dagConstruct {
                 interactorsInJoint &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInJoint = interactorsInJoint.count();
                 if ((numInteractorsInJoint / denom2) <= density ) {
-//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
+                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
                     if (debug) {
 //                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInJoint / denom << endl;
                     }
@@ -1106,7 +1111,7 @@ namespace dagConstruct {
                 interactorsInCombo &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInCombo = interactorsInCombo.count();
                 if ((numInteractorsInCombo / denom) <= density ) {
-//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
+                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
                     if (debug) {
 //                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
                     }
@@ -1124,7 +1129,7 @@ namespace dagConstruct {
                 interactorsInCombo &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInCombo = interactorsInCombo.count();
                 if ((numInteractorsInCombo / denom) <= density ) {
-//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
+                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
                     if (debug) {
 //                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
                     }
@@ -1133,7 +1138,7 @@ namespace dagConstruct {
                 else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
             }
         }
-
+        cout << "merging succeed: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
         return true;
     }
 
