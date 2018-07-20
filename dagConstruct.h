@@ -1057,10 +1057,10 @@ namespace dagConstruct {
         if (numJoint < 2) { return false;}
         if (elements1.is_subset_of(elements2) || elements2.is_subset_of(elements1)) {return false;}
 
-        printCluster(elements1, nodeIDsToNames);
-        cout << endl;
-        printCluster(elements2, nodeIDsToNames);
-        cout << endl;
+//        printCluster(elements1, nodeIDsToNames);
+//        cout << endl;
+//        printCluster(elements2, nodeIDsToNames);
+//        cout << endl;
 
         double mod1 = currentClusters.getNewmanModularityScore(elements1, clusterGraph, true);
         double mod2 = currentClusters.getNewmanModularityScore(elements2, clusterGraph, true);
@@ -1076,7 +1076,7 @@ namespace dagConstruct {
                 interactorsInJoint &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInJoint = interactorsInJoint.count();
                 if ((numInteractorsInJoint / denom2) <= density ) {
-                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
+//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
                     if (debug) {
 //                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInJoint / denom << endl;
                     }
@@ -1094,7 +1094,7 @@ namespace dagConstruct {
                 interactorsInCombo &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInCombo = interactorsInCombo.count();
                 if ((numInteractorsInCombo / denom) <= density ) {
-                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
+//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
                     if (debug) {
 //                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
                     }
@@ -1112,7 +1112,7 @@ namespace dagConstruct {
                 interactorsInCombo &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInCombo = interactorsInCombo.count();
                 if ((numInteractorsInCombo / denom) <= density ) {
-                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
+//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
                     if (debug) {
 //                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
                     }
@@ -1121,7 +1121,7 @@ namespace dagConstruct {
                 else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
             }
         }
-        cout << "merging succeed: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
+//        cout << "merging succeed: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
         return true;
     }
 
@@ -1585,52 +1585,36 @@ namespace dagConstruct {
                     continue;
                 }
 
-                /*modularity filter*/
-//                double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(clusterTop), realEdges);
-//                if (modularity <= modular) {
-//                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-//                    ++modular_filter;
-//                    continue;
-//                }
-
-                /*see if the term does not have many unique edges*/
-
                 currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
                 double uniqueThresh =  0.5 * (currentClusters.getElements(clusterTop).count() - 1) + 0.05 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
 
-//                if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
-//                    if (debug) {
-//                        cout << "Uniqueness failed: ";
-//                        cout << currentClusters.getElements(clusterTop).count() << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh
-//                             << "\t" << endl;
-//                    }
-//
-//                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-//                    ++unique_filter;
-//                    continue;
-//                }
+                if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
+                    if (debug) {
+                        cout << "Uniqueness failed: ";
+                        cout << currentClusters.getElements(clusterTop).count() << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh
+                             << "\t" << endl;
+                    }
+
+                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+                    ++unique_filter;
+                    continue;
+                }
                 /*pass all filter*/
                 ++n_pass_filter;
             }
 
-//            cout << "# " << modular_filter << " clusters failed the modularity filter" << endl;
+            cout << "# " << modular_filter << " clusters failed the modularity filter" << endl;
             cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
-//            cout << "# " << n_pass_filter << " clusters are valid" << endl;
-            //sort again by size
             currentClusters.sortNewClusters(tempNewAndValid);
 
             unsigned numNonMaximalDeleted = 0;
             for (vector<unsigned long>::iterator newValidClusterIt = tempNewAndValid.begin();
                  newValidClusterIt != tempNewAndValid.end(); ++newValidClusterIt) {
-//                double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(*newValidClusterIt), realEdges);
-
-
-//                validClusters.push_back(
-//                        validClusterBitset(currentClusters.getElements(*newValidClusterIt), 0, clustWeight));
-//                cout << "# Valid cluster:\t";
-//                printCluster(currentClusters.getElements(*newValidClusterIt), nodeIDsToNames);
                 currentClusters.setClusterValid(*newValidClusterIt, realEdges);
+                // for cluster entering this stage, print all information
+
+
                 vector<unsigned long> nonMaximals = currentClusters.getMergeFromID(*newValidClusterIt);
                 for (vector<unsigned long>::iterator nonMaximalIt = nonMaximals.begin();
                      nonMaximalIt != nonMaximals.end(); ++nonMaximalIt) {
@@ -1645,6 +1629,10 @@ namespace dagConstruct {
                 if ((currentClusters.numElements(i) !=0) && currentClusters.isValid(i) && (!currentClusters.isNew(i))) {
                     double clustWeight = currentClusters.getClusterWeight(i);
                     double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(i), realEdges, true);//this is the modularity after 1 round
+                    double modularity_old = currentClusters.getNewmanModularityScore(currentClusters.getElements(i), realEdges, false);
+                    // for clusters entering this stage, print all information
+                    cout << "Modular profile: " << "\t" << clustWeight << "\t" << modularity << "\t" << modularity_old << "\t" << realEdges.numEdges() << "\t" << currentClusters.getElements(i).count() << endl;
+
                     if (modularity > modular) {
                         validClusters.push_back(
                                 validClusterBitset(currentClusters.getElements(i), 0, clustWeight));
@@ -1668,21 +1656,6 @@ namespace dagConstruct {
                 }
             }
             cout << "# " << modular_filter << " clusters failed the modularity filter" << endl;
-
-
-            //successful clusters should be seen as real edges in future (okay because their weights doesn't change)
-//                cout << "\t" << clustWeight << "\t" << modularity << "\t"
-//                     << currentClusters.getNumUniquelyUnexplainedEdges(*newValidClusterIt) << "\t" << last_dt
-//                     << endl;
-                // now it is safe to delete the hidden cluster of the valid cluster. see the change in setClusterValid.
-//                if (validClusters.back().numElements() > largestCluster) {
-//                    largestCluster = validClusters.back().numElements();
-//                    currentClusters.setLargestCluster(largestCluster);
-//                }
-//                currentClusters.setOld(*newValidClusterIt);
-
-
-
 
             cout << "# Non-maximal finally deleted: " << numNonMaximalDeleted << endl;
             cout << "# dt: " << last_dt << endl;
@@ -1739,7 +1712,6 @@ namespace dagConstruct {
                     bool isAlreadyDescendent = ontology.isDescendent(possibleDescendentsIt->getID(), newNodeID);
                     if ((!isAlreadyDescendent) &&
                         (isClusterAncestor(possibleDescendentsIt->getElements(), clustersIt->getElements(), unaccountedFor))) {
-                        //cout << "adding edge " << newNodeID << "\t" << possibleDescendentsIt->getID() << endl;
                         ontology.addEdge(newNodeID, possibleDescendentsIt->getID());
                     }
                 }
