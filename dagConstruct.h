@@ -936,17 +936,19 @@ public:
         currentClusters[id].removeMergedToID(mergeID);
     }
 
-    double getNewmanModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph, bool zscore = false) {
+    double getModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph, bool zscore = false) {
 
         double actualEdges = 0;
         double expectEdges= 0;
+        double expectEdges2 = 0;
 
 //        unsigned long outdegree = 0;
         for (unsigned long i = elements.find_first(); i < elements.size()-1; i = elements.find_next(i)) {
             boost::dynamic_bitset<unsigned long> interactors1 = clusterGraph.getInteractors(i);
+            expectEdges += interactors1.count();
             for (unsigned long j = elements.find_next(i); j < elements.size(); j = elements.find_next(j)) {
                 boost::dynamic_bitset<unsigned long> interactors2 = clusterGraph.getInteractors(j);
-                expectEdges += interactors1.count() * interactors2.count();
+                expectEdges2 += interactors1.count() * interactors2.count();
                 if (clusterGraph.isEdge(i, j)) {
                     actualEdges += 1;
                 }
@@ -955,13 +957,15 @@ public:
 //        outdegree -= actualEdges;
 
         actualEdges /= clusterGraph.numEdges();
+        expectEdges = pow(expectEdges, 2.0);
         expectEdges /= pow(2 * clusterGraph.numEdges(), 2.0);
+        expectEdges2 /= pow(2 * clusterGraph.numEdges(), 2.0);
         if (zscore) {
             double normalizer = pow(expectEdges * (1-expectEdges), 0.5);
             return (actualEdges - expectEdges) / normalizer;
         }
-        else {
-            return actualEdges - expectEdges;
+        else { //traditional Newman's modularity
+            return actualEdges - expectEdges2;
         }
 
     }
@@ -1597,6 +1601,13 @@ namespace dagConstruct {
                 currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
                 double uniqueThresh =  0.5 * (currentClusters.getElements(clusterTop).count() - 1) + 0.05 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
+                // calculate modularity here (all before deleted by uniqueness)
+//                double zmodularity = currentClusters.getModularityScore(currentClusters.getElements(clusterTop), realEdges, true);
+//                double modularity = currentClusters.getModularityScore(currentClusters.getElements(clusterTop), realEdges, false);
+//                currentClusters.resetClusterModularity(clusterTop, zmodularity);
+//                cout << "# Modularity profile: " << "\t";
+////                printCluster(currentClusters.getElements(clusterTop), nodeIDsToNames);
+//                cout << "\t" << zmodularity << "\t" << modularity << "\t" << realEdges.numEdges() << "\t" << currentClusters.numElements(clusterTop) << endl;
 
                 if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
                     if (debug) {
@@ -1612,11 +1623,11 @@ namespace dagConstruct {
                 ++n_pass_filter;
 
                 // calculate modularity here
-                double zmodularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(clusterTop), realEdges, true);
-                double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(clusterTop), realEdges, false);
+                double zmodularity = currentClusters.getModularityScore(currentClusters.getElements(clusterTop), realEdges, true);
+                double modularity = currentClusters.getModularityScore(currentClusters.getElements(clusterTop), realEdges, false);
                 currentClusters.resetClusterModularity(clusterTop, zmodularity);
                 cout << "# Modularity profile: " << "\t";
-                printCluster(currentClusters.getElements(clusterTop), nodeIDsToNames);
+//                printCluster(currentClusters.getElements(clusterTop), nodeIDsToNames);
                 cout << "\t" << zmodularity << "\t" << modularity << "\t" << realEdges.numEdges() << "\t" << currentClusters.numElements(clusterTop) << endl;
             }
 
@@ -1644,11 +1655,11 @@ namespace dagConstruct {
             for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
                 if ((currentClusters.numElements(i) !=0) && currentClusters.isValid(i) && (!currentClusters.isNew(i))) {
                     double clustWeight = currentClusters.getClusterWeight(i);
-                    double modularity = currentClusters.getNewmanModularityScore(currentClusters.getElements(i), realEdges, true);//this is the modularity after 1 round
+                    double modularity = currentClusters.getModularityScore(currentClusters.getElements(i), realEdges, true);//this is the modularity after 1 round
+                    double oldmodularity = currentClusters.getClusterModularity(i);
 //                    double modularity_old = currentClusters.getNewmanModularityScore(currentClusters.getElements(i), realEdges, false);
-//                    // for clusters entering this stage, print all information
+                    // for clusters entering this stage, print all information
 //                    cout << "Modular profile: " << "\t" << clustWeight << "\t" << modularity << "\t" << modularity_old << "\t" << realEdges.numEdges() << "\t" << currentClusters.getElements(i).count() << endl;
-//                    double modularity = currentClusters.getClusterModularity(i);
 
                     if (modularity > modular) {
                         validClusters.push_back(
@@ -1659,7 +1670,7 @@ namespace dagConstruct {
                             currentClusters.setLargestCluster(largestCluster);
                         }
                         printCluster(currentClusters.getElements(i), nodeIDsToNames);
-                        cout << "\t" << clustWeight << "\t" << modularity << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(i) << "\t" << last_dt << endl;
+                        cout << "\t" << clustWeight << "\t" << modularity << "\t" << oldmodularity << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(i) << "\t" << last_dt << endl;
                     }
                     else {
                         ++modular_filter;
