@@ -1626,9 +1626,9 @@ namespace dagConstruct {
                 double zmodularity = currentClusters.getModularityScore(currentClusters.getElements(clusterTop), realEdges, true);
                 double modularity = currentClusters.getModularityScore(currentClusters.getElements(clusterTop), realEdges, false);
                 currentClusters.resetClusterModularity(clusterTop, zmodularity);
-                cout << "# Modularity profile: " << "\t";
+//                cout << "# Modularity profile: " << "\t";
 //                printCluster(currentClusters.getElements(clusterTop), nodeIDsToNames);
-                cout << "\t" << zmodularity << "\t" << modularity << "\t" << realEdges.numEdges() << "\t" << currentClusters.numElements(clusterTop) << endl;
+//                cout << "\t" << zmodularity << "\t" << modularity << "\t" << realEdges.numEdges() << "\t" << currentClusters.numElements(clusterTop) << endl;
             }
 
 //            cout << "# " << modular_filter << " clusters failed the modularity filter" << endl;
