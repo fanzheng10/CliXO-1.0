@@ -1655,7 +1655,7 @@ namespace dagConstruct {
             for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
                 if ((currentClusters.numElements(i) !=0) && currentClusters.isValid(i) && (!currentClusters.isNew(i))) {
                     double clustWeight = currentClusters.getClusterWeight(i);
-                    double modularity = currentClusters.getModularityScore(currentClusters.getElements(i), realEdges, true);//this is the modularity after 1 round
+                    double modularity = currentClusters.getModularityScore(currentClusters.getElements(i), realEdges, false);//this is the modularity after 1 round
                     double oldmodularity = currentClusters.getClusterModularity(i);
 //                    double modularity_old = currentClusters.getNewmanModularityScore(currentClusters.getElements(i), realEdges, false);
                     // for clusters entering this stage, print all information

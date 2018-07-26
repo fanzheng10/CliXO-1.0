@@ -26,7 +26,8 @@ int main(int argc, char* argv[]) {
   string netFile = argv[1];
   double threshold = stod(argv[2]);
   double density = 0.5;
-  double modular = 0.25;
+//  double modular = 0.25;
+    double modular = 0.001;
   bool debug = false;
 
   if (argc >= 4) {
