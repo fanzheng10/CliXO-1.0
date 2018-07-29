@@ -7,9 +7,9 @@ Kramer, M., Dutkowski, J., Yu, M., Bafna, V. & Ideker, T. Inferring gene ontolog
 
 A manuscript describing the new is under preparation.
 
-This version has a few improvements over the original version:
+This **version** has a few improvements over the original version:
 1. Corrected 
 2. 
 
-The improvements are not possible without HiView ()
-The author also thanks Anton K
+The improvements are not possible without the HiView tool (hiview.ucsd.edu) created by Keiichiro Ono. HiView provides an intuitive 
+The author also thanks Anton Kratz and Michael Ku Yu for helpful discussion. 
