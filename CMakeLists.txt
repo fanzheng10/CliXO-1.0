@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.7)
 project(CliXO)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -347,7 +347,6 @@ add_executable(CliXO
         clustersToDAG.cpp
         dag.h
         dagConstruct.h
-        dagConstruct_old.h
         graph_undirected.h
         graph_undirected_bitset.h
         nodeDistanceObject.h

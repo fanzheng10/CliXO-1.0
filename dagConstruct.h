@@ -639,7 +639,7 @@ public:
         currentClusters[id].setModularity(q);
     }
 
-    double getModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph, bool zscore = false) {
+    double getModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph, bool zscore = true) {
 
         double actualEdges = 0;
         double expectEdges= 0;
@@ -647,11 +647,13 @@ public:
 
 //        unsigned long outdegree = 0;
         for (unsigned long i = elements.find_first(); i < elements.size()-1; i = elements.find_next(i)) {
-            boost::dynamic_bitset<unsigned long> interactors1 = clusterGraph.getInteractors(i);
-            expectEdges += interactors1.count();
+//            boost::dynamic_bitset<unsigned long> interactors1 = clusterGraph.getInteractors(i);
+//            expectEdges += interactors1.count();
+            expectEdges += clusterGraph.getDegree(i);
             for (unsigned long j = elements.find_next(i); j < elements.size(); j = elements.find_next(j)) {
-                boost::dynamic_bitset<unsigned long> interactors2 = clusterGraph.getInteractors(j);
-                expectEdges2 += interactors1.count() * interactors2.count();
+//                boost::dynamic_bitset<unsigned long> interactors2 = clusterGraph.getInteractors(j);
+//                expectEdges2 += interactors1.count() * interactors2.count();
+                expectEdges2 += clusterGraph.getDegree(i) * clusterGraph.getDegree(j);
                 if (clusterGraph.isEdge(i, j)) {
                     actualEdges += 1;
                 }
