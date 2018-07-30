@@ -1,6 +1,6 @@
 # CliXO (Clique eXtracted Ontology) 1.0
 
-Fan Zheng (fanzheng1101@gmail.com), Trey Ideker lab, UCSD
+Fan Zheng (fanzheng1101@gmail.com), Trey Ideker lab, UCSD  
 Date: 08/01/2018
 
 ## About
@@ -35,7 +35,7 @@ We fixed this issue and the "long-chain" structure never appeared again, and two
 
 Besides the major correction mentioned above, we also have other improvements  .
 
- 1. We changed the definition of ALPHA parameter. CliXO 0.3 has in-depth reasoning on the definiton of ALPHA (see the paper for full discussion), but we think it does not help real-world networks very much. We simplified ALPHA so it now directly relates to the number of iterations. We noticed that this somewhat improves the performance of the program.
+ 1. We changed the definition of ALPHA parameter. CliXO 0.3 has in-depth reasoning on the definiton of ALPHA (see the paper for full discussion), but we think it does not help real-world networks very much. We simplified ALPHA so it now directly relates to the number of iterations. We think this operation improves the explainability of results and also noticed that it sometimes improves the performance of the program.
  2. CliXO is based on maximal clique finding, however, in a real-world graph usually there are too many such cliques (even the number of quasi-cliques after merging is still big). We introduced Z-modularity as a measure of statistical significance of cliques, and cliques that do not satisfying a certain cutoff were filtered. This operation increases the clarity of the output hierarchies. 
 
 
@@ -83,4 +83,5 @@ Although there are many fast community detection graphs, most of them partition 
 ## Acknowledgement
 
 The improvements mentioned above would have not been possible without HiView (hiview.ucsd.edu), a web-based platform for visualizing hierarchical models developed by Keiichiro Ono.
+
 The author also thanks Michael Ku Yu and Anton Kratz for helpful discussion.

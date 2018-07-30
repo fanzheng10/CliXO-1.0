@@ -1,7 +1,3 @@
-//
-// Created by fanzheng on 3/20/18.
-//
-
 #ifndef DAGCONSTRUCT
 #define DAGCONSTRUCT
 
@@ -145,7 +141,6 @@ public:
         clusterModularity = 0;
         valid = false;
         uniquelyExplainedEdges = 0;
-        active = true;
     } // this may not be very useful
 
     ClusterBitset() {
@@ -158,7 +153,6 @@ public:
         clusterModularity = 0;
         valid = false;
         uniquelyExplainedEdges = 0;
-        active = false;
     }
 
     inline double getWeight() {
@@ -167,14 +161,6 @@ public:
 
     inline double getModularity() {
         return clusterModularity;
-    }
-
-    // clusterweight minus alpha
-    inline double getThresh(double alpha, unsigned numUnexplainedEdges) {
-        if (numUnexplainedEdges ==0) {
-            return 0;
-        }
-        return clusterWeight - alpha;
     }
 
     inline void setWeight(const double & weight) {
@@ -244,20 +230,6 @@ public:
         return valid;
     }
 
-    /* inactive cluster is in the middle of being considered to merge*/
-
-    inline void setActive() {
-        active = true;
-    }
-
-    inline void setInactive() {
-        active = false;
-    }
-
-    inline bool isActive() {
-        return active;
-    }
-
     inline bool isAddedToExplain() {
         return isClusterAddedToExplain;
     }
@@ -291,40 +263,6 @@ public:
         setUnexplainedCounted();
     }
 
-    //TODO: consider removing these function about merging from and to
-
-    inline void setMergedFromID(vector <unsigned long> & ids) {
-        mergedFromID = ids;
-    }
-
-    inline vector <unsigned long> getMergedFromID() {
-        return mergedFromID;
-    }
-
-    inline void setMergeToID(vector <unsigned long> & ids) {
-        mergedToID = ids;
-    }
-
-    inline vector <unsigned long> getMergedToID() {
-        return mergedToID;
-    }
-
-    inline void addMergedFromID(unsigned long id) {
-        mergedFromID.push_back(id);
-    }
-
-    inline void addMergedToID(unsigned long id) {
-        mergedToID.push_back(id);
-    }
-
-    inline void removeMergedFromID(unsigned long id) {
-        mergedFromID.erase(remove(mergedFromID.begin(), mergedFromID.end(), id), mergedFromID.end());
-    }
-
-    inline void removeMergedToID(unsigned long id) {
-        mergedToID.erase(remove(mergedToID.begin(), mergedToID.end(), id), mergedToID.end());
-    }
-
 
 private:
     boost::dynamic_bitset<unsigned long> elements;
@@ -339,9 +277,6 @@ private:
     double clusterModularity;
     bool valid;
     unsigned uniquelyExplainedEdges;
-    bool active;
-    vector<unsigned long> mergedFromID; // a cluster can make other clusters non-maximal. but this cluster can be delete for some reason. When this happen, those other clusters should be reactivated.
-    vector<unsigned long> mergedToID;
 };
 
 
@@ -357,16 +292,12 @@ public:
         newClusts = 0;
         firstWeight = FirstWeight;
         curWeight = firstWeight;
-        maxNewWeight = firstWeight;
         minWeightAdded = firstWeight;
         alpha = thisAlpha;
         largestCluster = 0;
 
         edgesToClusters = vector<vector<unsigned> >(numNodes, vector<unsigned>(numNodes, 0));
         isEdgeExplained = vector<vector<char> >(numNodes, vector<char>(numNodes, 0));
-
-        maxClusterSizePerNodes = vector<unsigned long>(numNodes, 0);
-
     };
 
     inline void setLargestCluster(unsigned long size) {
@@ -375,10 +306,6 @@ public:
 
     inline unsigned long getLargestCluster() {
         return largestCluster;
-    }
-
-    inline double getAlpha() {
-        return alpha;
     }
 
     inline void setCurWeight(const double & weight) {
@@ -460,25 +387,7 @@ public:
         }
         ++clustersAdded;
         ++newClusts;
-        resetClusterWeight(newID, nodeDistances); //TODO: deprecate this
-
-        //check other inactivated clusters. If they are subset, add cluster relationships here
-        vector <unsigned long> nonMaximal;
-        nonMaximal.reserve(1000);
-        for (unsigned long i = 0; i < maxClusterID(); ++i) {
-            if ((numElements(i) !=0) && isNew(i) && (!isActive(i))) {
-                if (getElements(i).is_subset_of(getElements(newID))) {
-//                    inactivateCluster(i, nodeIDsToNames);
-                    nonMaximal.push_back(i);
-                }
-            }
-        }
-
-        /* add relationships to the non-maximal clusters*/
-        for (vector<unsigned long>::iterator nonMaximalIt = nonMaximal.begin(); nonMaximalIt < nonMaximal.end(); ++nonMaximalIt ) {
-            addMergedToID(*nonMaximalIt, newID);
-        }
-        setMergedFromID(newID, nonMaximal);
+        resetClusterWeight(newID, nodeDistances);
 
         return newID;
     }
@@ -510,53 +419,14 @@ public:
         return ret;
     }
 
-    inline void setAllNumUniquelyExplained() {
-        for (vector<ClusterBitset>::iterator clustIt = currentClusters.begin();
-             clustIt != currentClusters.end(); ++clustIt) {
-            if ((clustIt->numElements() != 0) && (!clustIt->isValid())) {
-                setNumUniquelyUnexplainedEdges(clustIt->getID());
-            }
-        }
-    }
-
-
-    inline void inactivateCluster(const unsigned long & clusterToInactivate, vector<string> & nodeIDsToNames, bool printClusterInfo = false) {
-        /*quite similar to delete, but only need to remove from explanation, and set an inactive flag to that cluster*/
-        if (currentClusters[clusterToInactivate].isAddedToExplain()) {
-            removeClusterFromExplanation(clusterToInactivate);
-        }
-        currentClusters[clusterToInactivate].setInactive();
-        if (printClusterInfo) {
-            cout << "Inactivate: ";
-           printCluster(currentClusters[clusterToInactivate].getElements(), nodeIDsToNames);
-           cout << endl;
-        }
-    }
-
-    inline void activateCluster(const unsigned long & clusterToActivate, vector<string> & nodeIDsToNames, bool printClusterInfo = false) {
-        if (!currentClusters[clusterToActivate].isAddedToExplain()) {
-            addClusterToExplanation(currentClusters[clusterToActivate].getElementsVector(), clusterToActivate);
-        }
-        currentClusters[clusterToActivate].setActive();
-        if (printClusterInfo) {
-            cout << "Activate: ";
-            printCluster(currentClusters[clusterToActivate].getElements(), nodeIDsToNames);
-            cout << endl;
-        }
-    }
-
-    inline vector<unsigned long> deleteCluster(const unsigned long & clusterToDelete, vector<string> & nodeIDsToNames, bool printClusterInfo = true) {
+    inline void deleteCluster(const unsigned long & clusterToDelete, vector<string> & nodeIDsToNames, bool printClusterInfo = true) {
         //TODO: should also delete edge from clusterGraph if this is the only cluster explaining that edge
 
-        /*re-activate hidden cliques*/
         if (printClusterInfo) {
             cout << "Delete: ";
             printCluster(currentClusters[clusterToDelete].getElements(), nodeIDsToNames);
             cout << endl;
         }
-
-        vector<unsigned long> hiddenClusters = currentClusters[clusterToDelete].getMergedFromID();
-        vector<unsigned long> upperClusters = currentClusters[clusterToDelete].getMergedToID();
 
         if (currentClusters[clusterToDelete].isAddedToExplain()) {
             removeClusterFromExplanation(clusterToDelete);
@@ -577,16 +447,7 @@ public:
         }
         *clusterToDelete_it = ClusterBitset();//this is needed
 
-        /* remove the current cluster from the hidden clusters */
-        for (vector<unsigned long>::iterator hiddenIt = hiddenClusters.begin(); hiddenIt !=  hiddenClusters.end(); ++hiddenIt) {
-            currentClusters[*hiddenIt].removeMergedToID(clusterToDelete);
-        }
-
-        for (vector<unsigned long>::iterator upperIt = upperClusters.begin(); upperIt !=  upperClusters.end(); ++upperIt) {
-            currentClusters[*upperIt].removeMergedFromID(clusterToDelete);
-        }
-
-        return hiddenClusters;
+        return;
     }
 
     /*inline*/ void deleteClusters(vector<unsigned long> & clustersToDelete, vector<string> & nodeIDsToNames, graph_undirected_bitset & clusterGraph) {
@@ -653,8 +514,7 @@ public:
         unsigned numFound = 0;
         for (vector<ClusterBitset>::reverse_iterator clustIt = currentClusters.rbegin();
              clustIt != currentClusters.rend(); ++clustIt) {
-            if ((clustIt->numElements() != 0) && (clustIt->isActive()) && (clustIt->isNew())) {
-//            if ((clustIt->numElements() != 0)  && (clustIt->isNew())) {
+            if ((clustIt->numElements() != 0)  && (clustIt->isNew())) {
                 newClustersAndCounts.push_back(make_pair(clustIt->getID(), clustIt->numElements()));
                 ++numFound;
             }
@@ -668,19 +528,10 @@ public:
         return;
     }
 
-    inline void clearEdgesToClusters() {
-        for (unsigned i = 0; i < numNodes; ++i) {
-            for (unsigned j = (i+1); j < numNodes; ++j) {
-                edgesToClusters[i][j] = 0;
-            }
-        }
-        return;
-    }
-
     inline void addClustersToExplanations(vector<unsigned long> & sortedNewClusters) {
         for (vector<unsigned long>::iterator newClustIt = sortedNewClusters.begin();
              newClustIt != sortedNewClusters.end(); ++newClustIt) {
-            if (currentClusters[*newClustIt].isActive() && !currentClusters[*newClustIt].isAddedToExplain()) {
+            if (!currentClusters[*newClustIt].isAddedToExplain()) {
                 addClusterToExplanation(currentClusters[*newClustIt].getElementsVector(), *newClustIt);
             }
         }
@@ -694,22 +545,6 @@ public:
         return;
     }
 
-    bool isLargestExplainer(unsigned edgeEnd1, unsigned edgeEnd2, unsigned long id, vector<char> & idsChecked) {
-        unsigned smallest = edgeEnd1;
-        unsigned other = edgeEnd2;
-        if (numClustersWithNode(edgeEnd2) < numClustersWithNode(edgeEnd1)) {
-            smallest = edgeEnd2;
-            other = edgeEnd1;
-        }
-        for (vector<unsigned long>::iterator nodeToClustersIt = clustersWithNodeBegin(smallest);
-             nodeToClustersIt != clustersWithNodeEnd(smallest); ++nodeToClustersIt) {
-            if (!idsChecked[*nodeToClustersIt] && currentClusters[*nodeToClustersIt].isElement(other)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     inline unsigned getNumUnexplainedEdges(unsigned long id) {
         unsigned ret = 0;
         const vector<unsigned> cluster = currentClusters[id].getElementsVector();
@@ -718,9 +553,7 @@ public:
             ++it2;
             for ( ; it2 != cluster.end(); ++it2) {
                 if (!isThisEdgeExplained(*it1,*it2)) {
-                    //if (edgesToClusters[*it1][*it2] == 1) {
                     ++ret;
-                    //}
                 }
             }
         }
@@ -738,9 +571,7 @@ public:
             vector<unsigned>::const_iterator it2 = it1;
             ++it2;
             for ( ; it2 != cluster.end(); ++it2) {
-                //cout << edgesToClusters[*it1][*it2] << " " ;
                 if (edgesToClusters[*it1][*it2] == 1) {// this edge only appears in one cluster. may use realedges so fewer necessary clusters?
-//                    setNecessary(id);
                     return true;
                 }
             }
@@ -774,10 +605,6 @@ public:
         return currentClusters[id].isNew();
     }
 
-    inline bool isActive(unsigned long id) {
-        return currentClusters[id].isActive();
-    }
-
     inline bool isValid(unsigned long id) {
         return currentClusters[id].isValid();
     }
@@ -802,36 +629,6 @@ public:
         return curWeight;
     }
 
-    inline double getMinWeightAdded() {
-        return minWeightAdded;
-    }
-
-    inline double getThresh(unsigned long id) {
-//        if (!currentClusters[id].isValid() && !currentClusters[id].isUnexplainedCounted()) {
-//            setNumUniquelyUnexplainedEdges(id);
-//        }
-        return currentClusters[id].getThresh(alpha, getNumUnexplainedEdges(id));
-    }
-
-    inline double getMaxThresh() {
-        unsigned numFound = 0;
-        nextThreshold = 0;
-        for (vector<ClusterBitset>::reverse_iterator clustIt = currentClusters.rbegin();
-             clustIt != currentClusters.rend(); ++clustIt) {
-            if (clustIt->isNew()) {
-                ++numFound;
-                double clustThresh = getThresh(clustIt->getID());
-                if (clustThresh > nextThreshold) {
-                    nextThreshold = clustThresh;
-                }
-            }
-            if (numFound == numNew()) {
-                return nextThreshold;
-            }
-        }
-        return nextThreshold;
-    }
-
     void resetClusterWeight(unsigned long id, nodeDistanceObject & nodeDistances) {
         double weight = calculateClusterWeight(currentClusters[id].getElements(), nodeDistances);
         currentClusters[id].setWeight(weight);
@@ -840,100 +637,6 @@ public:
 
     void resetClusterModularity(unsigned long id, double q) {
         currentClusters[id].setModularity(q);
-    }
-
-    unsigned numEdgesCovered() {
-        graph_undirected_bitset coveredEdges(numNodes);
-        for (vector<ClusterBitset>::iterator clustIt = currentClusters.begin(); clustIt != currentClusters.end(); ++clustIt) {
-            if (clustIt->numElements() != 0) {
-                vector<unsigned> clusterElems = clustIt->getElementsVector();
-                for (unsigned i = 0; i < clusterElems.size()-1; ++i) {
-                    for (unsigned j = i+1; j < clusterElems.size(); ++j) {
-                        if (!coveredEdges.isEdge(clusterElems[i],clusterElems[j])) {
-                            coveredEdges.addEdge(clusterElems[i],clusterElems[j]);
-                        }
-                    }
-                }
-            }
-        }
-        return coveredEdges.numEdges();
-    }
-
-//    bool isTooSmallForCurWeight(unsigned long id, unsigned lastLargestCluster, double lastLargestClusterWeight) {
-//        unsigned size = currentClusters[id].getElements().count();
-//        double latesmallThres_abs = ( log(numNodes) - log(size) ) /  log(numNodes) ;
-//        double latesmallThres_rel = lastLargestClusterWeight * ( log(numNodes) - log(size) ) / ( log(numNodes) - log(lastLargestCluster) ) ;
-//        double latesmallThres = min(latesmallThres_abs, latesmallThres_rel);
-//        if (curWeight < latesmallThres - 0.1) {
-//            return true;
-//        }
-//        else {
-//            return false;
-//        }
-//    }
-
-    unsigned long getMaxClusterSizeForNode(unsigned long nodeID) {
-        return maxClusterSizePerNodes[nodeID];
-    }
-
-    void updateMaxClusterSizeForNode(unsigned long nodeID, unsigned long size) {
-        maxClusterSizePerNodes[nodeID] = size;
-    }
-
-    bool clusterSizeTooSmall(unsigned long id) {
-        boost::dynamic_bitset<unsigned long> clust = currentClusters[id].getElements();
-        unsigned long clustSize = clust.count();
-        if (clustSize >= double(largestCluster) / 2) {
-            return false; //don't need to look one by one
-        }
-        for (unsigned long i = clust.find_first(); i < clust.size(); i = clust.find_next(i)) {
-            if (clustSize < double(getMaxClusterSizeForNode(i)) - 2) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void setLargestClusterForNodes(unsigned long id) {
-        boost::dynamic_bitset<unsigned long> clust = currentClusters[id].getElements();
-        unsigned long clustSize = clust.count();
-        for (unsigned long i = clust.find_first(); i < clust.size(); i = clust.find_next(i)) {
-            if (clustSize > getMaxClusterSizeForNode(i)) {
-                updateMaxClusterSizeForNode(i, clustSize);
-            }
-        }
-    }
-
-    vector<unsigned long> getMergeFromID(unsigned long id) {
-        return currentClusters[id].getMergedFromID();
-    }
-
-    vector<unsigned long> getMergeToID(unsigned long id) {
-        return currentClusters[id].getMergedToID();
-    }
-
-    void setMergedFromID(unsigned long id, vector <unsigned long> & mergeID) {
-        currentClusters[id].setMergedFromID(mergeID);
-    }
-
-    void setMergedToID(unsigned long id, vector <unsigned long> & mergeID) {
-        currentClusters[id].setMergeToID(mergeID);
-    }
-
-    void addMergedFromID(unsigned long id, unsigned long mergeID) {
-        currentClusters[id].addMergedFromID(mergeID);
-    }
-
-    void addMergedToID(unsigned long id, unsigned long mergeID) {
-        currentClusters[id].addMergedToID(mergeID);
-    }
-
-    void removeMergedFromID(unsigned long id, unsigned long mergeID) {
-        currentClusters[id].removeMergedFromID(mergeID);
-    }
-
-    void removeMergedToID(unsigned long id, unsigned long mergeID) {
-        currentClusters[id].removeMergedToID(mergeID);
     }
 
     double getModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph, bool zscore = false) {
@@ -993,13 +696,6 @@ private:
     double firstWeight;
     double alpha;
     unsigned largestCluster;
-
-    // Maximum weight of any new cluster curently in this list
-    double maxNewWeight;
-    double nextThreshold;
-
-    // new feature: maximum cluster size per gene
-    vector<unsigned long> maxClusterSizePerNodes;
 };
 
 
@@ -1017,27 +713,6 @@ namespace dagConstruct {
         return false;
     }
 
-    bool isClusterAncestor(const vector<unsigned> &cluster, const vector<unsigned> &possibleAncestorCluster) {
-        vector<unsigned>::const_iterator clusterIt = cluster.begin();
-        vector<unsigned>::const_iterator ancestorIt = possibleAncestorCluster.begin();
-        while ((clusterIt != cluster.end()) && (ancestorIt != possibleAncestorCluster.end())) {
-            if (*ancestorIt < *clusterIt) {
-                ++ancestorIt;
-            } else if (*ancestorIt > *clusterIt) {
-                return false;
-            } else if (*ancestorIt == *clusterIt) {
-                ++ancestorIt;
-                ++clusterIt;
-            }
-        }
-        if (clusterIt == cluster.end()) {
-            return true;
-        }
-        return false;
-    }
-
-
-
     inline unsigned performValidityCheck(currentClusterClassBitset & currentClusters,
                                      nodeDistanceObject & nodeDistances, vector<string> & nodeIDsToNames) {
         vector<unsigned long> newClustersSorted; // where is this given?
@@ -1046,7 +721,7 @@ namespace dagConstruct {
 
         for (vector<unsigned long>::iterator newClusterIt = newClustersSorted.begin();
              newClusterIt != newClustersSorted.end(); ++newClusterIt) {
-            if (!currentClusters.checkClusterValidity(*newClusterIt) && (currentClusters.isActive(*newClusterIt))) {
+            if (!currentClusters.checkClusterValidity(*newClusterIt)) {
                 currentClusters.deleteCluster(*newClusterIt, nodeIDsToNames, debug); // don't worry about the non-maximal child clusters. Since they won't pass here
                 ++deleted;
             }
@@ -1073,24 +748,11 @@ namespace dagConstruct {
         double denom = numCombined - 1;
         double denom2 = numJoint - 1;
 
-        // boundary condition can make this faster
 
         unsigned n1 = elements1.count();
         unsigned n2 = elements2.count();
         if (numJoint < 2) { return false;}
         if (elements1.is_subset_of(elements2) || elements2.is_subset_of(elements1)) {return false;}
-
-//        printCluster(elements1, nodeIDsToNames);
-//        cout << endl;
-//        printCluster(elements2, nodeIDsToNames);
-//        cout << endl;
-
-//        double mod1 = currentClusters.getNewmanModularityScore(elements1, clusterGraph, true);
-//        double mod2 = currentClusters.getNewmanModularityScore(elements2, clusterGraph, true);
-//        double modcom = currentClusters.getNewmanModularityScore(combination, clusterGraph, true);
-
-        //directly return gap
-//        modcom - std::max(mod1, mod2)
 
         //combine 2
         if ((numJoint > 1) && (numJoint/numCombined > density)) { // this faciliate merge of highly overlapped ones
@@ -1099,14 +761,7 @@ namespace dagConstruct {
                 interactorsInJoint &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInJoint = interactorsInJoint.count();
                 if ((numInteractorsInJoint / denom2) <= density ) {
-//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
-                    if (debug) {
-//                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInJoint / denom << endl;
-                    }
                     return false;
-                }
-                else if (debug) {
-//                    cout << nodeIDsToNames[i] << ' ' << numInteractorsInJoint / denom << endl;
                 }
             }
         }
@@ -1117,14 +772,7 @@ namespace dagConstruct {
                 interactorsInCombo &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInCombo = interactorsInCombo.count();
                 if ((numInteractorsInCombo / denom) <= density ) {
-//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
-                    if (debug) {
-//                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
-                    }
                     return false;
-                }
-                else if (debug) {
-                    cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
                 }
             }
         }
@@ -1135,16 +783,10 @@ namespace dagConstruct {
                 interactorsInCombo &= clusterGraph.getInteractors(i);
                 unsigned numInteractorsInCombo = interactorsInCombo.count();
                 if ((numInteractorsInCombo / denom) <= density ) {
-//                    cout << "merging fails: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
-                    if (debug) {
-//                        cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;
-                    }
                     return false;
                 }
-                else if (debug) {cout << nodeIDsToNames[i] << ' ' << numInteractorsInCombo / denom << endl;}
             }
         }
-//        cout << "merging succeed: " << mod1 << "\t" << mod2 << "\t" << modcom - std::max(mod1, mod2) << endl;
         return true;
     }
 
@@ -1305,8 +947,6 @@ namespace dagConstruct {
         newClustersToAdd.reserve(20000);
         vector<char> affectedClusters(currentClusters.maxClusterID(), 0);
 
-        // default behavior (no chordal graph)
-
         // label affected clusters
         for (unsigned i = 0; i < affectedNodes.size(); ++i) {
             if (affectedNodes[i]) {
@@ -1326,20 +966,20 @@ namespace dagConstruct {
         }
         cout << "# Clusters affected = " << numAff << endl;
 
-        unsigned inactivated = 0;
+        unsigned deleted = 0;
 
         // expanding existing clusters, in currentClusters
         for (unsigned i = 0; i < affectedClusters.size(); ++i) {
-            if (affectedClusters[i] && currentClusters.isNew(i) && currentClusters.isActive(i)) {
+            if (affectedClusters[i] && currentClusters.isNew(i)) {
                 if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd,
                                        nodeIDsToNames)) {
                     //TODO: change this to cluster inactivation
-                    currentClusters.inactivateCluster(i, nodeIDsToNames, debug); //set true for now for debugging
-                    ++inactivated;
+                    currentClusters.deleteCluster(i, nodeIDsToNames, debug); //set true for now for debugging
+                    ++deleted;
                 }
             }
         }
-        cout << "# Num of non-maximal clusters inactivated here: " << inactivated << endl;
+        cout << "# Num of non-maximal clusters deleted here: " << deleted << endl;
 
         // adding brand new clusters, using new edges added this round
         for (unsigned long edgesToAddCounter = 0; edgesToAddCounter != edgesToAdd.size(); ++edgesToAddCounter) {
@@ -1427,37 +1067,20 @@ namespace dagConstruct {
 
         for (unsigned long i = 0; i < maxClusterID; ++i) {
             if (currentClusters.isNew(i) &&
-                    currentClusters.isActive(i) &&
                     (currentClusters.numElements(i) !=0) ){//&& //don't exactly why I need this,  seems to be duplicated to 1,2
                 clustersChecked[i] = true;
                 for (unsigned long j = 0; j < maxClusterID; ++j) {
                     /*I think I should consider all clusters*/
                     if ((j != i) && (!clustersChecked[j]) &&
-                        currentClusters.isActive(j) &&
                         (currentClusters.numElements(j) != 0)) {
 
-                        if (debug) {
-                            cout << "# Merging attempt" << i << " " << j << endl;
-                            printCluster(currentClusters.getElements(i), nodeIDsToNames);
-                            cout << "\t";
-                            printCluster(currentClusters.getElements(j), nodeIDsToNames);
-                            cout << endl;
-
-                        }
                         if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density,
                                                nodeIDsToNames)) {// try clusterGraph in this new version
                             double tempWeight;
-                            if (debug) {
-//                                printCluster(currentClusters.getElements(i), nodeIDsToNames);
-//                                cout << "\t";
-//                                printCluster(currentClusters.getElements(j), nodeIDsToNames);
-//                                cout << endl;
-                                cout << "# Successful merging" << endl;
-                            }
-                            if (currentClusters.getThresh(j) > currentClusters.getThresh(i)) {
-                                tempWeight = currentClusters.getThresh(i);
+                            if (currentClusters.getClusterWeight(j) > currentClusters.getClusterWeight(i)) { //not sure about the purpose of this step
+                                tempWeight = currentClusters.getClusterWeight(i);
                             } else {
-                                tempWeight = currentClusters.getThresh(j);
+                                tempWeight = currentClusters.getClusterWeight(j);
                             }
                             clustersToCombine.push_back(make_pair(make_pair(i, j), tempWeight));
                         }
@@ -1606,15 +1229,10 @@ namespace dagConstruct {
 //                double modularity = currentClusters.getModularityScore(currentClusters.getElements(clusterTop), realEdges, false);
 //                currentClusters.resetClusterModularity(clusterTop, zmodularity);
 //                cout << "# Modularity profile: " << "\t";
-////                printCluster(currentClusters.getElements(clusterTop), nodeIDsToNames);
+//                printCluster(currentClusters.getElements(clusterTop), nodeIDsToNames);
 //                cout << "\t" << zmodularity << "\t" << modularity << "\t" << realEdges.numEdges() << "\t" << currentClusters.numElements(clusterTop) << endl;
 
                 if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
-                    if (debug) {
-                        cout << "Uniqueness failed: ";
-                        cout << currentClusters.getElements(clusterTop).count() << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) << "\t" << uniqueThresh << "\t" << endl;
-                    }
-
                     currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
                     ++unique_filter;
                     continue;
@@ -1624,32 +1242,17 @@ namespace dagConstruct {
 
                 // calculate modularity here
                 double zmodularity = currentClusters.getModularityScore(currentClusters.getElements(clusterTop), realEdges, true);
-                double modularity = currentClusters.getModularityScore(currentClusters.getElements(clusterTop), realEdges, false);
+//                double modularity = currentClusters.getModularityScore(currentClusters.getElements(clusterTop), realEdges, false);
                 currentClusters.resetClusterModularity(clusterTop, zmodularity);
-//                cout << "# Modularity profile: " << "\t";
-//                printCluster(currentClusters.getElements(clusterTop), nodeIDsToNames);
-//                cout << "\t" << zmodularity << "\t" << modularity << "\t" << realEdges.numEdges() << "\t" << currentClusters.numElements(clusterTop) << endl;
             }
 
 //            cout << "# " << modular_filter << " clusters failed the modularity filter" << endl;
             cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
             currentClusters.sortNewClusters(tempNewAndValid);
 
-            unsigned numNonMaximalDeleted = 0;
             for (vector<unsigned long>::iterator newValidClusterIt = tempNewAndValid.begin();
                  newValidClusterIt != tempNewAndValid.end(); ++newValidClusterIt) {
                 currentClusters.setClusterValid(*newValidClusterIt, realEdges);
-                // for cluster entering this stage, print all information
-
-
-                vector<unsigned long> nonMaximals = currentClusters.getMergeFromID(*newValidClusterIt);
-                for (vector<unsigned long>::iterator nonMaximalIt = nonMaximals.begin();
-                     nonMaximalIt != nonMaximals.end(); ++nonMaximalIt) {
-                    if ( !currentClusters.isValid(*nonMaximalIt) ) {
-                        currentClusters.deleteCluster(*nonMaximalIt, nodeIDsToNames, debug);
-                    }
-                    ++numNonMaximalDeleted;
-                }
             }
 
             for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
@@ -1657,7 +1260,6 @@ namespace dagConstruct {
                     double clustWeight = currentClusters.getClusterWeight(i);
                     double modularity = currentClusters.getModularityScore(currentClusters.getElements(i), realEdges, false);//this is the modularity after 1 round
                     double oldmodularity = currentClusters.getClusterModularity(i);
-//                    double modularity_old = currentClusters.getNewmanModularityScore(currentClusters.getElements(i), realEdges, false);
                     // for clusters entering this stage, print all information
 //                    cout << "Modular profile: " << "\t" << clustWeight << "\t" << modularity << "\t" << modularity_old << "\t" << realEdges.numEdges() << "\t" << currentClusters.getElements(i).count() << endl;
 
@@ -1674,8 +1276,6 @@ namespace dagConstruct {
                     }
                     else {
                         ++modular_filter;
-//                        printCluster(currentClusters.getElements(i), nodeIDsToNames);
-//                        cout << "\t" << clustWeight << "\t" << modularity << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(i) << "\t" << last_dt << endl;
                     }
                     currentClusters.setInvalid(i);
                 }
@@ -1685,7 +1285,6 @@ namespace dagConstruct {
             }
             cout << "# " << modular_filter << " clusters failed the modularity filter" << endl;
 
-            cout << "# Non-maximal finally deleted: " << numNonMaximalDeleted << endl;
             cout << "# dt: " << last_dt << endl;
             cout << "# Next dt: " << dt << endl;
             cout << "# Num current clusters: " << currentClusters.numCurrentClusters() << endl;
@@ -1805,13 +1404,9 @@ namespace dagConstruct {
     }
 
     // Main clustering function - cluster input graph into Ontology
-    void constructDAG(graph_undirected & input_graph, DAGraph & ontology, nodeDistanceObject & nodeDistances, double threshold, double density, double modular, bool debugging) {
+    void constructDAG(graph_undirected & input_graph, DAGraph & ontology, nodeDistanceObject & nodeDistances, double threshold, double density, double modular) {
         //ontology = DAGraph();
         map<string,unsigned> geneNamesToIDs;
-
-        if (debugging) {
-            debug = true;
-        }
 
         // Add all nodes in the input network to the ontology as genes
         for (vector<Node>::iterator nodesIt = input_graph.nodesBegin(); nodesIt != input_graph.nodesEnd(); ++nodesIt) {

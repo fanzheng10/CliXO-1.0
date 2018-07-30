@@ -11,14 +11,8 @@ int main(int argc, char* argv[]) {
     cout << "2) threshold between clusters (alpha parameter)" << endl;
     cout << "3) merge density for overlapping clusters (beta parameter. Optional with default = 0.5)" << endl;
     cout << "4) parameter regarding Newman's modularity. Optional with default = 0.002)" << endl;
-    cout << "5) if given entering debug mode, print more information" << endl;
     return 0;
   }
-
-  /*for (unsigned i = 0; i < 600; ++i) {
-    cout << i << "\t" << Corrector::correction(i) << endl;
-  }
-  return 1;*/
 
   map<string, unsigned> nodeNamesToIDs;
 
@@ -28,7 +22,6 @@ int main(int argc, char* argv[]) {
   double density = 0.5;
 //  double modular = 0.25;
     double modular = 0.001;
-  bool debug = false;
 
   if (argc >= 4) {
     density = stod(argv[3]);
@@ -38,9 +31,6 @@ int main(int argc, char* argv[]) {
     modular = stod(argv[4]);
   }
 
-  if (argc >= 6) {
-    debug = true;
-  }
   string terminalName = "gene";
   time_t start, end;
   time(&start);
@@ -57,7 +47,7 @@ int main(int argc, char* argv[]) {
   nodeDistanceObject nodeDistances;
 
   time (&start);
-  dagConstruct::constructDAG(inputNetwork, ontology, nodeDistances, threshold, density, modular, debug);
+  dagConstruct::constructDAG(inputNetwork, ontology, nodeDistances, threshold, density, modular);
   time (&end);
   dif = difftime(end,start);
   cout << "# Ontology construction took " << dif << " seconds" << endl;
