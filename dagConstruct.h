@@ -666,8 +666,11 @@ public:
         expectEdges /= pow(2 * clusterGraph.numEdges(), 2.0);
         expectEdges2 /= pow(2 * clusterGraph.numEdges(), 2.0);
         if (zscore) {
-            double normalizer = pow(expectEdges * (1-expectEdges), 0.5);
-            return (actualEdges - expectEdges) * sqrt(clusterGraph.numEdges()) / normalizer;
+//            double normalizer = pow(expectEdges * (1-expectEdges), 0.5);
+//            return (actualEdges - expectEdges) * sqrt(clusterGraph.numEdges()) / normalizer;
+            //backup
+            double normalizer = pow(expectEdges2 * (1-expectEdges2), 0.5);
+            return (actualEdges - expectEdges2) / normalizer;
         }
         else { //traditional Newman's modularity
             return actualEdges - expectEdges2;
