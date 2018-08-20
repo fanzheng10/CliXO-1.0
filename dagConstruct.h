@@ -643,7 +643,7 @@ public:
 
         double actualEdges = 0;
         double expectEdges= 0;
-        double expectEdges2 = 0;
+//        double expectEdges2 = 0;
 
 //        unsigned long outdegree = 0;
         for (unsigned long i = elements.find_first(); i < elements.size()-1; i = elements.find_next(i)) {
@@ -653,7 +653,7 @@ public:
             for (unsigned long j = elements.find_next(i); j < elements.size(); j = elements.find_next(j)) {
 //                boost::dynamic_bitset<unsigned long> interactors2 = clusterGraph.getInteractors(j);
 //                expectEdges2 += interactors1.count() * interactors2.count();
-                expectEdges2 += clusterGraph.getDegree(i) * clusterGraph.getDegree(j);
+//                expectEdges2 += clusterGraph.getDegree(i) * clusterGraph.getDegree(j);
                 if (clusterGraph.isEdge(i, j)) {
                     actualEdges += 1;
                 }
@@ -664,16 +664,16 @@ public:
         actualEdges /= clusterGraph.numEdges();
         expectEdges = pow(expectEdges, 2.0);
         expectEdges /= pow(2 * clusterGraph.numEdges(), 2.0);
-        expectEdges2 /= pow(2 * clusterGraph.numEdges(), 2.0);
+//        expectEdges2 /= pow(2 * clusterGraph.numEdges(), 2.0);
         if (zscore) {
-//            double normalizer = pow(expectEdges * (1-expectEdges), 0.5);
+            double normalizer = pow(expectEdges * (1-expectEdges), 0.5);
 //            return (actualEdges - expectEdges) * sqrt(clusterGraph.numEdges()) / normalizer;
             //backup
-            double normalizer = pow(expectEdges2 * (1-expectEdges2), 0.5);
-            return (actualEdges - expectEdges2) / normalizer;
+//            double normalizer = pow(expectEdges2 * (1-expectEdges2), 0.5);
+            return (actualEdges - expectEdges) / normalizer;
         }
         else { //traditional Newman's modularity
-            return actualEdges - expectEdges2;
+            return actualEdges - expectEdges;
         }
 
     }
@@ -1147,7 +1147,7 @@ namespace dagConstruct {
         unsigned totalEdges = numNodes * (numNodes - 1) / 2;
 
         // iterative clique finding
-        while ((realEdges.numEdges() < 0.5 * totalEdges) &&
+        while ((clusterGraph.numEdges() < 0.5 * totalEdges) &&
                (distanceIt != nodeDistances.sortedDistancesEnd())) { // termination conditions
 
             unsigned numRealEdgesThisRound = 0;

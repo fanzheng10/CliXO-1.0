@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
   double threshold = stod(argv[2]);
   double density = 0.5;
 //  double modular = 3.5;
-    double modular = 0.5;
+    double modular = 0.25;
 
   if (argc >= 4) {
     density = stod(argv[3]);
