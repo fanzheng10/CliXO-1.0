@@ -630,8 +630,8 @@ public:
     }
 
     void resetClusterWeight(unsigned long id, nodeDistanceObject & nodeDistances) {
-        double weight = calculateClusterWeight(currentClusters[id].getElements(), nodeDistances);
-        currentClusters[id].setWeight(weight);
+//        double weight = calculateClusterWeight(currentClusters[id].getElements(), nodeDistances);
+        currentClusters[id].setWeight(curWeight);
         return;
     }
 
@@ -639,43 +639,28 @@ public:
         currentClusters[id].setModularity(q);
     }
 
-    double getModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph, bool zscore = true) {
+    pair<double, double> getModularityScore(boost::dynamic_bitset<unsigned long> elements, graph_undirected_bitset & clusterGraph) {
 
         double actualEdges = 0;
         double expectEdges= 0;
-//        double expectEdges2 = 0;
 
-//        unsigned long outdegree = 0;
         for (unsigned long i = elements.find_first(); i < elements.size()-1; i = elements.find_next(i)) {
-//            boost::dynamic_bitset<unsigned long> interactors1 = clusterGraph.getInteractors(i);
-//            expectEdges += interactors1.count();
             expectEdges += clusterGraph.getDegree(i);
             for (unsigned long j = elements.find_next(i); j < elements.size(); j = elements.find_next(j)) {
-//                boost::dynamic_bitset<unsigned long> interactors2 = clusterGraph.getInteractors(j);
-//                expectEdges2 += interactors1.count() * interactors2.count();
-//                expectEdges2 += clusterGraph.getDegree(i) * clusterGraph.getDegree(j);
                 if (clusterGraph.isEdge(i, j)) {
                     actualEdges += 1;
                 }
             }
         }
-//        outdegree -= actualEdges;
 
         actualEdges /= clusterGraph.numEdges();
         expectEdges = pow(expectEdges, 2.0);
         expectEdges /= pow(2 * clusterGraph.numEdges(), 2.0);
-//        expectEdges2 /= pow(2 * clusterGraph.numEdges(), 2.0);
-        if (zscore) {
-            double normalizer = pow(expectEdges * (1-expectEdges), 0.5);
-//            return (actualEdges - expectEdges) * sqrt(clusterGraph.numEdges()) / normalizer;
-            //backup
-//            double normalizer = pow(expectEdges2 * (1-expectEdges2), 0.5);
-            return (actualEdges - expectEdges) / normalizer;
-        }
-        else { //traditional Newman's modularity
-            return actualEdges - expectEdges;
-        }
+        double normalizer = pow(expectEdges * (1-expectEdges), 0.5);
 
+        double modularity = actualEdges - expectEdges;
+        double zmodularity = (actualEdges - expectEdges) / normalizer;
+        return make_pair(modularity, zmodularity);
     }
 
     unsigned clustersAdded;
@@ -1115,8 +1100,8 @@ namespace dagConstruct {
 
     // ** Main function ** //
     unsigned getFuzzyClustersBitsetThreshold(nodeDistanceObject &nodeDistances, map<string, unsigned> &nodeNamesToIDs,
-                                             vector<validClusterBitset> & validClusters, double alpha = 0,
-                                             double beta = 1, double modular = 0.002) {
+                                             vector<validClusterBitset> & validClusters, double alpha,
+                                             double beta, double modular, double zmodular, double stopt) {
 
         // * profiling * //
         time_t start, end;
@@ -1171,10 +1156,10 @@ namespace dagConstruct {
                 ++distanceIt;
             }
             last_dt = dt;
-            if (distanceIt != nodeDistances.sortedDistancesEnd()) {
+            if (distanceIt->second > stopt) {
                 dt = addUntil; //dt is already moved to the next level
             } else {
-                dt = 0;
+                dt = stopt;
                 break;
             }
 
@@ -1187,7 +1172,7 @@ namespace dagConstruct {
             dif = difftime(end, start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
 
-            currentClusters.setCurWeight(dt);
+            currentClusters.setCurWeight(last_dt);
 
 
             unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
@@ -1195,7 +1180,7 @@ namespace dagConstruct {
 
             vector<unsigned long> newClustersSorted;
 
-            if (beta < 1) { // think about chordal later
+            if (beta < 1) {
 
                 cout << "# Adding missing edges...checking " << currentClusters.numCurrentClusters() << " cliques" << endl;
                 unsigned ndeleted = performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
@@ -1237,7 +1222,7 @@ namespace dagConstruct {
                 }
 
                 currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
-                double uniqueThresh =  0.5 * (currentClusters.getElements(clusterTop).count() - 1) + 0.05 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
+                double uniqueThresh =  0.5 * (currentClusters.getElements(clusterTop).count() - 2) + 0.1 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
 
                 if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
@@ -1270,12 +1255,13 @@ namespace dagConstruct {
             for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
                 if ((currentClusters.numElements(i) !=0) && currentClusters.isValid(i) && (!currentClusters.isNew(i))) {
                     double clustWeight = currentClusters.getClusterWeight(i);
-                    double modularity = currentClusters.getModularityScore(currentClusters.getElements(i), realEdges, true);//this is the modularity after 1 round
+                    pair<double, double> mod = currentClusters.getModularityScore(currentClusters.getElements(i), realEdges);//this is the modularity after 1 round
+
 //                    double oldmodularity = currentClusters.getClusterModularity(i);
                     // for clusters entering this stage, print all information
 //                    cout << "Modular profile: " << "\t" << clustWeight << "\t" << modularity << "\t" << oldmodularity << "\t" << realEdges.numEdges() << "\t" << currentClusters.getElements(i).count() << endl;
 
-                    if (modularity > modular) {
+                    if ((mod.first > modular) && (mod.second > zmodular)) {
                         validClusters.push_back(
                                 validClusterBitset(currentClusters.getElements(i), 0, clustWeight));
                         cout << "# Valid cluster:\t";
@@ -1284,7 +1270,7 @@ namespace dagConstruct {
                             currentClusters.setLargestCluster(largestCluster);
                         }
                         printCluster(currentClusters.getElements(i), nodeIDsToNames);
-                        cout << "\t" << clustWeight << "\t" << modularity << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(i) << "\t" << last_dt << endl;
+                        cout << "\t" << clustWeight << "\t" << mod.first << "\t" << mod.second << "\t" << currentClusters.getNumUniquelyUnexplainedEdges(i) << "\t" << last_dt << endl;
                     }
                     else {
                         ++modular_filter;
@@ -1416,7 +1402,7 @@ namespace dagConstruct {
     }
 
     // Main clustering function - cluster input graph into Ontology
-    void constructDAG(graph_undirected & input_graph, DAGraph & ontology, nodeDistanceObject & nodeDistances, double threshold, double density, double modular) {
+    void constructDAG(graph_undirected & input_graph, DAGraph & ontology, nodeDistanceObject & nodeDistances, double threshold, double density, double modular, double zmodular, double stopt) {
         //ontology = DAGraph();
         map<string,unsigned> geneNamesToIDs;
 
@@ -1429,7 +1415,7 @@ namespace dagConstruct {
         nodeDistances = nodeDistanceObject(input_graph);
 
         vector<validClusterBitset> validClusters;
-        dagConstruct::getFuzzyClustersBitsetThreshold(nodeDistances, geneNamesToIDs, validClusters, threshold, density, modular); //all important stuff in here
+        dagConstruct::getFuzzyClustersBitsetThreshold(nodeDistances, geneNamesToIDs, validClusters, threshold, density, modular, zmodular, stopt); //all important stuff in here
 
         // Got the clusters - build ontology assuming any clusters wholly contained in others are descendents
         cout << "# Num clusters: " << validClusters.size() << endl;
