@@ -8,10 +8,11 @@ void usage(char *prog_name) {
     cout << "-i\tfile with pairwise distances between elements. ";
     cout << "File should be 3 tab separated columns with 1 undirected edge per line of the format node1, node2, edgeWeight (similarity between node1 and node2)" << endl;
     cout << "-a\tthreshold between clusters (alpha parameter)" << endl;
-    cout << "-b\t(optional, default = 0.5) merge density for overlapping clusters (beta parameter)" << endl;
+    cout << "-b\t(optional, default = 0.01) merge similarity for overlapping clusters (beta parameter)" << endl;
     cout << "-m\t(optional, default = 0.005) cutoff for filtering clusters based on Newman's modularity" << endl;
     cout << "-z\t(optional, default = 0.2) cutoff for filtering clusters based on z-score modularity" << endl;
     cout << "-s\t(optional, default = 0) score threshold to stop the program" << endl;
+    cout << "-B\t(optional, boolean) legacy beta threshold for clique merging; if true and -b has not been set, set -b to 0.5 (the default value for the legacy beta)" << endl;
     exit(0);
 }
 
@@ -22,14 +23,17 @@ int main(int argc, char* argv[]) {
     bool netflag=false;
     double alpha = 0;
     bool aflag=false;
-    double beta = 0.5;
+    double beta = 0.01;
+    bool bflag = false;
     double modular = 0.005;
     double zmodular = 0.2;
     double stopt = 0;
 
+    bool legacyBetaflag = false;
+
     //parse argument
     int c;
-    while ((c = getopt(argc, argv, "i:a:b:m:z:s:")) != -1) {
+    while ((c = getopt(argc, argv, "i:a:b:m:z:s:B")) != -1) {
         switch (c) {
             case 'i':
                 netFile = optarg;
@@ -41,6 +45,7 @@ int main(int argc, char* argv[]) {
                 break;
             case 'b':
                 beta = stod(optarg);
+                bflag=true;
                 break;
             case 'm':
                 modular = stod(optarg);
@@ -50,6 +55,9 @@ int main(int argc, char* argv[]) {
                 break;
             case 's':
                 stopt = stod(optarg);
+                break;
+            case 'B':
+                legacyBetaflag = true;
                 break;
             case '?':
                 fprintf (stderr, "Unknown option `-%c' \n", optopt);
@@ -64,6 +72,9 @@ int main(int argc, char* argv[]) {
     if (!aflag) {
         fprintf(stderr, "-a is mandatory\n");
         usage(argv[0]);
+    }
+    if (legacyBetaflag && (!bflag)) {
+        beta = 0.5;
     }
 
     map<string, unsigned> nodeNamesToIDs;
@@ -84,7 +95,7 @@ int main(int argc, char* argv[]) {
     nodeDistanceObject nodeDistances;
 
     time (&start);
-    dagConstruct::constructDAG(inputNetwork, ontology, nodeDistances, alpha, beta, modular, zmodular, stopt);
+    dagConstruct::constructDAG(inputNetwork, ontology, nodeDistances, alpha, beta, modular, zmodular, stopt, legacyBetaflag);
     time (&end);
     dif = difftime(end,start);
     cout << "# Ontology construction took " << dif << " seconds" << endl;
