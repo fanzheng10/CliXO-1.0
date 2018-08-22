@@ -790,6 +790,58 @@ namespace dagConstruct {
         return true;
     }
 
+    //think it may be useful to try another similarity measurement here
+    bool isSimilar(unsigned cluster1, unsigned cluster2, currentClusterClassBitset &currentClusters,
+                   graph_undirected_bitset &clusterGraph, double cutoff, vector<string> & nodeIDsToNames) {
+        boost::dynamic_bitset<unsigned long> elements1 = currentClusters.getElements(cluster1);
+        boost::dynamic_bitset<unsigned long> elements2 = currentClusters.getElements(cluster2);
+        boost::dynamic_bitset<unsigned long> combination = currentClusters.getElements(cluster1);
+        boost::dynamic_bitset<unsigned long> joint = currentClusters.getElements(cluster1);
+
+
+        combination |= elements2;
+        joint &= elements2;
+        double numJoint = joint.count();
+
+        double actualEdges = 0;
+        double expectEdges = 0;
+
+        if (numJoint < 2) { return false;}
+        if (elements1.is_subset_of(elements2) || elements2.is_subset_of(elements1)) {return false;}
+
+        for (unsigned long i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
+            for (unsigned long j = elements2.find_first(); j < elements2.size(); j = elements2.find_next(j)) {
+                if (i==j) {
+                    continue;
+                }
+                if (clusterGraph.isEdge(i, j)) {
+                    actualEdges += 1;
+                }
+                expectEdges += clusterGraph.getDegree(i) * clusterGraph.getDegree(j);
+            }
+        }
+        double m = clusterGraph.numEdges();
+        actualEdges /= 2*m;
+        expectEdges /= pow(2*m ,2.0);
+        double sim = actualEdges - expectEdges;
+//        printCluster(elements1, nodeIDsToNames);
+//        cout << "\t";
+//        printCluster(elements2, nodeIDsToNames);
+//        cout << "\t";
+//        cout << sim << endl;
+        if (sim > cutoff) {
+//            printCluster(elements1, nodeIDsToNames);
+//            cout << "\t";
+//            printCluster(elements2, nodeIDsToNames);
+//            cout << "\t";
+//            cout << sim << endl;
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
 
     /*core clique finding algorithm. Don't know the detail*/
     void updateCliques(graph_undirected_bitset &clusterGraph,
@@ -1074,7 +1126,7 @@ namespace dagConstruct {
                     if ((j != i) && (!clustersChecked[j]) &&
                         (currentClusters.numElements(j) != 0)) {
 
-                        if (isMinNodeDegreeMet(i, j, currentClusters, realEdges, density,
+                        if (isSimilar(i, j, currentClusters, realEdges, density,
                                                nodeIDsToNames)) {// try clusterGraph in this new version
                             double tempWeight;
                             if (currentClusters.getClusterWeight(j) > currentClusters.getClusterWeight(i)) { //not sure about the purpose of this step
@@ -1220,16 +1272,16 @@ namespace dagConstruct {
                     currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
                     continue;
                 }
-
+                //TODO: remove all related to unique threshold
                 currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
-                double uniqueThresh =  0.5 * (currentClusters.getElements(clusterTop).count() - 2) + 0.1 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
+//                double uniqueThresh =  0.5 * (currentClusters.getElements(clusterTop).count() - 2) + 0.1 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
 
-                if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
-                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-                    ++unique_filter;
-                    continue;
-                }
+//                if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
+//                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+//                    ++unique_filter;
+//                    continue;
+//                }
                 /*pass all filter*/
                 ++n_pass_filter;
 
