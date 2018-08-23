@@ -309,9 +309,9 @@ public:
     }
 
     inline void setCurWeight(const double & weight) {
-        if (weight < minWeightAdded) {
-            minWeightAdded = weight;
-        }
+//        if (weight < minWeightAdded) {
+//            minWeightAdded = weight;
+//        }
         curWeight = weight;
     }
 
@@ -1025,7 +1025,6 @@ namespace dagConstruct {
             if (affectedClusters[i] && currentClusters.isNew(i)) {
                 if (findClustsWithSeed(currentClusters.getElements(i), clusterGraph, newClustersToAdd,
                                        nodeIDsToNames)) {
-                    //TODO: change this to cluster inactivation
                     currentClusters.deleteCluster(i, nodeIDsToNames, debug); //set true for now for debugging
                     ++deleted;
                 }
@@ -1225,13 +1224,14 @@ namespace dagConstruct {
                 ++distanceIt;
             }
             last_dt = dt;
-            if (distanceIt->second > stopt) {
+            if (distanceIt->second > stopt + alpha) {
                 dt = addUntil; //dt is already moved to the next level
             } else {
                 dt = stopt;
                 break;
             }
 
+            currentClusters.setCurWeight(dt);
 
             cout << "# Current distance: " << distanceIt->second << "\t" << "Add until: " << addUntil << "\t" << endl;
             cout << "# Num of real edges added: " << numRealEdgesAdded << endl;
@@ -1240,9 +1240,6 @@ namespace dagConstruct {
             time(&end);
             dif = difftime(end, start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
-
-            currentClusters.setCurWeight(dt);
-
 
             unsigned long numClustersBeforeDelete = currentClusters.numCurrentClusters();
             cout << "# Number of clusters before merging: " << numClustersBeforeDelete << endl;
@@ -1290,27 +1287,29 @@ namespace dagConstruct {
                 }
 
                 //uniqueness filter is still required when using legacy beta
-                if (legacyBeta) {
-                    currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
-                    double uniqueThresh = 0.5 * (currentClusters.getElements(clusterTop).count() - 2) + 0.1 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
+//                if (legacyBeta) {
+                currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
+                double uniqueThresh = 0.5 * (currentClusters.getElements(clusterTop).count() - 2) + 0.1 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
 
-                    if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
-                        currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
-                        ++unique_filter;
-                        continue;
-                    }
+                if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
+                    currentClusters.deleteCluster(clusterTop, nodeIDsToNames, debug);
+                    ++unique_filter;
+                    continue;
                 }
+//                }
             }
-            if (legacyBeta) {
-                cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
-            }
+//            if (legacyBeta) {
+            cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
+//            }
 
             currentClusters.sortNewClusters(tempNewAndValid);
 
             for (vector<unsigned long>::iterator newValidClusterIt = tempNewAndValid.begin();
                  newValidClusterIt != tempNewAndValid.end(); ++newValidClusterIt) {
                 currentClusters.setClusterValid(*newValidClusterIt, realEdges);
+//                printCluster(currentClusters.getElements(*newValidClusterIt), nodeIDsToNames);
+//                cout << currentClusters.getClusterWeight(*newValidClusterIt) << "\t" << currentClusters.isNew(*newValidClusterIt) << endl;
             }
 
             for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
@@ -1332,7 +1331,8 @@ namespace dagConstruct {
                                  << currentClusters.getNumUniquelyUnexplainedEdges(i) << "\t" << endl;
                         }
                         else {
-                            cout << "\t" << clustWeight << "\t" << mod.first << "\t" << mod.second << "\t" << endl;
+                            cout << "\t" << clustWeight << "\t" << mod.first << "\t" << mod.second << "\t"
+                                 << currentClusters.getNumUniquelyUnexplainedEdges(i) << endl;
                         }
                     }
                     else {
