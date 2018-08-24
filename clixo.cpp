@@ -8,7 +8,7 @@ void usage(char *prog_name) {
     cout << "-i\tfile with pairwise distances between elements. ";
     cout << "File should be 3 tab separated columns with 1 undirected edge per line of the format node1, node2, edgeWeight (similarity between node1 and node2)" << endl;
     cout << "-a\tthreshold between clusters (alpha parameter)" << endl;
-    cout << "-b\t(optional, default = 0.01) merge similarity for overlapping clusters (beta parameter)" << endl;
+    cout << "-b\t(optional, default = 0.75) merge similarity for overlapping clusters (beta parameter)" << endl;
     cout << "-m\t(optional, default = 0.005) cutoff for filtering clusters based on Newman's modularity" << endl;
     cout << "-z\t(optional, default = 0.2) cutoff for filtering clusters based on z-score modularity" << endl;
     cout << "-s\t(optional, default = 0) score threshold to stop the program" << endl;
@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
     bool netflag=false;
     double alpha = 0;
     bool aflag=false;
-    double beta = 0.01;
+    double beta = 0.75;
     bool bflag = false;
     double modular = 0.005;
     double zmodular = 0.2;
