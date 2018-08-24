@@ -644,7 +644,7 @@ public:
         double actualEdges = 0;
         double expectEdges= 0;
 
-        for (unsigned long i = elements.find_first(); i < elements.size()-1; i = elements.find_next(i)) {
+        for (unsigned long i = elements.find_first(); i < elements.size(); i = elements.find_next(i)) {
             expectEdges += clusterGraph.getDegree(i);
             for (unsigned long j = elements.find_next(i); j < elements.size(); j = elements.find_next(j)) {
                 if (clusterGraph.isEdge(i, j)) {
@@ -803,38 +803,32 @@ namespace dagConstruct {
         joint &= elements2;
         double numJoint = joint.count();
 
-        double actualEdges = 0;
-        double expectEdges = 0;
+        double v1 = 0;
+        double v2 = 0;
+        double m = clusterGraph.numEdges();
 
         if (numJoint < 2) { return false;}
         if (elements1.is_subset_of(elements2) || elements2.is_subset_of(elements1)) {return false;}
 
         for (unsigned long i = elements1.find_first(); i < elements1.size(); i = elements1.find_next(i)) {
             for (unsigned long j = elements2.find_first(); j < elements2.size(); j = elements2.find_next(j)) {
-                if (i==j) {
-                    continue;
-                }
                 if (clusterGraph.isEdge(i, j)) {
-                    actualEdges += 1;
+                    v1 += std::max(1-clusterGraph.getDegree(i) * clusterGraph.getDegree(j)/(2*m), 0.0);
                 }
-                expectEdges += clusterGraph.getDegree(i) * clusterGraph.getDegree(j);
             }
         }
-        double m = clusterGraph.numEdges();
-        actualEdges /= 2*m;
-        expectEdges /= pow(2*m ,2.0);
-        double sim = actualEdges - expectEdges;
-//        printCluster(elements1, nodeIDsToNames);
-//        cout << "\t";
-//        printCluster(elements2, nodeIDsToNames);
-//        cout << "\t";
-//        cout << sim << endl;
+
+        for (unsigned long k = combination.find_first(); k < combination.size(); k = combination.find_next(k)) {
+//            expectEdges2 += clusterGraph.getDegree(k);
+            for (unsigned long l = combination.find_next(k); l < combination.size(); l = combination.find_next(l)) {
+                if (clusterGraph.isEdge(k, l)) {
+                    v2 += std::max(1-clusterGraph.getDegree(k) * clusterGraph.getDegree(l)/(2*m), 0.0);
+                }
+            }
+        }
+
+        double sim = v1/(2*v2);
         if (sim > cutoff) {
-//            printCluster(elements1, nodeIDsToNames);
-//            cout << "\t";
-//            printCluster(elements2, nodeIDsToNames);
-//            cout << "\t";
-//            cout << sim << endl;
             return true;
         }
         else {
@@ -1286,10 +1280,8 @@ namespace dagConstruct {
                     continue;
                 }
 
-                //uniqueness filter is still required when using legacy beta
-//                if (legacyBeta) {
                 currentClusters.setNumUniquelyUnexplainedEdges(clusterTop);
-                double uniqueThresh = 0.5 * (currentClusters.getElements(clusterTop).count() - 2) + 0.1 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
+                double uniqueThresh = 0.1 * pow(currentClusters.getElements(clusterTop).count(), 2.0); //soft for small, I think quite strong for big
 
 
                 if (currentClusters.getNumUniquelyUnexplainedEdges(clusterTop) < uniqueThresh) {
@@ -1297,11 +1289,10 @@ namespace dagConstruct {
                     ++unique_filter;
                     continue;
                 }
-//                }
             }
-//            if (legacyBeta) {
-            cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
-//            }
+            if (legacyBeta) {
+                cout << "# " << unique_filter << " clusters failed the uniqueness filter" << endl;
+            }
 
             currentClusters.sortNewClusters(tempNewAndValid);
 

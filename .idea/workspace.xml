@@ -12,12 +12,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo" afterPath="$PROJECT_DIR$/clixo" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo.o" afterPath="$PROJECT_DIR$/clixo.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo.cpp" afterPath="$PROJECT_DIR$/clixo.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dagConstruct.h" afterPath="$PROJECT_DIR$/dagConstruct.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/makefile" afterPath="$PROJECT_DIR$/makefile" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/CMakeFiles/" />
@@ -37,8 +32,8 @@
       <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="290">
-              <caret line="1305" column="16" lean-forward="true" selection-start-line="1305" selection-start-column="16" selection-end-line="1305" selection-end-column="16" />
+            <state relative-caret-position="177">
+              <caret line="828" column="0" lean-forward="true" selection-start-line="828" selection-start-column="0" selection-end-line="828" selection-end-column="0" />
               <folding>
                 <element signature="e#43#60#0" expanded="true" />
               </folding>
@@ -59,8 +54,8 @@
       <file leaf-file-name="graph_undirected_bitset.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/graph_undirected_bitset.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="571">
-              <caret line="41" column="25" lean-forward="false" selection-start-line="41" selection-start-column="25" selection-end-line="41" selection-end-column="25" />
+            <state relative-caret-position="167">
+              <caret line="53" column="16" lean-forward="false" selection-start-line="53" selection-start-column="16" selection-end-line="53" selection-end-column="16" />
               <folding />
             </state>
           </provider>
@@ -121,10 +116,8 @@
       <find>getModu</find>
       <find>resetClusterW</find>
       <find>pair</find>
-      <find>getMo</find>
       <find>isSi</find>
       <find>n_pass</find>
-      <find>isSimilar</find>
       <find>setOld</find>
       <find>update</find>
       <find>reset</find>
@@ -132,6 +125,8 @@
       <find>printCluster</find>
       <find>clusterWeight</find>
       <find>edgesToClusters</find>
+      <find>getMo</find>
+      <find>isSimilar</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -476,7 +471,7 @@
       <workItem from="1533573686231" duration="2841000" />
       <workItem from="1534180269707" duration="597000" />
       <workItem from="1534795074979" duration="882000" />
-      <workItem from="1535041312317" duration="6341000" />
+      <workItem from="1535041312317" duration="12123000" />
     </task>
     <task id="LOCAL-00001" summary="altered density">
       <created>1501882926753</created>
@@ -489,7 +484,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="426941000" />
+    <option name="totallyTimeSpent" value="432723000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -861,14 +856,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/graph_undirected_bitset.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="571">
-          <caret line="41" column="25" lean-forward="false" selection-start-line="41" selection-start-column="25" selection-end-line="41" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/clixo.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-451">
@@ -879,10 +866,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/graph_undirected_bitset.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="167">
+          <caret line="53" column="16" lean-forward="false" selection-start-line="53" selection-start-column="16" selection-end-line="53" selection-end-column="16" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/dagConstruct.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="290">
-          <caret line="1305" column="16" lean-forward="true" selection-start-line="1305" selection-start-column="16" selection-end-line="1305" selection-end-column="16" />
+        <state relative-caret-position="177">
+          <caret line="828" column="0" lean-forward="true" selection-start-line="828" selection-start-column="0" selection-end-line="828" selection-end-column="0" />
           <folding>
             <element signature="e#43#60#0" expanded="true" />
           </folding>
