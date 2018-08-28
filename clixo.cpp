@@ -4,7 +4,7 @@
 #include "dagConstruct.h"
 
 void usage(char *prog_name) {
-    cout << "USAGE: " << prog_name << " -i input_file -a alpha [-b beta] [-m Newman's modularity cutoff] [-z z-modularity cutoff] [-s stop_score]" << endl << endl;
+    cout << "USAGE: " << prog_name << " -i input_file -a alpha [-b beta] [-m Newman's modularity cutoff] [-z z-modularity cutoff] [-s stop_score] [-B]" << endl << endl;
     cout << "-i\tfile with pairwise distances between elements. ";
     cout << "File should be 3 tab separated columns with 1 undirected edge per line of the format node1, node2, edgeWeight (similarity between node1 and node2)" << endl;
     cout << "-a\tthreshold between clusters (alpha parameter)" << endl;
