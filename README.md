@@ -1,7 +1,7 @@
 # CliXO (Clique eXtracted Ontology) 1.0
 
 Fan Zheng (fanzheng1101@gmail.com), Trey Ideker lab, UCSD  
-Date: 08/01/2018
+Date: 08/27/2018
 
 ## About
 
@@ -13,9 +13,23 @@ A manuscript describing this new version is under preparation.
 
 The input of the program is a weighted similarity network of objects (in our cases, genes), and the output is a directed acyclic graph (DAG), in which the leaf nodes are genes, and non-leaf nodes are gene sets called "terms". Term A is a descendent of another term B (i.e. in the DAG there is a path from A to B) if the gene set for A is a subset of the gene set for B. The whole DAG is called a "data-driven hierarchy" inferred from the input network.
 
-The usage of the program is similar to the original code (CliXO 0.3: https://github.com/mhk7/clixo_0.3). However, the new version has a few key improvements over the original version, increasing the accuracy and robustness inferred from pairwise similarity (weighted network) data.
+The new version has a few key improvements over the original version, increasing the accuracy and robustness inferred from pairwise similarity (weighted network) data.
 
-## Improvments
+## Usage
+
+`./clixo -i input_file -a alpha [-b beta] [-m Newman's modularity cutoff] [-z z-modularity cutoff] [-s stop_score] [-B]`
+
+-i: input file (similarity scores); The format of this file should be three columns separated by tab. The first two columns should be two strings for the node names (using numbers may cause problem); and the third column should be a value for the edge weight. 
+
+-a: Alpha parameter; for the step size of hierarchy construction; usually, a smaller Alpha will create "deeper" hierarchies with more levels from leaves to the root.
+-b: Beta parameter; for merging overlapping terms. Two existing terms will be merged if their similarity is above the threshold defined by Beta. Usually a lower Beta will create a hierarchy with more larger terms, since small terms can be merged. However, at a lower Beta the terms look less like a clique, since the requirement for being a clique has been relaxed. Note the defintion of Beta is different from that in Kramer et al. See the manuscript for the new definition (NOT PUBLIC YET).
+-m: Modularity parameter; calculate the contribution of each term to the Newman-Girvan's modularity in the network at the current score threshold; terms lower than this threshold will be removed from the output.
+-z: Z-modularity parameter; another metric to remove some terms from the output. See "Miyauchi, A. & Kawase, Y. Z-Score-Based Modularity for Community Detection in Networks. PLoS One 11, e0147805 (2016)". Both -m and -z remove some terms and increase the clarity of the output hierarchy to human visualization. Note they remove different types of undesired terms; sometimes there are small but relatively isolated terms in big networks. If one believes those are important and should be kept, it is recommended to set -m to a low value or not using it at all, but use -z filter instead.
+-s: A cutoff of similarity score, if set, the program will terminate when it reaches this point, and stop looking for more terms from scores lower than this threshold. 
+-B: if set, the program will interpret Beta (-b) as the old definition in Kramer et al.
+
+
+## Differences to the old version
 
 We observed several problems in CliXO 0.3. 
 
@@ -31,32 +45,8 @@ We found the major cause of this problem is due to a "missing edge inference" st
 
 We fixed this issue and the "long-chain" structure never appeared again, and two similar inputs now generate similar output hierarchies.
 
-## Other improvements
 
-Besides the major correction mentioned above, we also have other improvements  .
-
- 1. We changed the definition of ALPHA parameter. CliXO 0.3 has in-depth reasoning on the definiton of ALPHA (see the paper for full discussion), but we think it does not help real-world networks very much. We simplified ALPHA so it now directly relates to the number of iterations. We think this operation improves the explainability of results and also noticed that it sometimes improves the performance of the program.
- 2. CliXO is based on maximal clique finding, however, in a real-world graph usually there are too many such cliques (even the number of quasi-cliques after merging is still big). We introduced Z-modularity as a measure of statistical significance of cliques, and cliques that do not satisfying a certain cutoff were filtered. This operation increases the clarity of the output hierarchies. 
-
-
-## Usage (same as CliXO 0.3)
-
-This program is already compiled and should run without recompiling, but if it does not immediately work on your system then perform the following to compile.  This program requires g++ version 4.7 or newer to compile.  Simply enter the main folder and type:
-
-`make clixo`
-
-The program is run from the command line as:
-
-`./clixo SIMILARITY_NETWORK_FILE ALPHA BETA`
-
-The SIMILARITY_NETWORK_FILE is a file which contains three columns, tab separated.  Columns 1 and 2 are the two items (e.g. genes) which have some similarity measure between them.  Column 3 is the similarity value.  This similarity value must be positive.  Any missing similarity values in this file (i.e. no line is present for a pair of genes) are assumed to be zero.  We suggest using names including some text and not simply numbers to identify genes - if numbers are used, please make them consecutive and starting at 0 (otherwise internal terms may share the same name). 
-
-
-The CliXO algorithm will print diagnostic information to stdout (we suggest redirecting this to a file).  Diagnostic information will be preceeded with a "#" symbol for easy removal later.  Most of this information is self explanatory I hope.  As terms are found to be valid (i.e. they will be included in the final ontology), they are output with tag "Valid cluster:" at the beginning of the line, followed by a tab, all the genes in the term (comma separated), followed by another tab and then the similarity value at which this term was inferred.  This allows the user to view the output so far of CliXO even if it has not completed (oftentimes many of the smaller terms are inferred quite quickly whereas larger terms can take much longer).  At completion, CliXO will print "# Ontology is:" followed by the inferred ontology.  The inferred ontology will be in a three column, tab separated format where each line represents a relationship in the ontology.  Column 1 is the parent node (always an internal node or the root, identified by a number).  Column 2 is the child node (may be an internal node or a terminal node, i.e. a gene).  Column 3 is the distance between a parent and child node (distance = half the difference in term weight between the parent and child, where term weight is the similarity value at which the term was inferred).
-
-Please feel free to contact the author with any questions, comments, or concerns.
-
-Auxillary functions: 
+## Auxillary functions (identical to CliXO_0.3): 
 
 `extractOnt FILE THRESHOLD MIN_TERM_SIZE OUTFILE`
 
@@ -66,22 +56,20 @@ This script will allow the user to "peek" at the results of an in process CliXO 
 
 This utility will allow users to look at the ontology created by clixo.  There are several different types of stats that it can generate, but the most useful are the options "size" and "genes".  Option "size" will return a two column file where column one is the term identifier and column two is the number of leaf nodes / genes annotated to that term (all annotations are propagated upwards in the ontology).  Option "genes" adds a third column which is a comma separated list of all the genes annotated to the term.
 
-The folder example shows some example inputs and outputs on a very small toy ontology.  The results in this directory can be recreated by running the following commands from within this directory:
-
-`../clixo exampleInput 0 1 > exampleOutput
-grep -v "#" exampleOutput > exampleOutputOnt
+# TODO: upload a new toy example
+`grep -v "#" exampleOutput > exampleOutputOnt
 ../ontologyTermStats exampleOutputOnt genes gene > exampleOutputOntStats
 ../extractOnt exampleOutput 0.5 2 examplePeek`
 
-## Remaining issues
+## Limitations
 
-Since maximal clique enumeration is expensive (theoretical upper bound is exponential to the number of nodes), applying CliXO on a large number of genes is computational infeasible. If the goal is to the finish the construction of the entire hierarchy,  we recommend not to exceed 1000 genes to expect the running time to be within a few hours. 
+Since maximal clique enumeration is expensive (theoretical upper bound is exponential to the number of nodes), applying CliXO on a large number of genes is computational infeasible. If the goal is to the finish the construction of the entire hierarchy,  we recommend not to exceed 1000 genes to expect the running time to be within a few hours. If either overlapping or multi-scale properties is not crucial to your research program, you should stop browsing and turn to other popular algorithms, such as Louvain clustering. 
 
-Although there are many fast community detection graphs, most of them partition graphs into non-overlapping parts, and in other overlapping-community compatible options only a small number of nodes on the boundaries of partitions can be assigned to multiple communities. Even fewer of them have the concept of multi-scale community detection. Thus, CliXO is unique in that it can possibly found both mutl-scale and highly-overlapping community structures. We do notice that a lot of cliques found by CliXO were unnecessary since they are later removed in post-processing steps. How to utilize such information to reduce the running time of clique finding will be in our future direction.
+Although there are many fast community detection algorithms, most of them partition graphs into non-overlapping parts, and in other overlapping-community compatible options only a small number of nodes on the boundaries of partitions can be assigned to multiple communities. Even fewer of them have the concept of multi-scale community detection. Thus, CliXO is unique in that it can possibly found both mutl-scale and highly-overlapping community structures. We do notice that a lot of cliques found by CliXO were unnecessary since they are later removed in post-processing steps. How to utilize such information to reduce the running time of clique finding will be in our future direction. 
 
 
-## Acknowledgement
+## Acknowledgements
 
-The improvements mentioned above would have not been possible without HiView (hiview.ucsd.edu), a web-based platform for visualizing hierarchical models developed by Keiichiro Ono.
+The improvements mentioned above benefited a lot from HiView (hiview.ucsd.edu), a web-based platform for visualizing hierarchical models mainly developed by Keiichiro Ono.
 
 The author also thanks Michael Ku Yu and Anton Kratz for helpful discussion.
