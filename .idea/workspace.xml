@@ -13,7 +13,6 @@
   <component name="ChangeListManager">
     <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/clixo.cpp" afterPath="$PROJECT_DIR$/clixo.cpp" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/CMakeFiles/" />
@@ -43,9 +42,9 @@
       <file leaf-file-name="README.md" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/README.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-            <state split_layout="FIRST">
-              <first_editor relative-caret-position="154">
-                <caret line="22" column="167" lean-forward="true" selection-start-line="22" selection-start-column="167" selection-end-line="22" selection-end-column="167" />
+            <state split_layout="SECOND">
+              <first_editor relative-caret-position="120">
+                <caret line="21" column="183" lean-forward="false" selection-start-line="21" selection-start-column="183" selection-end-line="21" selection-end-column="183" />
                 <folding />
               </first_editor>
               <second_editor />
@@ -486,7 +485,7 @@
       <workItem from="1535041312317" duration="13345000" />
       <workItem from="1535223745225" duration="1148000" />
       <workItem from="1535247600190" duration="1044000" />
-      <workItem from="1535347598049" duration="2718000" />
+      <workItem from="1535347598049" duration="2852000" />
     </task>
     <task id="LOCAL-00001" summary="altered density">
       <created>1501882926753</created>
@@ -499,7 +498,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="438855000" />
+    <option name="totallyTimeSpent" value="438989000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -879,9 +878,9 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/README.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-        <state split_layout="FIRST">
-          <first_editor relative-caret-position="154">
-            <caret line="22" column="167" lean-forward="true" selection-start-line="22" selection-start-column="167" selection-end-line="22" selection-end-column="167" />
+        <state split_layout="SECOND">
+          <first_editor relative-caret-position="120">
+            <caret line="21" column="183" lean-forward="false" selection-start-line="21" selection-start-column="183" selection-end-line="21" selection-end-column="183" />
             <folding />
           </first_editor>
           <second_editor />

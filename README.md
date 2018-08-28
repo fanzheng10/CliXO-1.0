@@ -19,12 +19,19 @@ The new version has a few key improvements over the original version, increasing
 
 `./clixo -i input_file -a alpha [-b beta] [-m Newman's modularity cutoff] [-z z-modularity cutoff] [-s stop_score] [-B]`
 
--i: input file (similarity scores); The format of this file should be three columns separated by tab. The first two columns should be two strings for the node names (using numbers may cause problem); and the third column should be a value for the edge weight.  
--a: Alpha parameter; for the step size of hierarchy construction; usually, a smaller Alpha will create "deeper" hierarchies with more levels from leaves to the root.  
--b: Beta parameter; for merging overlapping terms. Two existing terms will be merged if their similarity is above the threshold defined by Beta. Usually a lower Beta will create a hierarchy with more larger terms, since small terms can be merged. However, at a lower Beta the terms look less like a clique, since the requirement for being a clique has been relaxed. Note the defintion of Beta is different from that in Kramer et al. See the manuscript for the new definition (NOT PUBLIC YET).  
--m: Modularity parameter; calculate the contribution of each term to the Newman-Girvan's modularity in the network at the current score threshold; terms lower than this threshold will be removed from the output.  
--z: Z-modularity parameter; another metric to remove some terms from the output. See "Miyauchi, A. & Kawase, Y. Z-Score-Based Modularity for Community Detection in Networks. PLoS One 11, e0147805 (2016)". Both -m and -z remove some terms and increase the clarity of the output hierarchy to human visualization. Note they remove different types of undesired terms; sometimes there are small but relatively isolated terms in big networks. If one believes those are important and should be kept, it is recommended to set -m to a low value or not using it at all, but use -z filter instead.  
--s: A cutoff of similarity score, if set, the program will terminate when it reaches this point, and stop looking for more terms from scores lower than this threshold.   
+-i: input file (similarity scores); The format of this file should be three columns separated by tab. The first two columns should be two strings for the node names (using numbers may cause problem); and the third column should be a value for the edge weight.
+
+-a: Alpha parameter; for the step size of hierarchy construction; usually, a smaller Alpha will create "deeper" hierarchies with more levels from leaves to 
+ the root.
+   
+-b: Beta parameter; for merging overlapping terms. Two existing terms will be merged if their similarity is above the threshold defined by Beta. Usually a lower Beta will create a hierarchy with more larger terms, since small terms can be merged. However, at a lower Beta the terms look less like a clique, since the requirement for being a clique has been relaxed. Note the defintion of Beta is different from that in Kramer et al. See the manuscript for the new definition (NOT PUBLIC YET).
+  
+-m: Modularity parameter; calculate the contribution of each term to the Newman-Girvan's modularity in the network at the current score threshold; terms lower than this threshold will be removed from the output.
+  
+-z: Z-modularity parameter; another metric to remove some terms from the output. See "Miyauchi, A. & Kawase, Y. Z-Score-Based Modularity for Community Detection in Networks. PLoS One 11, e0147805 (2016)". Both -m and -z remove some terms and increase the clarity of the output hierarchy to human visualization. Note they remove different types of undesired terms; sometimes there are small but relatively isolated terms in big networks. If one believes those are important and should be kept, it is recommended to set -m to a low value or not using it at all, but use -z filter instead.
+  
+-s: A cutoff of similarity score, if set, the program will terminate when it reaches this point, and stop looking for more terms from scores lower than this threshold.
+   
 -B: if set, the program will interpret Beta (-b) as the old definition in Kramer et al.
 
 
