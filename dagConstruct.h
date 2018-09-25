@@ -822,7 +822,10 @@ namespace dagConstruct {
 //            expectEdges2 += clusterGraph.getDegree(k);
             for (unsigned long l = combination.find_next(k); l < combination.size(); l = combination.find_next(l)) {
                 if (clusterGraph.isEdge(k, l)) {
-                    v2 += std::max(1-clusterGraph.getDegree(k) * clusterGraph.getDegree(l)/(2*m), 0.0);
+//                    v2 += std::max(1-clusterGraph.getDegree(k) * clusterGraph.getDegree(l)/(2*m), 0.0);
+                    v2 += abs(1-clusterGraph.getDegree(k) * clusterGraph.getDegree(l)/(2*m));
+                } else {
+                    v2 += abs(0-clusterGraph.getDegree(k) * clusterGraph.getDegree(l)/(2*m));
                 }
             }
         }
@@ -1305,7 +1308,7 @@ namespace dagConstruct {
 
             for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
                 if ((currentClusters.numElements(i) !=0) && currentClusters.isValid(i) && (!currentClusters.isNew(i))) {
-                    double clustWeight = currentClusters.getClusterWeight(i);
+                    double clustWeight = currentClusters.getClusterWeight(i) - alpha;
                     pair<double, double> mod = currentClusters.getModularityScore(currentClusters.getElements(i), realEdges);//this is the modularity after 1 round
 
                     if ((mod.first > modular) && (mod.second > zmodular)) {

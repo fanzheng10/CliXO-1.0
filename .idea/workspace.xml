@@ -12,7 +12,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ed845563-7cf2-49dc-ac3a-47fa083fe189" name="Default" comment="altered density">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dagConstruct.h" afterPath="$PROJECT_DIR$/dagConstruct.h" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/CMakeFiles/" />
@@ -29,21 +30,23 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="false">
+      <file leaf-file-name="dagConstruct.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dagConstruct.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-169">
-              <caret line="9" column="16" lean-forward="true" selection-start-line="9" selection-start-column="16" selection-end-line="9" selection-end-column="16" />
-              <folding />
+            <state relative-caret-position="144">
+              <caret line="1315" column="100" lean-forward="true" selection-start-line="1315" selection-start-column="100" selection-end-line="1315" selection-end-column="100" />
+              <folding>
+                <element signature="e#43#60#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="README.md" pinned="false" current-in-tab="true">
+      <file leaf-file-name="README.md" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/README.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
             <state split_layout="SECOND">
-              <first_editor relative-caret-position="120">
+              <first_editor relative-caret-position="357">
                 <caret line="21" column="183" lean-forward="false" selection-start-line="21" selection-start-column="183" selection-end-line="21" selection-end-column="183" />
                 <folding />
               </first_editor>
@@ -75,8 +78,8 @@
       <file leaf-file-name="clixo.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/clixo.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="92">
-              <caret line="6" column="168" lean-forward="true" selection-start-line="6" selection-start-column="168" selection-end-line="6" selection-end-column="168" />
+            <state relative-caret-position="102">
+              <caret line="6" column="168" lean-forward="false" selection-start-line="6" selection-start-column="168" selection-end-line="6" selection-end-column="168" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
@@ -108,7 +111,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>getModularity</find>
       <find>getNew</find>
       <find>getModularitySc</find>
       <find>Modularity</find>
@@ -133,11 +135,12 @@
       <find>reset</find>
       <find>curWeight</find>
       <find>printCluster</find>
-      <find>clusterWeight</find>
       <find>edgesToClusters</find>
       <find>getMo</find>
       <find>isSimilar</find>
       <find>getM</find>
+      <find>clusterW</find>
+      <find>clusterWeight</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -151,9 +154,9 @@
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/graph_undirected_bitset.h" />
         <option value="$PROJECT_DIR$/clustersToDAG.cpp" />
-        <option value="$PROJECT_DIR$/dagConstruct.h" />
         <option value="$PROJECT_DIR$/clixo.cpp" />
         <option value="$PROJECT_DIR$/README.md" />
+        <option value="$PROJECT_DIR$/dagConstruct.h" />
       </list>
     </option>
   </component>
@@ -165,10 +168,9 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="1755" />
-    <option name="y" value="78" />
-    <option name="width" value="1680" />
-    <option name="height" value="962" />
+    <option name="y" value="23" />
+    <option name="width" value="1440" />
+    <option name="height" value="815" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="2" id="Add" />
@@ -485,7 +487,11 @@
       <workItem from="1535041312317" duration="13345000" />
       <workItem from="1535223745225" duration="1148000" />
       <workItem from="1535247600190" duration="1044000" />
-      <workItem from="1535347598049" duration="2852000" />
+      <workItem from="1535347598049" duration="3015000" />
+      <workItem from="1536600850823" duration="713000" />
+      <workItem from="1537466208325" duration="487000" />
+      <workItem from="1537485115369" duration="570000" />
+      <workItem from="1537551303902" duration="2546000" />
     </task>
     <task id="LOCAL-00001" summary="altered density">
       <created>1501882926753</created>
@@ -498,7 +504,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="438989000" />
+    <option name="totallyTimeSpent" value="443468000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -510,14 +516,13 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1755" y="78" width="1680" height="962" extended-state="0" />
-    <editor active="true" />
+    <frame x="0" y="23" width="1440" height="815" extended-state="6" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2125" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2094082" sideWeight="0.49166667" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39030954" sideWeight="0.50277776" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32922733" sideWeight="0.49722221" order="12" side_tool="false" content_ui="tabs" />
+      <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.33109918" sideWeight="0.49722221" order="12" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -597,7 +602,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#43#60#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -660,7 +667,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="31722">
           <caret line="1866" column="8" lean-forward="false" selection-start-line="1866" selection-start-column="8" selection-end-line="1866" selection-end-column="8" />
-          <folding />
+          <folding>
+            <element signature="e#43#60#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -699,7 +708,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="31433">
           <caret line="1849" column="45" lean-forward="true" selection-start-line="1849" selection-start-column="45" selection-end-line="1849" selection-end-column="45" />
-          <folding />
+          <folding>
+            <element signature="e#43#60#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -738,7 +749,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="18564">
           <caret line="1092" column="14" lean-forward="false" selection-start-line="1092" selection-start-column="14" selection-end-line="1092" selection-end-column="14" />
-          <folding />
+          <folding>
+            <element signature="e#43#60#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -777,7 +790,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="45628">
           <caret line="2684" column="5" lean-forward="false" selection-start-line="2684" selection-start-column="5" selection-end-line="2684" selection-end-column="5" />
-          <folding />
+          <folding>
+            <element signature="e#43#60#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -858,18 +873,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/dagConstruct.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-169">
-          <caret line="9" column="16" lean-forward="true" selection-start-line="9" selection-start-column="16" selection-end-line="9" selection-end-column="16" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/clixo.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="92">
-          <caret line="6" column="168" lean-forward="true" selection-start-line="6" selection-start-column="168" selection-end-line="6" selection-end-column="168" />
+        <state relative-caret-position="102">
+          <caret line="6" column="168" lean-forward="false" selection-start-line="6" selection-start-column="168" selection-end-line="6" selection-end-column="168" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>
@@ -879,11 +886,21 @@
     <entry file="file://$PROJECT_DIR$/README.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="SECOND">
-          <first_editor relative-caret-position="120">
+          <first_editor relative-caret-position="357">
             <caret line="21" column="183" lean-forward="false" selection-start-line="21" selection-start-column="183" selection-end-line="21" selection-end-column="183" />
             <folding />
           </first_editor>
           <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/dagConstruct.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="144">
+          <caret line="1315" column="100" lean-forward="true" selection-start-line="1315" selection-start-column="100" selection-end-line="1315" selection-end-column="100" />
+          <folding>
+            <element signature="e#43#60#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
