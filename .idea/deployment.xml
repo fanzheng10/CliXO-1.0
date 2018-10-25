@@ -5,7 +5,7 @@
       <paths name="ribolla">
         <serverdata>
           <mappings>
-            <mapping deploy="/cellar/users/f6zheng/Code/CliXO" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/cellar/users/f6zheng/Code/CliXO-adventure" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

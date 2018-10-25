@@ -1228,7 +1228,7 @@ namespace dagConstruct {
 //                break;
             }
 
-            currentClusters.setCurWeight(dt);
+            currentClusters.setCurWeight(last_dt);
 
             cout << "# Current distance: " << distanceIt->second << "\t" << "Add until: " << addUntil << "\t" << endl;
             cout << "# Num of real edges added: " << numRealEdgesAdded << endl;
@@ -1260,6 +1260,9 @@ namespace dagConstruct {
                     newEdgesAdded = addMissingEdges(currentClusters, beta, alpha, clusterGraph, nodeIDsToNames, nodeDistances, realEdges, legacyBeta);
                     cout << "# " << ndeleted << " clusters deleted in validity check; Now has  " << currentClusters.numCurrentClusters() << " clusters" << endl;
                 }
+            }
+            else {
+                performValidityCheck(currentClusters, nodeDistances, nodeIDsToNames);
             }
             currentClusters.sortNewClusters(newClustersSorted); //sort by size, ascending; this only has new active clusters
 
@@ -1352,6 +1355,44 @@ namespace dagConstruct {
             dif = difftime(end, start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;
         }
+
+        //one last round
+        unsigned modular_filter = 0;
+        for (unsigned long i = 0; i < currentClusters.maxClusterID(); ++i) {
+            if ((currentClusters.numElements(i) !=0) && currentClusters.isValid(i) && (!currentClusters.isNew(i))) {
+                double clustWeight = currentClusters.getClusterWeight(i);
+                pair<double, double> mod = currentClusters.getModularityScore(currentClusters.getElements(i), realEdges);//this is the modularity after 1 round
+
+                if ((mod.first > modular) && (mod.second > zmodular)) {
+                    validClusters.push_back(
+                            validClusterBitset(currentClusters.getElements(i), 0, clustWeight));
+                    cout << "# Valid cluster:\t";
+                    if (validClusters.back().numElements() > largestCluster) {
+                        largestCluster = validClusters.back().numElements();
+                        currentClusters.setLargestCluster(largestCluster);
+                    }
+                    printCluster(currentClusters.getElements(i), nodeIDsToNames);
+                    if (legacyBeta) {
+                        cout << "\t" << clustWeight << "\t" << mod.first << "\t" << mod.second << "\t"
+                             << currentClusters.getNumUniquelyUnexplainedEdges(i) << "\t" << endl;
+                    }
+                    else {
+                        cout << "\t" << clustWeight << "\t" << mod.first << "\t" << mod.second << "\t"
+                             << currentClusters.getNumUniquelyUnexplainedEdges(i) << endl;
+                    }
+                }
+                else {
+                    ++modular_filter;
+                }
+                currentClusters.setInvalid(i);
+            }
+            else if (currentClusters.isNew(i)) {
+                currentClusters.setOld(i);
+            }
+        }
+        cout << "# " << modular_filter << " clusters failed the modularity filter" << endl;
+
+
         return currentClusters.numCurrentClusters();
     }
 
