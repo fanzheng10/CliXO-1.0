@@ -825,7 +825,7 @@ namespace dagConstruct {
 //                    v2 += std::max(1-clusterGraph.getDegree(k) * clusterGraph.getDegree(l)/(2*m), 0.0);
                     v2 += abs(1-clusterGraph.getDegree(k) * clusterGraph.getDegree(l)/(2*m));
                 } else {
-//                    v2 += abs(0-clusterGraph.getDegree(k) * clusterGraph.getDegree(l)/(2*m));
+                    v2 += abs(0-clusterGraph.getDegree(k) * clusterGraph.getDegree(l)/(2*m));
                 }
             }
         }
@@ -1221,7 +1221,7 @@ namespace dagConstruct {
                 ++distanceIt;
             }
             last_dt = dt;
-            if (distanceIt->second > stopt + alpha) {
+            if (distanceIt->second >= stopt + alpha) {
                 dt = addUntil; //dt is already moved to the next level
             } else {
                 dt = stopt;
