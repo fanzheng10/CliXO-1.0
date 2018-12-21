@@ -23,10 +23,10 @@ int main(int argc, char* argv[]) {
     bool netflag=false;
     double alpha = 0;
     bool aflag=false;
-    double beta = 0.75;
+    double beta = 0.5;
     bool bflag = false;
     double modular = 0.005;
-    double zmodular = 0.2;
+    double zmodular = 0.05;
     double stopt = 0;
 
     bool legacyBetaflag = false;
