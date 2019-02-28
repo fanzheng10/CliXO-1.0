@@ -71,7 +71,7 @@ This utility will allow users to look at the ontology created by clixo.  There a
 
 Since maximal clique enumeration is expensive (theoretical upper bound is exponential to the number of nodes), applying CliXO on a large number of genes is computational infeasible. If the goal is to the finish the construction of the entire hierarchy,  we recommend not to exceed 1000 genes to expect the running time to be within a few hours. If either overlapping or multi-scale properties is not crucial to your research program, you should stop browsing and turn to other popular algorithms, such as Louvain clustering. 
 
-Although there are many fast community detection algorithms, most of them partition graphs into non-overlapping parts, and in other overlapping-community compatible options only a small number of nodes on the boundaries of partitions can be assigned to multiple communities. Even fewer of them have the concept of multi-scale community detection. Thus, CliXO is unique in that it can possibly found both mutl-scale and highly-overlapping community structures. We do notice that a lot of cliques found by CliXO were unnecessary since they are later removed in post-processing steps. How to utilize such information to reduce the running time of clique finding will be in our future direction. 
+We are working hard on combining the best of both worlds, so stay tuned!
 
 
 ## Acknowledgements
