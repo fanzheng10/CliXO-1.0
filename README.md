@@ -1,7 +1,4 @@
-# CliXO (Clique eXtracted Ontology) 1.0
-
-Fan Zheng (fanzheng1101@gmail.com), Trey Ideker lab, UCSD  
-Date: 08/27/2018
+# CliXO (Clique eXtracted Ontology) 1.0 beta
 
 ## About
 
