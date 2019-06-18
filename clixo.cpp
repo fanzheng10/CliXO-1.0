@@ -10,7 +10,7 @@ void usage(char *prog_name) {
     cout << "-a\tthreshold between clusters (alpha parameter)" << endl;
     cout << "-b\t(optional, default = 0.5) merge similarity for overlapping clusters (beta parameter)" << endl;
     cout << "-m\t(optional, default = 0.005) cutoff for filtering clusters based on Newman's modularity" << endl;
-    cout << "-z\t(optional, default = 0.05) cutoff for filtering clusters based on z-score modularity" << endl;
+//    cout << "-z\t(optional, default = 0.05) cutoff for filtering clusters based on z-score modularity" << endl;
     cout << "-s\t(optional, default = 0) score threshold to stop the program" << endl;
     cout << "-B\t(optional, boolean) legacy beta threshold for clique merging; if true and -b has not been set, set -b to 0.5 (the default value for the legacy beta)" << endl;
     exit(0);
