@@ -1038,6 +1038,9 @@ namespace dagConstruct {
                                     nodeIDsToNames)) { //seedClust is updated inside the findClustWithSeed function
                 // seedClust is a maximal clique of just two nodes
                 Utils::insertInOrder(newClustersToAdd, seedClust);
+                if (newClustersToAdd.size() == newClustersToAdd.capacity()) {
+                    newClustersToAdd.reserve(2*newClustersToAdd.size());
+                }
             }
         }
 
@@ -1051,6 +1054,11 @@ namespace dagConstruct {
             currentClusters.addCluster(*clustersToAddIt, nodeDistances, nodeIDsToNames);
         }
         //done
+        //clear some memory
+        edgesToAdd.clear();
+        edgesToAdd.shrink_to_fit();
+        newClustersToAdd.clear();
+        newClustersToAdd.shrink_to_fit();
     }
 
     bool combineClusters(
@@ -1086,6 +1094,9 @@ namespace dagConstruct {
                         edgesToAdd.push_back(make_pair(i, j)); //here you are adding all edges!
                         edgeWillBeAdded[i][j] = true;
                         edgeWillBeAdded[j][i] = true;
+                        if (edgesToAdd.size() == edgesToAdd.capacity()) { // allocate more memory
+                            edgesToAdd.reserve(2*edgesToAdd.size());
+                        }
                     }
                 }
             }
@@ -1218,6 +1229,9 @@ namespace dagConstruct {
                 ++numRealEdgesAdded;
                 ++numRealEdgesThisRound;
                 edgesToAdd.push_back(make_pair(firstNode, secondNode));
+                if (edgesToAdd.size() == edgesToAdd.capacity()) {
+                    edgesToAdd.reserve(2*edgesToAdd.size());
+                }
                 ++distanceIt;
             }
             last_dt = dt;
@@ -1234,6 +1248,8 @@ namespace dagConstruct {
             cout << "# Num of real edges added: " << numRealEdgesAdded << endl;
             updateClustersWithEdges(edgesToAdd, currentClusters, clusterGraph, nodeDistances, nodeIDsToNames);
 
+            edgesToAdd.clear();
+            edgesToAdd.shrink_to_fit();
             time(&end);
             dif = difftime(end, start);
             cout << "# Time elapsed: " << dif << " seconds" << endl;

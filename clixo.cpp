@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
         //cout << ontology.getName(edgesIt->first.first) << "\t" << ontology.getName(edgesIt->first.second) << "\t" << edgesIt->second << "\t" << (ontology.getWeight(edgesIt->first.second) - ontology.getWeight(edgesIt->first.first)) / 2.0 << endl;
 
         // THIS VERSION JUST TELLS THE WEIGHT ON THE PARENT TERM
-        cout << ontology.getName(edgesIt->first.first) << "\t" << ontology.getName(edgesIt->first.second) << "\t" << edgesIt->second << "\t" << ontology.getWeight(edgesIt->first.first) << endl;
+        cout << ontology.getName(edgesIt->first.first) << "\t" << ontology.getName(edgesIt->first.second) << "\t" << edgesIt->second << "\t" << std::max(ontology.getWeight(edgesIt->first.first) - alpha, 0.0)  << endl;
     }
     return 1;
 }
