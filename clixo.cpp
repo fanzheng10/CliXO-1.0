@@ -12,7 +12,7 @@ void usage(char *prog_name) {
     cout << "-m\t(optional, default = 0.005) cutoff for filtering clusters based on Newman's modularity" << endl;
 //    cout << "-z\t(optional, default = 0.05) cutoff for filtering clusters based on z-score modularity" << endl;
     cout << "-s\t(optional, default = 0) score threshold to stop the program" << endl;
-    cout << "-B\t(optional, boolean) legacy beta threshold for clique merging; if true and -b has not been set, set -b to 0.5 (the default value for the legacy beta)" << endl;
+//    cout << "-B\t(optional, boolean) legacy beta threshold for clique merging; if true and -b has not been set, set -b to 0.5 (the default value for the legacy beta)" << endl;
     exit(0);
 }
 
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
     nodeDistanceObject nodeDistances;
 
     time (&start);
-    dagConstruct::constructDAG(inputNetwork, ontology, nodeDistances, alpha, beta, modular, zmodular, stopt, legacyBetaflag);
+    dagConstruct::constructDAG(inputNetwork, ontology, nodeDistances, alpha, beta, modular/100, zmodular, stopt, legacyBetaflag);
     time (&end);
     dif = difftime(end,start);
     cout << "# Ontology construction took " << dif << " seconds" << endl;
