@@ -85,9 +85,9 @@ int main(int argc, char* argv[]) {
     cout << "# param -a " << alpha << endl;
     cout << "# param -b " << beta << endl;
     cout << "# param -m " << modular << endl;
-    cout << "# param -z " << zmodular << endl;
+//    cout << "# param -z " << zmodular << endl;
     cout << "# param -s " << stopt << endl;
-    cout << "# param -B " << legacyBetaflag << endl;
+//    cout << "# param -B " << legacyBetaflag << endl;
 
     string terminalName = "gene";
     time_t start, end;
