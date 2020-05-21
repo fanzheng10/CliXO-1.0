@@ -1,58 +1,65 @@
 # CliXO (Clique eXtracted Ontology) 1.0 beta
 
+
 ## About
 
 This repository is an updated version of the CliXO (Clique eXtracted Ontology) algorithm, originally associated with the following publication:
 
-Kramer M, Dutkowski J, Yu M, Bafna V, Ideker T. Inferring gene ontologies from pairwise similarity data. Bioinformatics, 30: i34-i42. 2014. doi: 10.1093/bioinformatics/btu282
+>Kramer M, Dutkowski J, Yu M, Bafna V, Ideker T. Inferring gene ontologies from pairwise similarity data. Bioinformatics, 30: i34-i42. 2014. doi: 10.1093/bioinformatics/btu282
 
-The input of the program is a weighted similarity network of objects (in our cases, genes), and the output is a directed acyclic graph (DAG), in which the leaf nodes are genes, and non-leaf nodes are gene sets called "terms". Term A is a descendent of another term B (i.e. in the DAG there is a path from A to B) if the gene set for A is a subset of the gene set for B. The whole DAG is called a "data-driven hierarchy" inferred from the input network.
+The input of the program is a weighted similarity network of objects (in our cases, genes), and the output is a directed acyclic graph (DAG), in which the leaf nodes are genes, and non-leaf nodes are gene sets called "terms" (communities).  
 
-The new version has a few key improvements over the original version, increasing the accuracy and robustness inferred from pairwise similarity (weighted network) data.
+ Term A is a descendent of another term B (i.e. in the DAG there is a path from A to B) if the gene set for A is a subset of the gene set for B. The whole DAG is called a "data-driven hierarchy" inferred from the input network.
+
+The new version has a few key improvements over the original version (see below), increasing the accuracy and robustness inferred from pairwise similarity (weighted network) data.
 
 ## Usage
 
-`./clixo -i input_file -a alpha [-b beta] [-m modularity cutoff] [-s stop_score] [-B]`
+`./clixo -i input_file -a alpha [-b beta] [-m modularity cutoff] [-s stop_score]`
 
--i: input file (similarity scores); The format of this file should be three columns separated by tabs. The first two columns should be two strings for the node names (using numbers may cause problem); and the third column should be a value for the edge weight.
+`-i`: input file (similarity scores); A TSV file with three columns. The first two columns should be two strings for the node names (using numbers may cause problem); and the third column should be a value for the edge weight.
 
--a: Alpha parameter; for the step size of hierarchy construction; usually, a smaller Alpha will create "deeper" hierarchies with more levels from leaves to 
- the root.
+`-a`: **alpha**; for the step size of hierarchy construction; usually, a smaller value will create "deeper" hierarchies with more levels from leaves to the root.
    
--b: Beta parameter; for merging overlapping terms. Two existing terms will be merged if their similarity is above the threshold defined by Beta. Usually a lower Beta will create a hierarchy with more big terms, since small terms can be merged. However, at a lower Beta the terms look less like a clique, since the requirement for being a clique has been relaxed. Note the definition of Beta is different from that in CliXO 0.3 from Kramer et al.
+`-b`: **beta**; for merging overlapping communities. Two existing communities will be merged if their similarity is above the threshold defined by this value. Usually a higher value will create a hierarchy with more smaller communities", which looks "broader".
   
--m: Modularity parameter; calculate the contribution of each term to the Newman-Girvan's modularity in the network at the current score threshold; terms lower than this threshold will be removed from the output.
+`-m`: **modularity**; calculate the modularity of each community (adapted and modified from Newman-Girvan's modularity) in the network at the current score threshold; communities lower than this threshold will be removed from the output. Increasing the value will reduce the number of communities.
   
--s: A cutoff of similarity score, if set, the program will terminate when it reaches this point, and stop looking for more terms from scores lower than this threshold.
-   
--B: if set, the program will interpret Beta (-b) as the old definition in Kramer et al. (not recommended)
+`-s`: A cutoff of similarity score, if set, the program will terminate when it reaches this point, and stop looking for more terms from scores lower than this threshold.
 
-More detailed description of the parameters can be found in the supplementary materials of the following paper:  
-Fan Zheng et al. A multi-scale map of cell systems
-explains mutational heterogeneity in cancer, in preparation.
-
+The effects of parameters are qualitatively illustrated in the following figure.
+<p align="center">
+  <img src="fig.png" width="500" align="center">
+</p>
 
 
+## Pseudocode
 
-## Differences to the old version (CliXO 0.3)
+[Pseudocode](CliXO%201.0%20pseudocode.pdf)
 
-We observed several problems in CliXO 0.3. 
 
-1. When we visualized the hierarchical model generated by CliXO 0.3, we always saw that biggest modules in the hierarchy forming a long nested chain. It is suspicious that such a "Russian doll" structure is the actual of the hierarchical organization of cellular components. 
-2. A robust ontology inference algorithm should be relatively insensitive to stochastic noise in the input similarity network, i.e. slightly perturbed similarity scores should not significantly affect the resulting hierarchy. However, we found CliXO 0.3 is quite sensitive to small perturbation in input scores, sometimes the content of medium-to-big size terms are very different even between two input scores with >0.99 pearson correlation.
-3. Sometimes in CliXO 0.3 we found terms for which most of the edges weights are very low, which do not look like valid communities during visualization.
+## Differences to the CliXO 0.3 (TL; DR)
 
-We found the major cause of this problem is due to a "missing edge inference" step. The idea of CliXO is based on finding maximal cliques in the network. However, real-world networks are noisy, and there could a large number of maximal cliques that are highly overlapping with each other, and thus In CliXO 0.3, parameter BETA was introduced to merge highly overlapping cliques by adding the missing edges. 
-However, during this step, the missing edges were added to the network, which makes the next iterations see an altered network. This operation leads to the arfifacts mentioned above because:
+We addressed several problems in CliXO 0.3. 
+
+1. When we visualized the DAGs generated by CliXO 0.3, we always saw that biggest modules in the hierarchy forming a long nested chain. 
+2. We found CliXO 0.3 is quite sensitive to small perturbation in input scores, sometimes the content of medium-to-big size terms are very different even between two input scores with >0.99 pearson correlation.
+3. Sometimes in CliXO 0.3 we found communities for which most of the edges are missing, which do not look like valid communities during visualization.
+
+We found the major cause of this problem is due to a "missing edge inference" step. The idea of CliXO is based on finding maximal cliques in the network. However, real-world networks are noisy, and there could a large number of maximal cliques that are highly overlapping with each other, and thus In CliXO 0.3, parameter `beta` was introduced to merge highly overlapping cliques by adding the missing edges. 
+However, during this step, the missing edges were added to the network, altering the network before the next iteration. This operation leads to the arfifacts mentioned above because:
 
 1. The network edge density was increased in every iteration when missing edges were inferred. Thus, a big and tight component could form within a few iterations. The iterations afterwards only incrementally added the genes that has not been covered by the big component. Thus, a "long-chain" structure was formed.
 2. The missing edges that were inferred early on have strong impact on the results in the future iterations. Slight perturbations of edge weights that affect early iterations could be augmented in future iterations. Thus the results were sensitive to slight perturbations.
-3. Because missing edges became "real" edges after being inferred, it is possible that in future iterations, these edges were clustered together to form cliques/communities. But they are false positives since their actual edge weights are low.
+3. Because missing edges became "real"  after being inferred, it is possible that in future iterations, these edges were clustered together to form cliques/communities. But they are false positives since their actual edge weights are low.
 
-We fixed this issue and the "long-chain" structure never appeared again, and two similar inputs now generate much more similar output hierarchies.
+In the new version, the "long-chain" structure never appeared again, and two similar inputs now generate much more similar output hierarchies.
 
 
 ## Auxillary functions (identical to CliXO_0.3): 
+
+Old version of CliXO can be found at
+https://github.com/mhk7/clixo_0.3
 
 `extractOnt FILE THRESHOLD MIN_TERM_SIZE OUTFILE`
 
@@ -64,8 +71,7 @@ This utility will allow users to look at the ontology created by clixo.  There a
 
 ## Limitations
 
-Since maximal clique enumeration is expensive (theoretical upper bound is exponential to the number of nodes), applying CliXO on a large number of genes is computational prohibitive. We recommend not to exceed 2000 genes if the expected running time is within a few hours. If neither overlapping nor multi-scale properties is not crucial to your research program, you should probably turn to other popular algorithms, such as Louvain clustering. 
-
+Since maximal clique enumeration is NP-complete, applying CliXO on a large number of genes is computational prohibitive. We recommend not to exceed 2000 genes if the expected running time is within a few hours. For problems of larger size, you should probably turn to other popular algorithms, such as Louvain clustering.
 
 
 ## Acknowledgements
