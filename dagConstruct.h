@@ -1200,7 +1200,8 @@ namespace dagConstruct {
         graph_undirected_bitset realEdges(numNodes); // all the real edges by this time
 
         //
-        double dt = nodeDistances.sortedDistancesBegin()->second; // Current threshold, starting with the maximum similarity
+        //double dt = nodeDistances.sortedDistancesBegin()->second; // Current threshold, starting with the maximum similarity
+        double dt = 1.0;
         double last_dt = dt;
         currentClusterClassBitset currentClusters(numNodes, dt, alpha);
 
