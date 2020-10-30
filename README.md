@@ -17,7 +17,7 @@ The new version has a few key improvements over the original version (see below)
 
 `./clixo -i input_file -a alpha [-b beta] [-m modularity cutoff] [-s stop_score]`
 
-`-i`: input file (similarity scores); A TSV file with three columns. The first two columns should be two strings for the node names (using numbers may cause problem); and the third column should be a value for the edge weight.
+`-i`: input file (similarity scores); A TSV file with three columns. The first two columns should be two strings for the node names (using numbers may cause problem); and the third column should be a value for the edge weight (from 0 to 1).
 
 `-a`: **alpha**; for the step size of hierarchy construction; usually, a smaller value will create "deeper" hierarchies with more levels from leaves to the root.
    
