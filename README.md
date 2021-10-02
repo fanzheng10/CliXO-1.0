@@ -74,7 +74,7 @@ This script will allow the user to "peek" at the results of an in process CliXO 
 
 `ontologyTermStats`
 
-This utility will allow users to look at the ontology created by clixo.  There are several different types of stats that it can generate, but the most useful are the options "size" and "genes".  Option "size" will return a two column file where column one is the term identifier and column two is the number of leaf nodes / genes annotated to that term (all annotations are propagated upwards in the ontology).  Option "genes" adds a third column which is a comma separated list of all the genes annotated to the term.
+This utility will allow users to look at the ontology created by clixo.  There are several different types of stats that it can generate, but the most useful are the options "size" and "genes".  Option "size" will return a two column file where column one is the term identifier and column two is the number of leaf nodes/genes annotated to that term (all annotations are propagated upwards in the ontology).  Option "genes" adds a third column which is a comma separated list of all the genes annotated to the term.
 
 Old version of CliXO can be found at
 https://github.com/mhk7/clixo_0.3
