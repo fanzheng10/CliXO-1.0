@@ -11,9 +11,9 @@ The input of the program is a weighted similarity network of objects (in our cas
 
  Term A is a descendent of another term B (i.e. in the DAG there is a path from A to B) if the gene set for A is a subset of the gene set for B. The whole DAG is called a "data-driven hierarchy" inferred from the input network.
 
-The new version has a few key improvements over the original version (see below), increasing the accuracy and robustness inferred from pairwise similarity (weighted network) data. W
+The new version has a few key improvements over the original version (see below), increasing the accuracy and robustness inferred from pairwise similarity (weighted network) data.
 
-e have used CliXO-1.0 in the following studies:
+We have used CliXO-1.0 in the following studies:
 
 F. Zheng et al., [Interpretation of cancer mutations using a multiscale map of protein systems.](https://www.science.org/doi/10.1126/science.abf3067) *Science* 374, eabf3067 (2021). (Please consider cite this paper if you use CliXO-1.0)
 
