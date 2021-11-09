@@ -15,7 +15,7 @@ The new version has a few key improvements over the original version (see below)
 
 We have used CliXO-1.0 in the following studies:
 
-F. Zheng et al., [Interpretation of cancer mutations using a multiscale map of protein systems.](https://www.science.org/doi/10.1126/science.abf3067) *Science* 374, eabf3067 (2021). (Please consider cite this paper if you use CliXO-1.0)
+F. Zheng et al., [Interpretation of cancer mutations using a multiscale map of protein systems.](https://www.science.org/doi/10.1126/science.abf3067) *Science* 374, eabf3067 (2021). (Please cite this paper if you use CliXO-1.0)
 
 Y. Qin et al., Mapping cell systems across scales by fusing protein images and interactions. *Nature*, Accepted (2021).
 
