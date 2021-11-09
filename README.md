@@ -5,7 +5,7 @@
 
 CliXO-1.0 is an updated version of the CliXO (Clique eXtracted Ontology) algorithm, originally described in the following paper:
 
-M. Kramer et al. [Inferring gene ontologies from pairwise similarity data](https://doi.org/10.1093/bioinformatics/btu282). *Bioinformatics*, 30: i34-i42. (2014)
+M. Kramer et al. Inferring gene ontologies from pairwise similarity data. *Bioinformatics*, 30: i34-i42. (2014)
 
 The input of the program is a weighted similarity network of objects (in our cases, genes), and the output is a directed acyclic graph (DAG), in which the leaf nodes are genes, and non-leaf nodes are gene sets called "terms" (communities).  
 
